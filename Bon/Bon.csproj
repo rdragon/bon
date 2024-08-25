@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <Title>Bon</Title>
+    <Authors>rdragon</Authors>
+    <Description>A fast and efficient serializer for .NET.</Description>
+    <Copyright>ISC License</Copyright>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>serializer;binary</PackageTags>
+    <Version>1.0.15</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bon.Azure\Bon.Azure.csproj" />
+    <ProjectReference Include="..\Bon.Serializer\Bon.Serializer.csproj" />
+    <ProjectReference Include="..\Bon.SourceGeneration\Bon.SourceGeneration.csproj" />
+  </ItemGroup>
+
+</Project>
