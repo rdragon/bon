@@ -96,7 +96,7 @@ The `[BonMember]` attribute has one required parameter of type `int`. This param
 
 Every member should have a unique non-negative ID. You are free to choose any IDs you like. The IDs are not included in the serializer output. They are written as variable-width integers to the schema file. Using very large IDs will make the schema file a few bytes per ID larger than using small IDs, but you will likely not notice this.
 
-Every serializable member should have a setter, or there should be a suitable constructor. A suitable constructor is a constructor that has for every serializable member one argument with the same name (case insensitive) and same type. If found, this constructor will be used during deserialization, also if all members have setters.
+Every serializable member should have a setter, or there should be a suitable constructor. A suitable constructor is a constructor that has for every serializable member one argument with the same name (case insensitive) and same type. If found, this constructor will be used during deserialization, even if all members have setters.
 
 #### BonReservedMembers
 If you delete a property or field from a class (or struct) then you should not re-use its ID. Otherwise, if you deserialize older data, the new property might receive values from the deleted member. To prevent this scenario you can use the `[BonReservedMembers]` attribute. For example, decorating a type with `[BonReservedMembers(3, 5)]` makes sure the code no longer compiles if a member with ID 3 or 5 is added to the type.
