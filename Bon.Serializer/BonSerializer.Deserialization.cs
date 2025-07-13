@@ -18,9 +18,9 @@ partial class BonSerializer
     public async Task<T> DeserializeAsync<T>(Stream stream)
     {
         var reader = new BinaryReader(stream);
-        var (_, schemaData) = await ReadHeader(reader).ConfigureAwait(false);
+        var header = await ReadHeaderAsync(reader).ConfigureAwait(false);
 
-        return DeserializeBody<T>(reader, schemaData);
+        return DeserializeBody<T>(reader, header.SchemaData);
     }
 
     /// <summary>
@@ -31,14 +31,25 @@ partial class BonSerializer
     {
         var reader = new BinaryReader(stream);
 
-        if (TryReadHeader(reader) is SchemaData schemaData)
+        if (TryReadHeader(reader, out var header))
         {
-            value = DeserializeBody<T>(reader, schemaData);
+            value = DeserializeBody<T>(reader, header.SchemaData);
             return true;
         }
 
         value = default;
         return false;
+    }
+
+    /// <summary>
+    /// Deserializes a value from a stream.
+    /// If unknown schema IDs are encountered then an exception is thrown.
+    /// </summary>
+    public T Deserialize<T>(Stream stream)
+    {
+        var reader = new BinaryReader(stream);
+        var header = ReadHeader(reader);
+        return DeserializeBody<T>(reader, header.SchemaData);
     }
 
     /// <summary>
@@ -48,56 +59,102 @@ partial class BonSerializer
     public async Task<JsonObject> BonToJsonAsync(Stream stream)
     {
         var reader = new BinaryReader(stream);
-        var (blockId, schemaData) = await ReadHeader(reader).ConfigureAwait(false);
-        var schemaBase64 = Convert.ToBase64String(SchemaSerializer.Write(schemaData));
+        var (formatType, blockId, schemaData) = await ReadHeaderAsync(reader).ConfigureAwait(false);
+        var schemaDataBytes = SchemaSerializer.Write(schemaData);
         var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
 
         return new JsonObject
         {
+            ["body"] = BonToJsonDeserializer.Deserialize(reader, schema),
+            ["schema"] = Convert.ToBase64String(schemaDataBytes),
             ["blockId"] = blockId,
-            ["schema"] = schemaBase64,
-            ["data"] = BonToJsonDeserializer.Deserialize(reader, schema),
         };
     }
 
-    private async Task<(uint BlockId, SchemaData SchemaData)> ReadHeader(BinaryReader reader)
+    /// <summary>
+    /// Deserializes a value from a stream and then converts the value to a JSON string.
+    /// Loads new schemas from the storage if unknown schema IDs are encountered.
+    /// </summary>
+    public async Task<string> BonToJsonAsync(byte[] bytes)
     {
-        var formatType = ReadFormatType(reader);
-        uint blockId = 0;
-
-        if (formatType == DEFAULT_FORMAT_TYPE)
-        {
-            blockId = reader.ReadUInt32();
-            await LoadBlock(blockId).ConfigureAwait(false);
-        }
-
-        return (blockId, ReadSchemaData(reader, formatType));
+        var stream = new MemoryStream(bytes);
+        var jsonObject = await BonToJsonAsync(stream).ConfigureAwait(false);
+        return jsonObject.ToJsonString();
     }
 
-    private SchemaData? TryReadHeader(BinaryReader reader)
+    private async Task<Header> ReadHeaderAsync(BinaryReader reader)
     {
-        var formatType = ReadFormatType(reader);
-
-        if (formatType == DEFAULT_FORMAT_TYPE && !BlockIsLoaded(ReadBlockId(reader)))
+        var headerPart = ReadFirstPartOfHeader(reader);
+        if (TryReadHeader(reader, headerPart, out var header))
         {
-            return null;
+            return header;
         }
 
-        return ReadSchemaData(reader, formatType);
+        await LoadBlock(headerPart.BlockId).ConfigureAwait(false);
+        return ReadHeader(reader, headerPart);
     }
 
-    private static byte ReadFormatType(BinaryReader reader) => reader.ReadByte();
-
-    private static uint ReadBlockId(BinaryReader reader) => reader.ReadUInt32();
-
-    private static SchemaData ReadSchemaData(BinaryReader reader, byte formatType)
+    private Header ReadHeader(BinaryReader reader)
     {
-        if (formatType == DEFAULT_FORMAT_TYPE || formatType == NO_BLOCK_ID_FORMAT_TYPE)
+        var headerPart = ReadFirstPartOfHeader(reader);
+        if (TryReadHeader(reader, headerPart, out var header))
         {
-            return SchemaSerializer.ReadSchemaData(reader);
+            return header;
         }
 
-        throw new DeserializationFailedException($"Cannot handle format type {formatType}.");
+        throw GetBlockNotFoundException(headerPart.BlockId);
+    }
+
+    private bool TryReadHeader(BinaryReader reader, out Header header)
+    {
+        var headerPart = ReadFirstPartOfHeader(reader);
+        return TryReadHeader(reader, headerPart, out header);
+    }
+
+    private static HeaderPart ReadFirstPartOfHeader(BinaryReader reader)
+    {
+        var formatType = (FormatType)reader.ReadByte();
+        var blockId = formatType == FormatType.Full ? reader.ReadUInt32() : 0;
+        return new(formatType, blockId);
+    }
+
+    private bool TryReadHeader(BinaryReader reader, HeaderPart headerPart, out Header header)
+    {
+        var (_, blockId) = headerPart;
+
+        if (blockId != 0 && !BlockIsLoaded(blockId))
+        {
+            header = default;
+            return false;
+        }
+
+        header = ReadHeader(reader, headerPart);
+        return true;
+    }
+
+    private static Header ReadHeader(BinaryReader reader, HeaderPart headerPart)
+    {
+        var (formatType, blockId) = headerPart;
+        var schemaData = ReadSchemaData(reader, formatType);
+
+        return new(formatType, blockId, schemaData);
+    }
+
+    private static SchemaData ReadSchemaData(BinaryReader reader, FormatType formatType)
+    {
+        return formatType switch
+        {
+            FormatType.Full or FormatType.WithoutBlockId => SchemaSerializer.ReadSchemaData(reader),
+            FormatType.Byte => new SchemaData(SchemaType.Byte, false, []),
+            FormatType.SByte => new SchemaData(SchemaType.SByte, false, []),
+            FormatType.Short => new SchemaData(SchemaType.Short, false, []),
+            FormatType.UShort => new SchemaData(SchemaType.UShort, false, []),
+            FormatType.Int => new SchemaData(SchemaType.Int, false, []),
+            FormatType.UInt => new SchemaData(SchemaType.UInt, false, []),
+            FormatType.Long => new SchemaData(SchemaType.Long, false, []),
+            FormatType.ULong => new SchemaData(SchemaType.ULong, false, []),
+            _ => throw new DeserializationFailedException($"Cannot handle format type {formatType}.")
+        };
     }
 
     private T DeserializeBody<T>(BinaryReader reader, SchemaData schemaData)
@@ -111,26 +168,30 @@ partial class BonSerializer
 
     private async Task LoadBlock(uint blockId)
     {
-        if (BlockIsLoaded(blockId))
+        if (blockId == 0 || BlockIsLoaded(blockId))
         {
             return;
         }
 
         await _schemaStoreUpdater.UpdateSchemaStore().ConfigureAwait(false);
 
-        if (BlockIsLoaded(blockId))
+        if (!BlockIsLoaded(blockId))
         {
-            return;
+            throw GetBlockNotFoundException(blockId);
         }
-
-        throw new DeserializationFailedException(
-            $"Cannot find the schemas that were used during serialization. " +
-            $"Block {blockId} cannot be found.");
     }
+
+    private static DeserializationFailedException GetBlockNotFoundException(uint blockId) => new(
+        $"Cannot find the schemas that were used during serialization. " +
+        $"Block {blockId} cannot be found.");
 
     // Bookmark 553576978
     private bool BlockIsLoaded(uint blockId)
     {
         return _blockStore.ContainsBlockId(blockId);
     }
+
+    private readonly record struct HeaderPart(FormatType FormatType, uint BlockId);
+
+    internal readonly record struct Header(FormatType FormatType, uint BlockId, SchemaData SchemaData);
 }

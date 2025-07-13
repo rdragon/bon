@@ -1,6 +1,4 @@
-﻿using Bon.Serializer.Schemas;
-
-namespace Bon.FileInspector;
+﻿namespace Bon.FileInspector;
 
 internal static class SchemaFileInspector
 {

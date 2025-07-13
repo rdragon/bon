@@ -257,10 +257,12 @@ public class BonSerializerTestBase
     public static byte? DefaultNullableByte => null;
     public static sbyte SByte => sbyte.MaxValue - 10;
     public static sbyte DefaultSByte => 0;
+    public static sbyte NegativeSByte => sbyte.MinValue + 10;
     public static sbyte? NullableSByte => SByte;
     public static sbyte? DefaultNullableSByte => null;
     public static short Short => short.MaxValue - 10;
     public static short DefaultShort => 0;
+    public static short NegativeShort => short.MinValue + 10;
     public static short? NullableShort => Short;
     public static short? DefaultNullableShort => null;
     public static ushort UShort => ushort.MaxValue - 10;
@@ -270,6 +272,7 @@ public class BonSerializerTestBase
     public static int Int => int.MaxValue - 10;
     public static int OtherInt => int.MaxValue - 20;
     public static int DefaultInt => 0;
+    public static int NegativeInt => int.MinValue + 10;
     public static int? NullableInt => Int;
     public static int? DefaultNullableInt => null;
     public static uint UInt => uint.MaxValue - 10;
@@ -278,6 +281,7 @@ public class BonSerializerTestBase
     public static uint? DefaultNullableUInt => null;
     public static long Long => long.MaxValue - 10;
     public static long DefaultLong => 0;
+    public static long NegativeLong => long.MinValue + 10;
     public static long? NullableLong => Long;
     public static long? DefaultNullableLong => null;
     public static ulong ULong => ulong.MaxValue - 10;
@@ -400,10 +404,10 @@ public class BonSerializerTestBase
     public static WithField WithField => new() { Int = Int };
     public static WithField DefaultWithField => new();
 
-    public SerializationResult Serialize<T>(T value)
+    public SerializationResult Serialize<T>(T value, BonSerializerOptions? options = null)
     {
         var stream = new MemoryStream();
-        BonSerializer.Serialize(stream, value);
+        BonSerializer.Serialize(stream, value, options);
 
         return new SerializationResult(BonSerializer, stream);
     }
@@ -415,7 +419,8 @@ public class BonSerializerTestBase
     /// Then deserializes the result into a new value of type <typeparamref name="T2"/>.
     /// Finally asserts that the new value is equal to the expected value.
     /// </summary>
-    public void DeserializeSlow<T1, T2>(T1 source, T2 expected) => Assert.Equal(expected, Serialize(source).DeserializeSlow<T2>());
+    public void DeserializeSlow<T1, T2>(T1 source, T2 expected, BonSerializerOptions? serializationOptions = null) =>
+        Assert.Equal(expected, Serialize(source, serializationOptions).DeserializeSlow<T2>());
 
     /// <summary>
     /// First serializes the source value.
@@ -424,9 +429,10 @@ public class BonSerializerTestBase
     /// The distinction between fast and slow is that fast means the deserialize method already exists and for slow the
     /// deserialize method is created on the fly.
     /// </summary>
-    public void DeserializeFast<T1, T2>(T1 source, T2 expected) => Assert.Equal(expected, Serialize(source).DeserializeFast<T2>());
+    public void DeserializeFast<T1, T2>(T1 source, T2 expected, BonSerializerOptions? serializationOptions = null) =>
+        Assert.Equal(expected, Serialize(source, serializationOptions).DeserializeFast<T2>());
 
-    public SimpleSerializer GetSimpleSerializer() => new(this);
+    public ManualSerializer GetManualSerializer() => new(this);
 
     /// <summary>
     /// First serializes the value.
@@ -455,7 +461,8 @@ public class BonSerializerTestBase
         return (T)BonSerializer.LoadDefaultValue(typeof(T));
     }
 
-    protected void RequireSameSerialization<T1, T2>(T1 expected, T2 actual) => Assert.Equal(Serialize(expected), Serialize(actual));
+    protected void RequireSameSerialization<T1, T2>(T1 expected, T2 actual, BonSerializerOptions? expectedValueOptions = null) =>
+        Assert.Equal(Serialize(expected, expectedValueOptions), Serialize(actual));
 
     public static TwoInts CreateTwoInts(int int1, int int2) => new() { Int1 = int1, Int2 = int2 };
 
@@ -468,4 +475,10 @@ public class BonSerializerTestBase
         Assert.IsType<SchemaException>(aggregateException.InnerException);
         Assert.StartsWith("No schema for", aggregateException.InnerException.Message);
     }
+
+    /// <summary>
+    /// This value is used to get the serializer output a specific schema type, namely the schema type of the type that
+    /// is serialized.
+    /// </summary>
+    public static BonSerializerOptions ForbidSchemaTypeOptimization => new() { AllowSchemaTypeOptimization = false };
 }

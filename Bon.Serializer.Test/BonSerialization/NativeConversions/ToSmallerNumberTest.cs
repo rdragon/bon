@@ -10,7 +10,7 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(byte.MaxValue, byte.MaxValue)]
     [InlineData(byte.MaxValue + 1, 0)]
     [InlineData(byte.MaxValue + 2, 1)]
-    public void IntToByte(int value, byte expected) => DeserializeSlow(value, expected);
+    public void IntToByte(int value, byte expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(sbyte.MinValue - 2, sbyte.MaxValue - 1)]
@@ -19,7 +19,7 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(sbyte.MaxValue, sbyte.MaxValue)]
     [InlineData(sbyte.MaxValue + 1, sbyte.MinValue)]
     [InlineData(sbyte.MaxValue + 2, sbyte.MinValue + 1)]
-    public void IntToSByte(int value, sbyte expected) => DeserializeSlow(value, expected);
+    public void IntToSByte(int value, sbyte expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(short.MinValue - 2, short.MaxValue - 1)]
@@ -28,7 +28,7 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(short.MaxValue, short.MaxValue)]
     [InlineData(short.MaxValue + 1, short.MinValue)]
     [InlineData(short.MaxValue + 2, short.MinValue + 1)]
-    public void IntToShort(int value, short expected) => DeserializeSlow(value, expected);
+    public void IntToShort(int value, short expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(ushort.MinValue - 2, ushort.MaxValue - 1)]
@@ -38,7 +38,7 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(ushort.MaxValue, ushort.MaxValue)]
     [InlineData(ushort.MaxValue + 1, 0)]
     [InlineData(ushort.MaxValue + 2, 1)]
-    public void IntToUShort(int value, ushort expected) => DeserializeSlow(value, expected);
+    public void IntToUShort(int value, ushort expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(int.MinValue - 2L, int.MaxValue - 1)]
@@ -47,7 +47,7 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(int.MaxValue, int.MaxValue)]
     [InlineData(int.MaxValue + 1L, int.MinValue)]
     [InlineData(int.MaxValue + 2L, int.MinValue + 1)]
-    public void LongToInt(long value, int expected) => DeserializeSlow(value, expected);
+    public void LongToInt(long value, int expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(uint.MinValue - 2L, uint.MaxValue - 1)]
@@ -57,13 +57,13 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(uint.MaxValue, uint.MaxValue)]
     [InlineData(uint.MaxValue + 1L, 0)]
     [InlineData(uint.MaxValue + 2L, 1)]
-    public void LongToUInt(long value, uint expected) => DeserializeSlow(value, expected);
+    public void LongToUInt(long value, uint expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(long.MaxValue, long.MaxValue)]
     [InlineData(long.MaxValue + 1UL, long.MinValue)]
     [InlineData(long.MaxValue + 2UL, long.MinValue + 1)]
-    public void ULongToLong(ulong value, long expected) => DeserializeSlow(value, expected);
+    public void ULongToLong(ulong value, long expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [InlineData(double.NaN, float.NaN)]
@@ -74,11 +74,11 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
     [InlineData(3.4028234663852886E+38, float.MaxValue)]
     [InlineData(double.MaxValue, float.PositiveInfinity)]
     [InlineData(double.PositiveInfinity, float.PositiveInfinity)]
-    public void DoubleToFloat(double value, float expected) => DeserializeSlow(value, expected);
+    public void DoubleToFloat(double value, float expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [MemberData((nameof(DoubleToDecimalData)))]
-    public void DoubleToDecimal(double value, decimal expected) => DeserializeSlow(value, expected);
+    public void DoubleToDecimal(double value, decimal expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     public static TheoryData<double, decimal> DoubleToDecimalData => new() {
         { double.NaN, 0 },
@@ -93,7 +93,7 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
 
     [Theory]
     [MemberData((nameof(DecimalToLongData)))]
-    public void DecimalToLong(decimal value, long expected) => DeserializeSlow(value, expected);
+    public void DecimalToLong(decimal value, long expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     public static TheoryData<decimal, long> DecimalToLongData => new() {
         { decimal.MinValue, long.MinValue },
@@ -105,11 +105,11 @@ public sealed class ToSmallerNumberTest : BonSerializerTestBase
 
     [Theory]
     [MemberData((nameof(DecimalToLongData)))]
-    public void NullableDecimalToNullableLong(decimal value, long expected) => DeserializeSlow((decimal?)value, (long?)expected);
+    public void NullableDecimalToNullableLong(decimal value, long expected) => DeserializeSlow((decimal?)value, (long?)expected, ForbidSchemaTypeOptimization);
 
     [Theory]
     [MemberData((nameof(DecimalToULongData)))]
-    public void DecimalToULong(decimal value, ulong expected) => DeserializeSlow(value, expected);
+    public void DecimalToULong(decimal value, ulong expected) => DeserializeSlow(value, expected, ForbidSchemaTypeOptimization);
 
     public static TheoryData<decimal, ulong> DecimalToULongData => new() {
         { decimal.MinValue, ulong.MinValue },

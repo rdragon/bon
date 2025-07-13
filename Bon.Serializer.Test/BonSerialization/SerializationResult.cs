@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Text.Json.Nodes;
-
-namespace Bon.Serializer.Test.BonSerialization;
+﻿namespace Bon.Serializer.Test.BonSerialization;
 
 public sealed class SerializationResult(BonSerializer bonSerializer, MemoryStream stream) : IEnumerable<byte>
 {
@@ -11,25 +8,23 @@ public sealed class SerializationResult(BonSerializer bonSerializer, MemoryStrea
 
     public T DeserializeSlow<T>() => Deserialize<T>(true);
 
-    public T Deserialize<T>(bool expectNewDeserializer)
+    private T Deserialize<T>(bool? expectNewDeserializer = null)
     {
         stream.Position = 0;
         var countBefore = bonSerializer.DeserializerCount;
         var result = bonSerializer.DeserializeAsync<T>(stream).Result;
         Assert.Equal(stream.Length, stream.Position);
 
-        var actual = bonSerializer.DeserializerCount != countBefore ? "slow" : "fast";
-        Assert.Equal(expectNewDeserializer ? "slow" : "fast", actual);
+        if (expectNewDeserializer.HasValue)
+        {
+            var actual = bonSerializer.DeserializerCount != countBefore ? "slow" : "fast";
+            Assert.Equal(expectNewDeserializer.Value ? "slow" : "fast", actual);
+        }
 
         return result;
     }
 
-    public JsonObject DeserializeToJson()
-    {
-        stream.Position = 0;
-
-        return bonSerializer.BonToJsonAsync(stream).Result;
-    }
+    public string DeserializeToJson() => bonSerializer.BonToJsonAsync(Bytes).Result;
 
     public IEnumerator<byte> GetEnumerator() => ((IEnumerable<byte>)Bytes).GetEnumerator();
 

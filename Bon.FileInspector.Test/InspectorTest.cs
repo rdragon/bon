@@ -1,12 +1,19 @@
 namespace Bon.FileInspector.Test;
 
-public partial class InspectorTest
+public class InspectorTest
 {
-    private readonly MockFileSystem _fileSystem = new();
+    private readonly MockFileSystem _fileSystem;
+    private readonly BonSerializer _serializer;
 
-    [Fact] public Task IntToJson() => BonToJson(3, false, "CwA=", "3");
-    [Fact] public Task RecursiveClassToJson() => BonToJson(new RecursiveClass(5, new RecursiveClass(6, null)), true, "AQAC", "[5,[6,null]]");
+    public InspectorTest()
+    {
+        _fileSystem = new MockFileSystem();
+        _serializer = CreateSerializer().Result;
+    }
+
+    [Fact] public Task IntToJson() => BonToJson(3);
     [Fact] public Task JsonToInt() => JsonToBon(3);
+    [Fact] public Task RecursiveClassToJson() => BonToJson(new RecursiveClass(5, new RecursiveClass(6, null)));
     [Fact] public Task JsonToRecursiveClass() => JsonToBon(new RecursiveClass(5, new RecursiveClass(6, null)));
 
     [Fact]
@@ -69,46 +76,44 @@ public partial class InspectorTest
     public async Task MoreThanOneSchemaFile()
     {
         await WriteSchemaFile("schemas1");
-        await SerializeToFile(true);
+        SerializeToFile(true);
         var exception = await Assert.ThrowsAnyAsync<Exception>(() => RunInspector("data", "schemas", "schemas1"));
         Assert.Contains("more than one", exception.Message);
     }
 
-    private async Task BonToJson<T>(T value, bool expectsBlockId, string expectedSchema, string expectedData)
+    private async Task BonToJson<T>(T expected)
     {
-        var blockId = await SerializeToFile(value);
+        SerializeToFile(expected);
         await RunInspector("data", "schemas");
-        blockId = expectsBlockId ? blockId : 0;
-
-        var expected = $$"""
-            {"blockId":{{blockId}},"schema":"{{expectedSchema}}","data":{{expectedData}}}
-            """;
-
-        var actual = _fileSystem.File.ReadAllText("data.json");
+        var json = _fileSystem.File.ReadAllText("data.json");
+        var bytes = await _serializer.JsonToBonAsync(json);
+        var actual = await _serializer.DeserializeAsync<T>(bytes);
 
         Assert.Equal(expected, actual);
     }
 
-    private async Task<uint> SerializeToFile<T>(T value)
+    private void SerializeToFile<T>(T value)
     {
-        var serializer = await CreateSerializer();
         var stream = _fileSystem.File.OpenWrite("data");
-        serializer.Serialize(stream, value);
+        _serializer.Serialize(stream, value);
         stream.Close();
-
-        return serializer.LastBlockId;
     }
 
-    private async Task JsonToBon<T>(T value)
+    private async Task JsonToBon<T>(T expected)
     {
-        var serializer = await CreateSerializer();
-        var expected = serializer.Serialize(value);
-        var jsonObject = await serializer.BonToJsonAsync(new MemoryStream(expected));
-        _fileSystem.File.WriteAllText("data.json", jsonObject.ToJsonString());
+        var json = await GetJson(expected);
+        _fileSystem.File.WriteAllText("data.json", json);
         await RunInspector("data.json", "schemas");
-        var actual = _fileSystem.File.ReadAllBytes("data.json.bon");
+        var bytes = _fileSystem.File.ReadAllBytes("data.json.bon");
+        var actual = await _serializer.DeserializeAsync<T>(bytes);
 
         Assert.Equal(expected, actual);
+    }
+
+    private async Task<string> GetJson<T>(T value)
+    {
+        var bytes = _serializer.Serialize(value);
+        return await _serializer.BonToJsonAsync(bytes);
     }
 
     private async Task RunInspector(params string[] args)

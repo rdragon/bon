@@ -11,13 +11,11 @@ namespace Bon.Serializer;
 /// </summary>
 public sealed partial class BonSerializer
 {
-    internal const byte DEFAULT_FORMAT_TYPE = 254; // Why 254? See bookmark 914164543.
-    internal const byte NO_BLOCK_ID_FORMAT_TYPE = 253;
-
     private readonly BlockStore _blockStore;
     private readonly SchemaDataResolver _schemaDataResolver;
     private readonly SchemaDataStore _schemaDataStore;
     private readonly WriterStore _writerStore;
+    private readonly SimpleWriterStore _simpleWriterStore;
     private readonly SchemaStoreUpdater _schemaStoreUpdater;
     private readonly DeserializerStore _deserializerStore;
 
@@ -26,6 +24,7 @@ public sealed partial class BonSerializer
         SchemaDataResolver schemaDataResolver,
         SchemaDataStore schemaDataStore,
         WriterStore writerStore,
+        SimpleWriterStore simpleWriterStore,
         SchemaStoreUpdater schemaStoreUpdater,
         DeserializerStore deserializerStore)
     {
@@ -33,6 +32,7 @@ public sealed partial class BonSerializer
         _schemaDataResolver = schemaDataResolver;
         _schemaDataStore = schemaDataStore;
         _writerStore = writerStore;
+        _simpleWriterStore = simpleWriterStore;
         _schemaStoreUpdater = schemaStoreUpdater;
         _deserializerStore = deserializerStore;
     }
@@ -57,6 +57,7 @@ public sealed partial class BonSerializer
         SchemaDataResolver schemaDataResolver = new(schemaContentsStore);
         BlockStore blockStore = new();
         WriterStore writerStore = new();
+        SimpleWriterStore simpleWriterStore = new();
         SchemaDataStore schemaDataStore = new(schemaByTypeStore);
         DefaultValueGetterFactory defaultValueGetterFactory = new();
         DeserializerStore deserializerStore = new(schemaByTypeStore, defaultValueGetterFactory);
@@ -67,12 +68,14 @@ public sealed partial class BonSerializer
         writerStore.AddBuiltInWriters();
         deserializerStore.AddNativeReaders();
         sourceGenerationContext.Run(bonFacade);
+        simpleWriterStore.Initialize();
 
         return new BonSerializer(
             blockStore,
             schemaDataResolver,
             schemaDataStore,
             writerStore,
+            simpleWriterStore,
             schemaStoreUpdater,
             deserializerStore);
     }
@@ -108,6 +111,3 @@ public sealed partial class BonSerializer
         return hashCode.ToHashCode();
     }
 }
-
-// Bookmark 914164543: we want to reserve the lower numbers for future use (e.g. 1 byte messages). Using 255 is also
-// fine, but 254 might be more unique and therefore might be a better identifier of a BON message.

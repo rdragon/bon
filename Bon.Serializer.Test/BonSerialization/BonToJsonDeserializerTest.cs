@@ -67,30 +67,24 @@ public sealed class BonToJsonDeserializerTest : BonSerializerTestBase
         Run(value, expectedJson);
     }
 
-    private void Run<T>(T value, string expectedJson)
+    private void Run<T>(T value, string expectedBodyJson)
     {
-        var jsonObject = DeserializeToJson(value);
-        var actualJson = jsonObject["data"]?.ToJsonString() ?? "null";
+        var json = DeserializeToJson(value);
+        var actualBodyJson = GetBodyJson(json);
+        Assert.Equal(expectedBodyJson, actualBodyJson);
 
-        Assert.Equal(expectedJson, actualJson);
-
-        var actualValue = SerializeFromJson<T>(jsonObject);
+        var actualValue = SerializeFromJson<T>(json);
         Assert.Equal(value, actualValue);
     }
 
-    private JsonObject DeserializeToJson<T>(T value)
+    private string DeserializeToJson<T>(T value) => Serialize(value).DeserializeToJson();
+
+    private static string GetBodyJson(string json) => JsonNode.Parse(json)!.AsObject().GetPropertyValue("body").ToJsonString();
+
+    private T SerializeFromJson<T>(string json)
     {
-        var jsonObject = Serialize(value).DeserializeToJson();
+        var bytes = BonSerializer.JsonToBonAsync(json).Result;
 
-        return jsonObject;
-    }
-
-    private T SerializeFromJson<T>(JsonObject jsonObject)
-    {
-        var stream = new MemoryStream();
-        BonSerializer.JsonToBonAsync(stream, jsonObject).Wait();
-        stream.Position = 0;
-
-        return BonSerializer.DeserializeAsync<T>(stream).Result;
+        return BonSerializer.DeserializeAsync<T>(bytes).Result;
     }
 }

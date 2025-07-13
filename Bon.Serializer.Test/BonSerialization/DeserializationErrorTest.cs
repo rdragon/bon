@@ -3,7 +3,7 @@
 public class DeserializationErrorTest : BonSerializerTestBase
 {
     [Fact] public void InvalidVersion() => Fail([0x00], "Cannot handle format type");
-    [Fact] public void UnknownBlock() => Fail([.. GetSimpleSerializer().WriteFirstPartOfHeader(0x0d6948da)], "Cannot find the schemas");
+    [Fact] public void UnknownBlock() => Fail([.. GetManualSerializer().WriteFirstPartOfHeader(0x0d6948da)], "Cannot find the schemas");
 
     private void Fail(byte[] bytes, string expectedSubstring)
     {

@@ -28,7 +28,7 @@ public class StorageTestBase(FakeBlob? blob = null) : BonSerializerTestBase(blob
         return stream.ToArray();
     }
 
-    protected byte[] GetInstanceBytes() => [.. GetSimpleSerializer()
+    protected byte[] GetInstanceBytes() => [.. GetManualSerializer()
         .WriteFirstPartOfHeader(BlockId)
         .WriteWholeNumber((int)SchemaType.Record)
         .WriteBool(false)

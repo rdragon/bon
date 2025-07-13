@@ -22,14 +22,14 @@ internal sealed class WriterStore : IUseReflection
     {
         Add<string>(NativeSerializer.WriteString, false);
         Add<bool>(NativeSerializer.WriteBool, false);
-        Add<byte>(NativeSerializer.WriteByte, false);
-        Add<sbyte>(NativeSerializer.WriteSByte, false);
-        Add<short>(NativeSerializer.WriteShort, false);
-        Add<ushort>(NativeSerializer.WriteUShort, false);
-        Add<int>(NativeSerializer.WriteInt, false);
-        Add<uint>(NativeSerializer.WriteUInt, false);
-        Add<long>(NativeSerializer.WriteLong, false);
-        Add<ulong>(NativeSerializer.WriteULong, false);
+        Add<byte>(NativeSerializer.WriteByte, false, SimpleWriterType.Byte);
+        Add<sbyte>(NativeSerializer.WriteSByte, false, SimpleWriterType.SByte);
+        Add<short>(NativeSerializer.WriteShort, false, SimpleWriterType.Short);
+        Add<ushort>(NativeSerializer.WriteUShort, false, SimpleWriterType.UShort);
+        Add<int>(NativeSerializer.WriteInt, false, SimpleWriterType.Int);
+        Add<uint>(NativeSerializer.WriteUInt, false, SimpleWriterType.UInt);
+        Add<long>(NativeSerializer.WriteLong, false, SimpleWriterType.Long);
+        Add<ulong>(NativeSerializer.WriteULong, false, SimpleWriterType.ULong);
         Add<float>(NativeSerializer.WriteFloat, false);
         Add<double>(NativeSerializer.WriteDouble, false);
         Add<decimal>(NativeSerializer.WriteDecimal, false);
@@ -71,9 +71,9 @@ internal sealed class WriterStore : IUseReflection
     /// Whether the writer might use custom schemas.
     /// This value controls whether the header of the final binary message includes a block ID.
     /// </param>
-    public void Add<T>(Action<BinaryWriter, T> writer, bool usesCustomSchemas)
+    public void Add<T>(Action<BinaryWriter, T> writer, bool usesCustomSchemas, SimpleWriterType simpleWriterType = SimpleWriterType.None)
     {
-        _writers[typeof(T)] = new(writer, usesCustomSchemas);
+        _writers[typeof(T)] = new(writer, usesCustomSchemas, simpleWriterType);
     }
 
     /// <summary>
@@ -158,7 +158,7 @@ internal sealed class WriterStore : IUseReflection
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
-        var (writeElement, usesCustomSchemas) = GetWriter<TElement>();
+        var (writeElement, usesCustomSchemas, _) = GetWriter<TElement>();
 
         return new((BinaryWriter writer, IEnumerable<TElement> collection) =>
         {
@@ -205,8 +205,8 @@ internal sealed class WriterStore : IUseReflection
     {
         // Almost identical to the method below.
 
-        var (writeKey, usesCustomSchemas1) = GetWriter<TKey>();
-        var (writeValue, usesCustomSchemas2) = GetWriter<TValue>();
+        var (writeKey, usesCustomSchemas1, _) = GetWriter<TKey>();
+        var (writeValue, usesCustomSchemas2, _) = GetWriter<TValue>();
 
         var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
 
@@ -234,8 +234,8 @@ internal sealed class WriterStore : IUseReflection
     {
         // Almost identical to the method above.
 
-        var (writeKey, usesCustomSchemas1) = GetWriter<TKey>();
-        var (writeValue, usesCustomSchemas2) = GetWriter<TValue>();
+        var (writeKey, usesCustomSchemas1, _) = GetWriter<TKey>();
+        var (writeValue, usesCustomSchemas2, _) = GetWriter<TValue>();
 
         var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
 
@@ -270,8 +270,8 @@ internal sealed class WriterStore : IUseReflection
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var (writeItem1, usesCustomSchemas1) = GetWriter<T1>();
-        var (writeItem2, usesCustomSchemas2) = GetWriter<T2>();
+        var (writeItem1, usesCustomSchemas1, _) = GetWriter<T1>();
+        var (writeItem2, usesCustomSchemas2, _) = GetWriter<T2>();
 
         var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
 
@@ -310,9 +310,9 @@ internal sealed class WriterStore : IUseReflection
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var (writeItem1, usesCustomSchemas1) = GetWriter<T1>();
-        var (writeItem2, usesCustomSchemas2) = GetWriter<T2>();
-        var (writeItem3, usesCustomSchemas3) = GetWriter<T3>();
+        var (writeItem1, usesCustomSchemas1, _) = GetWriter<T1>();
+        var (writeItem2, usesCustomSchemas2, _) = GetWriter<T2>();
+        var (writeItem3, usesCustomSchemas3, _) = GetWriter<T3>();
 
         var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2 | usesCustomSchemas3;
 

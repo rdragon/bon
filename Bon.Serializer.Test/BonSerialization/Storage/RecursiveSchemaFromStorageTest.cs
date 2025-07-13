@@ -39,7 +39,7 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
         return stream.ToArray();
     }
 
-    private byte[] GetInstanceBytes() => [.. GetSimpleSerializer()
+    private byte[] GetInstanceBytes() => [.. GetManualSerializer()
         .WriteFirstPartOfHeader(BlockId)
         .WriteWholeNumber((int)SchemaType.Record)
         .WriteBool(false)
