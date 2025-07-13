@@ -59,14 +59,6 @@ public partial class InspectorTest
     }
 
     [Fact]
-    public async Task InvalidFile()
-    {
-        _fileSystem.File.WriteAllBytes("data", [1, 2]);
-        var exception = await Assert.ThrowsAnyAsync<Exception>(() => RunInspector("data"));
-        Assert.Contains("Invalid file", exception.Message);
-    }
-
-    [Fact]
     public async Task NoFiles()
     {
         var exception = await Assert.ThrowsAnyAsync<Exception>(() => RunInspector());

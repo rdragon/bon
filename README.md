@@ -120,12 +120,11 @@ The first parameter of the attribute is an identifier of type `int`. Each implem
 The serializer outputs a binary message that consists of the following parts:
 
 ```
-message = marker + version + block_id + schema + body
+message = version + block_id + schema + body
 ```
 
 These parts can be described as follows:
 
-- `marker`: two bytes indicating the beginning of a BON message (`2B 41`).
 - `version`: one byte indicating the version of the serializer that is used.
 - `block_id`: four bytes representing the ID of a schema block.
 - `schema`: three or more bytes determining the schema used by the `body` part.

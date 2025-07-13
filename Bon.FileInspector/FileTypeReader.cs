@@ -2,7 +2,6 @@
 
 internal class FileTypeReader(IFileSystem fileSystem)
 {
-    private const ushort BON_MARKER = 0x412b;
     private const ushort BLOCK_MARKER = 0xad5d;
 
     public FileType GetFileType(string path)
@@ -24,8 +23,7 @@ internal class FileTypeReader(IFileSystem fileSystem)
         return marker switch
         {
             BLOCK_MARKER => FileType.Schema,
-            BON_MARKER => FileType.Bon,
-            _ => throw new IOException($"Invalid file '{path}'. Expecting a schema, bon, or json file."),
+            _ => FileType.Bon,
         };
     }
 }

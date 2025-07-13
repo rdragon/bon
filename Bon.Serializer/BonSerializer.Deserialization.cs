@@ -78,13 +78,6 @@ partial class BonSerializer
 
     private static uint ReadFirstPartOfHeader(BinaryReader reader)
     {
-        var marker = reader.ReadUInt16();
-
-        if (marker != BON_MARKER)
-        {
-            throw new DeserializationFailedException($"Invalid stream. Expected marker {BON_MARKER:x4} but found {marker:x4}.");
-        }
-
         var version = reader.ReadByte();
 
         if (version > 0)

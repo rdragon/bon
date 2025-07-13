@@ -11,7 +11,6 @@ namespace Bon.Serializer;
 /// </summary>
 public sealed partial class BonSerializer
 {
-    private const ushort BON_MARKER = 0x412b;
     private const byte VERSION = 0;
 
     private readonly BlockStore _blockStore;

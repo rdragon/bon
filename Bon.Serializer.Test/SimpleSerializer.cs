@@ -2,7 +2,6 @@
 
 public sealed class SimpleSerializer : IEnumerable<byte>
 {
-    private const ushort BON_MARKER = 0x412b;
     private const byte VERSION = 0;
 
     private readonly MemoryStream _stream = new();
@@ -94,8 +93,7 @@ public sealed class SimpleSerializer : IEnumerable<byte>
         .WriteInterfaceSchema<T>(isNullable);
 
     public SimpleSerializer WriteFirstPartOfHeader(uint? blockId = null) =>
-        WriteUShort(BON_MARKER)
-        .WriteByte(VERSION)
+        WriteByte(VERSION)
         .WriteUInt(blockId ?? _bonSerializerTestBase.BonSerializer.LastBlockId);
 
     public SimpleSerializer WriteClassSchema<T>(bool isNullable = false) => WriteCustomSchema<T>(SchemaType.Record, isNullable);

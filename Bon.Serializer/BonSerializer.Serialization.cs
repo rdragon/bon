@@ -53,7 +53,6 @@ partial class BonSerializer
 
     private static void WriteHeader(BinaryWriter writer, uint blockId, SchemaData schemaData)
     {
-        writer.Write(BON_MARKER);
         writer.Write(VERSION);
         writer.Write(blockId);
         SchemaSerializer.Write(writer, schemaData);
