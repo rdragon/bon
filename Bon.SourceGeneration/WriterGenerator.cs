@@ -4,7 +4,9 @@ using System.Collections.Generic;
 namespace Bon.SourceGeneration
 {
     /// <summary>
-    /// Generates source code that can serialize every type that has a BonObject attribute.
+    /// Generates source code that can serialize:
+    /// 1. every type that has a BonObject attribute,
+    /// 2. enums without this attribute that are used inside at least one type with a BonObject attribute.
     /// </summary>
     internal sealed class WriterGenerator
     {
@@ -29,7 +31,11 @@ namespace Bon.SourceGeneration
                 }
 
                 var id = GetId(definition);
-                _codeGenerator.AddStatement($"bonFacade.AddWriter<{definition.Type}>({GetMethodName(definition.IsNullable)}{id});");
+                var usesCustomSchemas = definition.GetType() != typeof(EnumDefinition);
+                var argument = usesCustomSchemas ? "true" : "false";
+
+                _codeGenerator.AddStatement(
+                    $"bonFacade.AddWriter<{definition.Type}>({GetMethodName(definition.IsNullable)}{id}, {argument});");
             }
         }
 

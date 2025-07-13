@@ -2,8 +2,6 @@
 
 public sealed class SimpleSerializer : IEnumerable<byte>
 {
-    private const byte VERSION = 0;
-
     private readonly MemoryStream _stream = new();
     private readonly BinaryWriter _writer;
     private readonly BonSerializerTestBase _bonSerializerTestBase;
@@ -92,9 +90,17 @@ public sealed class SimpleSerializer : IEnumerable<byte>
         WriteFirstPartOfHeader()
         .WriteInterfaceSchema<T>(isNullable);
 
-    public SimpleSerializer WriteFirstPartOfHeader(uint? blockId = null) =>
-        WriteByte(VERSION)
-        .WriteUInt(blockId ?? _bonSerializerTestBase.BonSerializer.LastBlockId);
+    public SimpleSerializer WriteFirstPartOfHeader(uint? blockId = null)
+    {
+        var id = blockId ?? _bonSerializerTestBase.BonSerializer.LastBlockId;
+
+        if (id == 0)
+        {
+            return WriteByte(BonSerializer.NO_BLOCK_ID_FORMAT_TYPE);
+        }
+
+        return WriteByte(BonSerializer.DEFAULT_FORMAT_TYPE).WriteUInt(id);
+    }
 
     public SimpleSerializer WriteClassSchema<T>(bool isNullable = false) => WriteCustomSchema<T>(SchemaType.Record, isNullable);
 

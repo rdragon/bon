@@ -11,7 +11,8 @@ namespace Bon.Serializer;
 /// </summary>
 public sealed partial class BonSerializer
 {
-    private const byte VERSION = 0;
+    internal const byte DEFAULT_FORMAT_TYPE = 254; // Why 254? See bookmark 914164543.
+    internal const byte NO_BLOCK_ID_FORMAT_TYPE = 253;
 
     private readonly BlockStore _blockStore;
     private readonly SchemaDataResolver _schemaDataResolver;
@@ -107,3 +108,6 @@ public sealed partial class BonSerializer
         return hashCode.ToHashCode();
     }
 }
+
+// Bookmark 914164543: we want to reserve the lower numbers for future use (e.g. 1 byte messages). Using 255 is also
+// fine, but 254 might be more unique and therefore might be a better identifier of a BON message.

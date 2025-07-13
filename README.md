@@ -29,7 +29,7 @@ Console.WriteLine(person.Age);
 
 ## Features
 ### Compact output
-The output of the serializer is a compact binary message. The message consists of a header and a body. The header is around 10 bytes. The body contains almost exclusively raw data. No type information or member IDs are stored in the body. 
+The output of the serializer is a compact binary message. The message consists of a header and a body. Typically the header is around 10 bytes, but it can be as short as 3 bytes for simple messages. The body contains almost exclusively raw data. No type information or member IDs are stored in the body.
 
 Here are some examples of how much space certain types require in the body (the `Person` class is from the quick start paragraph):
 
@@ -120,14 +120,14 @@ The first parameter of the attribute is an identifier of type `int`. Each implem
 The serializer outputs a binary message that consists of the following parts:
 
 ```
-message = version + block_id + schema + body
+message = format_type + block_id + schema + body
 ```
 
 These parts can be described as follows:
 
-- `version`: one byte indicating the version of the serializer that is used.
-- `block_id`: four bytes representing the ID of a schema block.
-- `schema`: three or more bytes determining the schema used by the `body` part.
+- `format_type`: one byte indicating the format type.
+- `block_id`: four bytes representing the ID of a schema block, or zero bytes if the format type doesn't include a block ID.
+- `schema`: two or more bytes determining the schema used by the `body` part.
 - `body`: the actual payload of the message.
 
 A message can only be deserialized if the schema block with ID `block_id` is known by the deserializer.

@@ -2,10 +2,10 @@ namespace Bon.FileInspector.Test;
 
 public partial class InspectorTest
 {
-    private readonly IFileSystem _fileSystem = new MockFileSystem();
+    private readonly MockFileSystem _fileSystem = new();
 
-    [Fact] public Task IntToJson() => BonToJson(3, "CwA=", "3");
-    [Fact] public Task RecursiveClassToJson() => BonToJson(new RecursiveClass(5, new RecursiveClass(6, null)), "AQAC", "[5,[6,null]]");
+    [Fact] public Task IntToJson() => BonToJson(3, false, "CwA=", "3");
+    [Fact] public Task RecursiveClassToJson() => BonToJson(new RecursiveClass(5, new RecursiveClass(6, null)), true, "AQAC", "[5,[6,null]]");
     [Fact] public Task JsonToInt() => JsonToBon(3);
     [Fact] public Task JsonToRecursiveClass() => JsonToBon(new RecursiveClass(5, new RecursiveClass(6, null)));
 
@@ -74,10 +74,11 @@ public partial class InspectorTest
         Assert.Contains("more than one", exception.Message);
     }
 
-    private async Task BonToJson<T>(T value, string expectedSchema, string expectedData)
+    private async Task BonToJson<T>(T value, bool expectsBlockId, string expectedSchema, string expectedData)
     {
         var blockId = await SerializeToFile(value);
         await RunInspector("data", "schemas");
+        blockId = expectsBlockId ? blockId : 0;
 
         var expected = $$"""
             {"blockId":{{blockId}},"schema":"{{expectedSchema}}","data":{{expectedData}}}

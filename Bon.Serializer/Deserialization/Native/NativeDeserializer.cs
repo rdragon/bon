@@ -7,7 +7,7 @@ internal static class NativeDeserializer
     private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
     /// <summary>
-    /// Returns a deserializer that reads a value with schema <paramref name="sourceSchema"/> and returns a value of
+    /// Returns a deserializer that reads a value of type <paramref name="sourceType"/> and returns a value of
     /// type <paramref name="annotatedTargetType"/>.
     /// </summary>
     /// <param name="readSourceType">A method that reads a value of type <paramref name="sourceType"/>.</param>

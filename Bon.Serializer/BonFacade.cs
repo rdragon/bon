@@ -31,7 +31,7 @@ public sealed class BonFacade
         }
     }
 
-    public void AddWriter<T>(Action<BinaryWriter, T> writer) => _writerStore.Add(writer);
+    public void AddWriter<T>(Action<BinaryWriter, T> writeValue, bool usesCustomSchemas) => _writerStore.Add(writeValue, usesCustomSchemas);
 
     public void AddEnumData(Type type, Type underlyingType, Func<Delegate, Delegate> addEnumCast) =>
         _deserializerStore.AddEnumData(type, underlyingType, addEnumCast);

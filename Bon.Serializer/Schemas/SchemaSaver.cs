@@ -31,7 +31,7 @@ internal sealed class SchemaSaver(BlockStore blockStore, SchemaStorage schemaSto
         {
             var blockId = BonHelper.GetRandomUInt();
 
-            // Zero is not a valid block ID. See the code at bookmark 697235293.
+            // Zero is not a valid block ID.
             if (blockId == 0)
             {
                 continue;

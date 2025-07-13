@@ -62,33 +62,43 @@ partial class BonSerializer
 
     private async Task<(uint BlockId, SchemaData SchemaData)> ReadHeader(BinaryReader reader)
     {
-        var blockId = ReadFirstPartOfHeader(reader);
-        await LoadBlock(blockId).ConfigureAwait(false);
-        var schemaData = ReadSecondPartOfHeader(reader);
+        var formatType = ReadFormatType(reader);
+        uint blockId = 0;
 
-        return (blockId, schemaData);
+        if (formatType == DEFAULT_FORMAT_TYPE)
+        {
+            blockId = reader.ReadUInt32();
+            await LoadBlock(blockId).ConfigureAwait(false);
+        }
+
+        return (blockId, ReadSchemaData(reader, formatType));
     }
 
     private SchemaData? TryReadHeader(BinaryReader reader)
     {
-        var blockId = ReadFirstPartOfHeader(reader);
+        var formatType = ReadFormatType(reader);
 
-        return BlockIsLoaded(blockId) ? ReadSecondPartOfHeader(reader) : null;
-    }
-
-    private static uint ReadFirstPartOfHeader(BinaryReader reader)
-    {
-        var version = reader.ReadByte();
-
-        if (version > 0)
+        if (formatType == DEFAULT_FORMAT_TYPE && !BlockIsLoaded(ReadBlockId(reader)))
         {
-            throw new DeserializationFailedException($"Invalid stream. Cannot handle wire format version {version}.");
+            return null;
         }
 
-        return reader.ReadUInt32();
+        return ReadSchemaData(reader, formatType);
     }
 
-    private static SchemaData ReadSecondPartOfHeader(BinaryReader reader) => SchemaSerializer.ReadSchemaData(reader);
+    private static byte ReadFormatType(BinaryReader reader) => reader.ReadByte();
+
+    private static uint ReadBlockId(BinaryReader reader) => reader.ReadUInt32();
+
+    private static SchemaData ReadSchemaData(BinaryReader reader, byte formatType)
+    {
+        if (formatType == DEFAULT_FORMAT_TYPE || formatType == NO_BLOCK_ID_FORMAT_TYPE)
+        {
+            return SchemaSerializer.ReadSchemaData(reader);
+        }
+
+        throw new DeserializationFailedException($"Cannot handle format type {formatType}.");
+    }
 
     private T DeserializeBody<T>(BinaryReader reader, SchemaData schemaData)
     {
@@ -121,14 +131,6 @@ partial class BonSerializer
     // Bookmark 553576978
     private bool BlockIsLoaded(uint blockId)
     {
-        // Bookmark 697235293
-        // A block ID of zero means there is no block.
-        // This is possible when at the time of serialization there were no types with the BonObject attribute.
-        if (blockId == 0)
-        {
-            return true;
-        }
-
         return _blockStore.ContainsBlockId(blockId);
     }
 }
