@@ -41,8 +41,8 @@ partial class BonSerializer
     /// </summary>
     public async Task JsonToBonAsync(Stream stream, JsonObject jsonObject)
     {
-        var blockId = jsonObject.GetPropertyValue("blockId").GetValue<uint>();
-        var schemaDataBytes = Convert.FromBase64String(jsonObject.GetPropertyValue("schema").GetValue<string>());
+        var blockId = jsonObject["blockId"]?.GetValue<uint>() ?? 0;
+        var schemaData = SchemaJsonSerializer.Deserialize(jsonObject.GetPropertyValue("schema"));
         var body = jsonObject["body"];
 
         if (blockId != 0)
@@ -50,7 +50,6 @@ partial class BonSerializer
             await LoadBlock(blockId).ConfigureAwait(false);
         }
 
-        var schemaData = SchemaSerializer.ReadSchemaData(schemaDataBytes);
         var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
         var writer = new BinaryWriter(stream);
 

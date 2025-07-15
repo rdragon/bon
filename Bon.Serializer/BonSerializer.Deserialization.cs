@@ -59,16 +59,21 @@ partial class BonSerializer
     public async Task<JsonObject> BonToJsonAsync(Stream stream)
     {
         var reader = new BinaryReader(stream);
-        var (formatType, blockId, schemaData) = await ReadHeaderAsync(reader).ConfigureAwait(false);
-        var schemaDataBytes = SchemaSerializer.Write(schemaData);
+        var (_, blockId, schemaData) = await ReadHeaderAsync(reader).ConfigureAwait(false);
         var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
 
-        return new JsonObject
+        var result = new JsonObject
         {
             ["body"] = BonToJsonDeserializer.Deserialize(reader, schema),
-            ["schema"] = Convert.ToBase64String(schemaDataBytes),
-            ["blockId"] = blockId,
+            ["schema"] = SchemaJsonSerializer.Serialize(schemaData),
         };
+
+        if (blockId != 0)
+        {
+            result["blockId"] = blockId;
+        }
+
+        return result;
     }
 
     /// <summary>
