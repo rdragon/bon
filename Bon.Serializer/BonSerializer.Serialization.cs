@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Nodes;
-
-namespace Bon.Serializer;
+﻿namespace Bon.Serializer;
 
 partial class BonSerializer
 {
@@ -34,39 +32,6 @@ partial class BonSerializer
 
         WriteHeader(writer, blockId, typeof(T));
         writeValue(writer, value);
-    }
-
-    /// <summary>
-    /// The reverse of <see cref="BonToJsonAsync(Stream)"/>.
-    /// </summary>
-    public async Task JsonToBonAsync(Stream stream, JsonObject jsonObject)
-    {
-        var blockId = jsonObject["blockId"]?.GetValue<uint>() ?? 0;
-        var schemaData = SchemaJsonSerializer.Deserialize(jsonObject.GetPropertyValue("schema"));
-        var body = jsonObject["body"];
-
-        if (blockId != 0)
-        {
-            await LoadBlock(blockId).ConfigureAwait(false);
-        }
-
-        var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
-        var writer = new BinaryWriter(stream);
-
-        WriteHeader(writer, blockId, schemaData);
-        JsonToBonSerializer.Serialize(writer, body, schema);
-    }
-
-    /// <summary>
-    /// The reverse of <see cref="BonToJsonAsync(string)"/>.
-    /// </summary>
-    public async Task<byte[]> JsonToBonAsync(string json)
-    {
-        var stream = new MemoryStream();
-        var jsonNode = JsonNode.Parse(json) ?? throw new ArgumentException("Parsing returned null");
-        await JsonToBonAsync(stream, jsonNode.AsObject());
-
-        return stream.ToArray();
     }
 
     /// <param name="blockId">If zero then no block ID is included in the header.</param>
