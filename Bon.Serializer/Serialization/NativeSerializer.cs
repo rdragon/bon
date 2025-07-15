@@ -11,8 +11,6 @@ public static class NativeSerializer
 
     public static string ReadString(BinaryReader reader) => StringDeserializer.ReadString(reader);
 
-    public static void WriteNullableString(BinaryWriter writer, string? value) => StringSerializer.WriteString(writer, value);
-
     public static string? ReadNullableString(BinaryReader reader) => StringDeserializer.ReadNullableString(reader);
 
     public static void WriteBool(BinaryWriter writer, bool value) => writer.Write(value);

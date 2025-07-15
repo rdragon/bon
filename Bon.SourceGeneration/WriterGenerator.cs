@@ -296,11 +296,11 @@ namespace Bon.SourceGeneration
             switch (definition)
             {
                 case NativeDefinition native:
-                    lines.Add($"NativeSerializer.Write{native.SimpleType}(writer, {argument});");
+                    lines.Add($"{native.GetWriteMethod()}(writer, {argument});");
                     break;
 
                 case WeakDefinition weak:
-                    lines.Add($"NativeSerializer.Write{weak.SimpleType}(writer, {argument});");
+                    lines.Add($"{weak.GetWriteMethod()}(writer, {argument});");
                     break;
 
                 default:

@@ -24,7 +24,7 @@ public class NativeSerializerTest
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void SerializeNullableString(string? value) => RoundTrip(value, NativeSerializer.WriteNullableString, NativeSerializer.ReadNullableString);
+    public void SerializeNullableString(string? value) => RoundTrip(value, NativeSerializer.WriteString, NativeSerializer.ReadNullableString);
 
     [Theory]
     [InlineData(false)]
