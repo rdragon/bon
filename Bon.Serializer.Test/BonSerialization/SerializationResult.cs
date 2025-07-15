@@ -4,11 +4,11 @@ public sealed class SerializationResult(BonSerializer bonSerializer, MemoryStrea
 {
     public byte[] Bytes => stream.ToArray();
 
-    public T DeserializeFast<T>() => Deserialize<T>(false);
+    public T? DeserializeFast<T>() => Deserialize<T>(false);
 
-    public T DeserializeSlow<T>() => Deserialize<T>(true);
+    public T? DeserializeSlow<T>() => Deserialize<T>(true);
 
-    private T Deserialize<T>(bool? expectNewDeserializer = null)
+    private T? Deserialize<T>(bool? expectNewDeserializer = null)
     {
         stream.Position = 0;
         var countBefore = bonSerializer.DeserializerCount;

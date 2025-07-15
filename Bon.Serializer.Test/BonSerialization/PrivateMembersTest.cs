@@ -6,6 +6,7 @@ public class PrivateMembersTest : BonSerializerTestBase
     public void WithNonPublicMembersTest()
     {
         var result = Serialize(new WithNonPublicMembers(1)).DeserializeFast<WithNonPublicMembers>();
+        Assert.NotNull(result);
         Assert.True(result.HasOnlyZeroes());
     }
 }

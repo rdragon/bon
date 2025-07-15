@@ -81,7 +81,7 @@ public sealed class BonToJsonDeserializerTest : BonSerializerTestBase
 
     private static string GetBodyJson(string json) => JsonNode.Parse(json)!.AsObject().GetPropertyValue("body").ToJsonString();
 
-    private T SerializeFromJson<T>(string json)
+    private T? SerializeFromJson<T>(string json)
     {
         var bytes = BonSerializer.JsonToBonAsync(json).Result;
 
