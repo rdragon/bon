@@ -15,14 +15,10 @@ public static class StringDeserializer
 
         return ReadString(reader, totalByteCount);
     }
-    public static string ReadString(BinaryReader reader)
-    {
-        var totalByteCount = (int)WholeNumberSerializer.Read(reader);
 
-        return ReadString(reader, totalByteCount);
-    }
+    public static string ReadString(BinaryReader reader) => ReadNullableString(reader) ?? "";
 
-    public static string ReadString(BinaryReader reader, int totalByteCount)
+    private static string ReadString(BinaryReader reader, int totalByteCount)
     {
         if (totalByteCount == 0)
         {

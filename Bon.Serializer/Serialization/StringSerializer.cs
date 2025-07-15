@@ -6,7 +6,7 @@ public static class StringSerializer
 {
     private const int MaxArrayPoolRentalSize = 64 * 1024;
 
-    public static void WriteNullableString(BinaryWriter writer, string? value)
+    public static void WriteString(BinaryWriter writer, string? value)
     {
         if (value is null)
         {
@@ -15,11 +15,6 @@ public static class StringSerializer
             return;
         }
 
-        WriteString(writer, value);
-    }
-
-    public static void WriteString(BinaryWriter writer, string value)
-    {
         if (value.Length <= 127 / 3)
         {
             Span<byte> buffer = stackalloc byte[128];

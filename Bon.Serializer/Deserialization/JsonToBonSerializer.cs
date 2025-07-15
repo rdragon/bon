@@ -20,7 +20,6 @@ internal static class JsonToBonSerializer
     {
         switch ((schema.SchemaType, schema.IsNullable))
         {
-            case (SchemaType.String, false): NativeSerializer.WriteString(writer, ExpectNotNull(jsonNode).GetValue<string>() ?? ""); break;
             case (SchemaType.Bool, false): NativeSerializer.WriteBool(writer, ExpectNotNull(jsonNode).GetValue<bool>()); break;
             case (SchemaType.Byte, false): NativeSerializer.WriteByte(writer, ExpectNotNull(jsonNode).GetValue<byte>()); break;
             case (SchemaType.SByte, false): NativeSerializer.WriteSByte(writer, ExpectNotNull(jsonNode).GetValue<sbyte>()); break;
@@ -35,7 +34,7 @@ internal static class JsonToBonSerializer
             case (SchemaType.Decimal, false): NativeSerializer.WriteDecimal(writer, ExpectNotNull(jsonNode).GetValue<decimal>()); break;
             case (SchemaType.Guid, false): NativeSerializer.WriteGuid(writer, ExpectNotNull(jsonNode).GetValue<Guid>()); break;
 
-            case (SchemaType.String, true): NativeSerializer.WriteNullableString(writer, jsonNode?.GetValue<string>()); break;
+            case (SchemaType.String, _): NativeSerializer.WriteString(writer, jsonNode?.GetValue<string>()); break;
             case (SchemaType.Bool, true): NativeSerializer.WriteNullableBool(writer, jsonNode?.GetValue<bool>()); break;
             case (SchemaType.WholeNumber, true): WholeNumberSerializer.WriteNullable(writer, jsonNode?.GetValue<ulong>()); break;
             case (SchemaType.SignedWholeNumber, true): WholeNumberSerializer.WriteNullableSigned(writer, jsonNode?.GetValue<long>()); break;

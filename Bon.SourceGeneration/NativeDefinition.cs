@@ -1,6 +1,5 @@
 ﻿// Bookmark 413211217
 using System;
-using System.Collections.Generic;
 
 namespace Bon.SourceGeneration
 {

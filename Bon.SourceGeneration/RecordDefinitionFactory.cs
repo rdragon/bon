@@ -247,7 +247,7 @@ namespace Bon.SourceGeneration
             if (!hasEmptyConstructor)
             {
                 throw new SourceGenerationException(
-                    $"The class '{symbol}' does not have an accessible empty constructor or a constructor with the correct " +
+                    $"The class '{symbol}' does not have an accessible empty constructor nor a constructor with the correct " +
                     $"parameter names and types.",
                     2677,
                     symbol);

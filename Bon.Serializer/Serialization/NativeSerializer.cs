@@ -1,16 +1,17 @@
 ﻿// Bookmark 413211217
 namespace Bon.Serializer.Serialization;
 
+// This class is also directly used by the source generated code.
 public static class NativeSerializer
 {
     public const byte NULL = 255;
     public const byte NOT_NULL = 254;
 
-    public static void WriteString(BinaryWriter writer, string value) => StringSerializer.WriteString(writer, value);
+    public static void WriteString(BinaryWriter writer, string? value) => StringSerializer.WriteString(writer, value);
 
     public static string ReadString(BinaryReader reader) => StringDeserializer.ReadString(reader);
 
-    public static void WriteNullableString(BinaryWriter writer, string? value) => StringSerializer.WriteNullableString(writer, value);
+    public static void WriteNullableString(BinaryWriter writer, string? value) => StringSerializer.WriteString(writer, value);
 
     public static string? ReadNullableString(BinaryReader reader) => StringDeserializer.ReadNullableString(reader);
 
