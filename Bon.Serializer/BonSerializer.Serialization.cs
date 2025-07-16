@@ -60,17 +60,17 @@ partial class BonSerializer
 
     private static FormatType GetFormatType(uint blockId, SchemaData schemaData)
     {
-        return (blockId, schemaData.SchemaType, schemaData.IsNullable) switch
+        return (blockId, schemaData.SchemaType) switch
         {
-            (_, SchemaType.Byte, false) => FormatType.Byte,
-            (_, SchemaType.SByte, false) => FormatType.SByte,
-            (_, SchemaType.Short, false) => FormatType.Short,
-            (_, SchemaType.UShort, false) => FormatType.UShort,
-            (_, SchemaType.Int, false) => FormatType.Int,
-            (_, SchemaType.UInt, false) => FormatType.UInt,
-            (_, SchemaType.Long, false) => FormatType.Long,
-            (_, SchemaType.ULong, false) => FormatType.ULong,
-            (0, _, _) => FormatType.WithoutBlockId,
+            (_, SchemaType.Byte) => FormatType.Byte,
+            (_, SchemaType.SByte) => FormatType.SByte,
+            (_, SchemaType.Short) => FormatType.Short,
+            (_, SchemaType.UShort) => FormatType.UShort,
+            (_, SchemaType.Int) => FormatType.Int,
+            (_, SchemaType.UInt) => FormatType.UInt,
+            (_, SchemaType.Long) => FormatType.Long,
+            (_, SchemaType.ULong) => FormatType.ULong,
+            (0, _) => FormatType.WithoutBlockId,
             _ => FormatType.Full
         };
     }

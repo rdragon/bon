@@ -2,8 +2,6 @@
 
 public sealed class RoundTripTest : BonSerializerTestBase
 {
-    // Keep in sync with the file at bookmark 451785766.
-
     [Fact] public void EmptyClassRoundTrip() => RoundTripFast(EmptyClass);
     [Fact] public void EmptyStructRoundTrip() => RoundTripFast(EmptyStruct);
 

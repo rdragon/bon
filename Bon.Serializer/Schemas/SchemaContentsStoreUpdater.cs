@@ -2,7 +2,7 @@
 
 internal class SchemaContentsStoreUpdater(SchemaContentsStore schemaContentsStore, SchemaDataResolver schemaDataResolver)
 {
-    private readonly Dictionary<(int, SchemaType, bool), CustomSchema> NewCustomSchemas = [];
+    private readonly Dictionary<(int, SchemaType), CustomSchema> NewCustomSchemas = [];
     private readonly Dictionary<int, SchemaContents> NewSchemaContents = [];
 
     /// <summary>
@@ -28,7 +28,7 @@ internal class SchemaContentsStoreUpdater(SchemaContentsStore schemaContentsStor
         }
 
         // Give every new schema its members.
-        foreach (var ((contentsId, _, _), schema) in NewCustomSchemas)
+        foreach (var ((contentsId, _), schema) in NewCustomSchemas)
         {
             schema.SetMembers([.. NewSchemaContents[contentsId].Members]);
         }
@@ -46,8 +46,8 @@ internal class SchemaContentsStoreUpdater(SchemaContentsStore schemaContentsStor
         {
             if (!schemaContentsStore.ContainsContentsId(customSchemaData.ContentsId))
             {
-                var key = (customSchemaData.ContentsId, data.SchemaType, data.IsNullable);
-                var value = CustomSchema.Create(data.SchemaType, data.IsNullable);
+                var key = (customSchemaData.ContentsId, data.SchemaType);
+                var value = CustomSchema.Create(data.SchemaType);
                 NewCustomSchemas.TryAdd(key, value);
             }
 
@@ -78,7 +78,7 @@ internal class SchemaContentsStoreUpdater(SchemaContentsStore schemaContentsStor
     {
         if (data is CustomSchemaData customSchemaData)
         {
-            var key = (customSchemaData.ContentsId, data.SchemaType, data.IsNullable);
+            var key = (customSchemaData.ContentsId, data.SchemaType);
 
             if (NewCustomSchemas.TryGetValue(key, out var schema))
             {
@@ -90,7 +90,7 @@ internal class SchemaContentsStoreUpdater(SchemaContentsStore schemaContentsStor
 
         var innerSchemas = data.InnerSchemas.Select(GetSchemaBySchemaData).ToArray();
 
-        return Schema.CreateNonCustomSchema(data.SchemaType, data.IsNullable, innerSchemas);
+        return Schema.CreateNonCustomSchema(data.SchemaType, innerSchemas);
     }
 
     private void AddToStore(int contentsId, SchemaContents contents)

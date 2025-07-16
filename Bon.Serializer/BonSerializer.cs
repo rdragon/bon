@@ -59,9 +59,8 @@ public sealed partial class BonSerializer
         WriterStore writerStore = new();
         SimpleWriterStore simpleWriterStore = new();
         SchemaDataStore schemaDataStore = new(schemaByTypeStore);
-        DefaultValueGetterFactory defaultValueGetterFactory = new();
-        DeserializerStore deserializerStore = new(schemaByTypeStore, defaultValueGetterFactory);
-        BonFacade bonFacade = new(schemaContentsStore, schemaByTypeStore, deserializerStore, writerStore, defaultValueGetterFactory);
+        DeserializerStore deserializerStore = new(schemaByTypeStore);
+        BonFacade bonFacade = new(schemaContentsStore, schemaByTypeStore, deserializerStore, writerStore);
         SchemaStoreUpdater schemaStoreUpdater = new(schemaStorage, blockStore, schemaContentsStore, schemaByTypeStore, schemaDataResolver, sourceGenerationContext, bonFacade);
 
         await schemaStoreUpdater.InitializeSchemaStore().ConfigureAwait(false);
@@ -95,7 +94,6 @@ public sealed partial class BonSerializer
         CreateAsync(bonSerializerContext, new FileSystemBlob(schemaStorageFile));
 
     internal int GetContentsId(Type type) => _schemaStoreUpdater.GetContentsId(type);
-    internal object LoadDefaultValue(Type type) => _deserializerStore.LoadDefaultValue(type);
     internal uint LastBlockId => _blockStore.LastBlockId;
     internal int DeserializerCount => _deserializerStore.DeserializerCount;
 

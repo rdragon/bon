@@ -18,13 +18,10 @@ public class NativeSerializerTest
     public static TheoryData<long> Numbers => new(NumbersArray);
     public static TheoryData<long?> NumbersNullable => new([null, .. NumbersArray]);
 
-    [Fact]
-    public void SerializeString() => RoundTrip("abc", NativeSerializer.WriteString, NativeSerializer.ReadString);
-
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void SerializeNullableString(string? value) => RoundTrip(value, NativeSerializer.WriteString, NativeSerializer.ReadNullableString);
+    public void SerializeString(string? value) => RoundTrip(value, NativeSerializer.WriteString, NativeSerializer.ReadString);
 
     [Theory]
     [InlineData(false)]

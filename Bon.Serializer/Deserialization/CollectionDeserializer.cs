@@ -2,8 +2,7 @@
 
 // See bookmark 791351735 for all places where an array is serialized/deserialized.
 internal sealed class CollectionDeserializer(
-    DeserializerStore deserializerStore,
-    DefaultValueGetterFactory defaultValueGetterFactory) : IUseReflection
+    DeserializerStore deserializerStore) : IUseReflection
 {
     public Delegate CreateDeserializer<T>(Schema sourceSchema, Schema targetSchema)
     {
@@ -16,7 +15,7 @@ internal sealed class CollectionDeserializer(
                 .Invoke(this, [sourceSchema, targetSchema, collectionKind])!;
         }
 
-        return CreateCollectionToElementReader<T>(sourceSchema, targetSchema);
+        return CreateCollectionToElementReader<T>(sourceSchema);
     }
 
     private Delegate CreateCollectionDeserializerFor<T>(Schema sourceSchema, ArraySchema targetSchema, CollectionKind collectionKind)
@@ -29,16 +28,15 @@ internal sealed class CollectionDeserializer(
         return CreateElementToCollectionReaderFor<T>(sourceSchema, targetSchema, collectionKind);
     }
 
-    private Read<T?> CreateCollectionToElementReader<T>(Schema sourceSchema, Schema targetSchema)
+    private Read<T?> CreateCollectionToElementReader<T>(Schema sourceSchema)
     {
         var readArray = deserializerStore.GetDeserializer<T[]>(sourceSchema, false);
-        var getDefaultValue = defaultValueGetterFactory.GetDefaultValueGetter<T>(targetSchema.IsNullable);
 
         return (BonInput input) =>
         {
             var array = readArray(input);
 
-            return array.Length > 0 ? array[0] : getDefaultValue(input);
+            return array.Length > 0 ? array[0] : default;
         };
     }
 

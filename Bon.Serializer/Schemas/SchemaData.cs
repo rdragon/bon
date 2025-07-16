@@ -4,14 +4,14 @@
 /// A less recursive version of <see cref="Schema"/> that can be serialized.
 /// The recursion stops at <see cref="CustomSchemaData"/>.
 /// </summary>
-internal record class SchemaData(SchemaType SchemaType, bool IsNullable, IReadOnlyList<SchemaData> InnerSchemas)
+internal record class SchemaData(SchemaType SchemaType, IReadOnlyList<SchemaData> InnerSchemas)
 {
     public static SchemaData Create(Schema schema)
     {
         return schema switch
         {
-            CustomSchema customSchema => new CustomSchemaData(customSchema.SchemaType, customSchema.IsNullable, customSchema.ContentsId),
-            _ => new SchemaData(schema.SchemaType, schema.IsNullable, schema.GetInnerSchemas().Select(Create).ToArray()),
+            CustomSchema customSchema => new CustomSchemaData(customSchema.SchemaType, customSchema.ContentsId),
+            _ => new SchemaData(schema.SchemaType, schema.GetInnerSchemas().Select(Create).ToArray()),
         };
     }
 }
@@ -19,8 +19,8 @@ internal record class SchemaData(SchemaType SchemaType, bool IsNullable, IReadOn
 /// <summary>
 /// Represents a record or union.
 /// </summary>
-internal sealed record class CustomSchemaData(SchemaType SchemaType, bool IsNullable, int ContentsId) :
-    SchemaData(SchemaType, IsNullable, []);
+internal sealed record class CustomSchemaData(SchemaType SchemaType, int ContentsId) :
+    SchemaData(SchemaType, []);
 
 /// <summary>
 /// Represents a <see cref="CustomSchema"/>.

@@ -6,40 +6,23 @@
 internal sealed class SchemaByTypeStore
 {
     /// <summary>
-    /// During initialization the native types and the types from the source generation context are added to this dictionary.
-    /// The latter are all the classes, structs, interfaces and enums with the <see cref="BonObjectAttribute"/> (their nullable
-    /// and non-nullable versions).
+    /// Contains for each type the schema that will be used when serializing the type.
     /// 
-    /// Generic types like arrays and tuples are added during serialization and deserialization.
+    /// During initialization the native types and the types from the source generation context are added to this dictionary.
+    /// The latter are all the classes, structs, interfaces and enums with the <see cref="BonObjectAttribute"/> (for value
+    /// types, their nullable and non-nullable versions).
+    /// 
+    /// Built in generic types like array and tuple types are added during serialization and deserialization.
     /// 
     /// When loading schemas from the storage this dictionary is not updated because there is no type information available in the storage.
-    /// This is not a problem as the source generation context already populates this dictionary with all types with the
-    /// <see cref="BonObjectAttribute"/>.
-    /// </summary>
-    private readonly ConcurrentDictionary<AnnotatedType, Schema> _schemaByAnnotatedType = [];
-
-    /// <summary>
-    /// Contains the same schemas as <see cref="_schemaByAnnotatedType"/> but without the nullable reference type schemas.
-    /// Reference types are assumed to be non-nullable in this dictionary.
-    /// The reason this dictionary exists is to avoid having to check if a type is nullable every time a schema is requested.
     /// </summary>
     private readonly ConcurrentDictionary<Type, Schema> _schemaByType = [];
 
     /// <summary>
-    /// Returns a schema corresponding to the given type.
-    /// If a reference type is given then a non-nullable schema is returned.
-    /// For generic types this method may create a new schema.
+    /// Returns the schema that will be used when serializing the given type.
     /// </summary>
     public Schema GetSchemaByType(Type type) => _schemaByType.TryGetValue(type, out var schema) ?
-        schema : GetSchemaByType(new AnnotatedType(type, type.IsNullable(false)));
-
-    /// <summary>
-    /// Returns a schema corresponding to the given type.
-    /// For generic types this method may create a new schema.
-    /// </summary>
-    public Schema GetSchemaByType(AnnotatedType annotatedType) =>
-        _schemaByAnnotatedType.TryGetValue(annotatedType, out var schema) ?
-            schema : AddSchema(annotatedType.Type, GetGenericSchema(annotatedType));
+        schema : AddSchema(type, CreateSchema(type));
 
     public void AddBuiltInSchemas()
     {
@@ -57,6 +40,7 @@ internal sealed class SchemaByTypeStore
     private void AddNativeSchemas()
     {
         AddSchema(typeof(string), NativeSchema.String);
+
         AddSchema(typeof(bool), NativeSchema.Bool);
         AddSchema(typeof(byte), NativeSchema.Byte);
         AddSchema(typeof(sbyte), NativeSchema.SByte);
@@ -71,50 +55,39 @@ internal sealed class SchemaByTypeStore
         AddSchema(typeof(decimal), NativeSchema.Decimal);
         AddSchema(typeof(Guid), NativeSchema.Guid);
 
-        AddSchema(typeof(string), NativeSchema.NullableString);
-        AddSchema(typeof(bool?), NativeSchema.NullableBool);
-        AddSchema(typeof(byte?), NativeSchema.NullableWholeNumber);
-        AddSchema(typeof(sbyte?), NativeSchema.NullableSignedWholeNumber);
-        AddSchema(typeof(short?), NativeSchema.NullableSignedWholeNumber);
-        AddSchema(typeof(ushort?), NativeSchema.NullableWholeNumber);
-        AddSchema(typeof(int?), NativeSchema.NullableSignedWholeNumber);
-        AddSchema(typeof(uint?), NativeSchema.NullableWholeNumber);
-        AddSchema(typeof(long?), NativeSchema.NullableSignedWholeNumber);
-        AddSchema(typeof(ulong?), NativeSchema.NullableWholeNumber);
-        AddSchema(typeof(float?), NativeSchema.NullableFloat);
-        AddSchema(typeof(double?), NativeSchema.NullableDouble);
-        AddSchema(typeof(decimal?), NativeSchema.NullableDecimal);
-        AddSchema(typeof(Guid?), NativeSchema.NullableGuid);
+        AddSchema(typeof(bool?), NativeSchema.WholeNumber);
+        AddSchema(typeof(byte?), NativeSchema.WholeNumber);
+        AddSchema(typeof(sbyte?), NativeSchema.SignedWholeNumber);
+        AddSchema(typeof(short?), NativeSchema.SignedWholeNumber);
+        AddSchema(typeof(ushort?), NativeSchema.WholeNumber);
+        AddSchema(typeof(int?), NativeSchema.SignedWholeNumber);
+        AddSchema(typeof(uint?), NativeSchema.WholeNumber);
+        AddSchema(typeof(long?), NativeSchema.SignedWholeNumber);
+        AddSchema(typeof(ulong?), NativeSchema.WholeNumber);
+        AddSchema(typeof(float?), NativeSchema.DoubleMaybe);
+        AddSchema(typeof(double?), NativeSchema.DoubleMaybe);
+        AddSchema(typeof(decimal?), NativeSchema.Decimal);
+        AddSchema(typeof(Guid?), NativeSchema.Guid);
     }
 
     private void AddWeakSchemas()
     {
         // Bookmark 659516266 (char serialization)
         AddSchema(typeof(char), NativeSchema.WholeNumber);
-        AddSchema(typeof(char?), NativeSchema.NullableWholeNumber);
+        AddSchema(typeof(char?), NativeSchema.WholeNumber);
         AddSchema(typeof(DateTime), NativeSchema.Long);
-        AddSchema(typeof(DateTime?), NativeSchema.NullableSignedWholeNumber);
+        AddSchema(typeof(DateTime?), NativeSchema.SignedWholeNumber);
         AddSchema(typeof(DateTimeOffset), NativeSchema.Long);
-        AddSchema(typeof(DateTimeOffset?), NativeSchema.NullableSignedWholeNumber);
+        AddSchema(typeof(DateTimeOffset?), NativeSchema.SignedWholeNumber);
         AddSchema(typeof(TimeSpan), NativeSchema.Long);
-        AddSchema(typeof(TimeSpan?), NativeSchema.NullableSignedWholeNumber);
+        AddSchema(typeof(TimeSpan?), NativeSchema.SignedWholeNumber);
         AddSchema(typeof(DateOnly), NativeSchema.Int);
-        AddSchema(typeof(DateOnly?), NativeSchema.NullableSignedWholeNumber);
+        AddSchema(typeof(DateOnly?), NativeSchema.SignedWholeNumber);
         AddSchema(typeof(TimeOnly), NativeSchema.Long);
-        AddSchema(typeof(TimeOnly?), NativeSchema.NullableSignedWholeNumber);
+        AddSchema(typeof(TimeOnly?), NativeSchema.SignedWholeNumber);
     }
 
-    public Schema AddSchema(Type type, Schema schema)
-    {
-        var annotatedType = new AnnotatedType(type, schema.IsNullable);
-
-        if (!annotatedType.IsNullableReferenceType)
-        {
-            _schemaByType.TryAdd(annotatedType.Type, schema);
-        }
-
-        return _schemaByAnnotatedType.GetOrAdd(annotatedType, schema);
-    }
+    public Schema AddSchema(Type type, Schema schema) => _schemaByType.GetOrAdd(type, schema);
 
     public bool TryAdd(Type type, Schema schema)
     {
@@ -123,15 +96,13 @@ internal sealed class SchemaByTypeStore
         return ReferenceEquals(addedSchema, schema);
     }
 
-    public Schema GetGenericSchema(AnnotatedType annotatedType)
+    public Schema CreateSchema(Type type)
     {
-        var (type, isNullable) = annotatedType;
-
         if (type.TryGetElementTypeOfArray() is Type elementType)
         {
             var innerSchema = GetSchemaByType(elementType);
 
-            return Schema.CreateNonCustomSchema(SchemaType.Array, isNullable, innerSchema);
+            return Schema.CreateNonCustomSchema(SchemaType.Array, innerSchema);
         }
 
         if (type.TryGetInnerTypesOfDictionary() is (Type keyType, Type valueType))
@@ -139,7 +110,7 @@ internal sealed class SchemaByTypeStore
             var innerSchema1 = GetSchemaByType(keyType);
             var innerSchema2 = GetSchemaByType(valueType);
 
-            return Schema.CreateNonCustomSchema(SchemaType.Dictionary, isNullable, innerSchema1, innerSchema2);
+            return Schema.CreateNonCustomSchema(SchemaType.Dictionary, innerSchema1, innerSchema2);
         }
 
         if (type.TryGetInnerTypesOfTuple2() is (Type item1Type, Type item2Type))
@@ -147,7 +118,7 @@ internal sealed class SchemaByTypeStore
             var innerSchema1 = GetSchemaByType(item1Type);
             var innerSchema2 = GetSchemaByType(item2Type);
 
-            return Schema.CreateNonCustomSchema(SchemaType.Tuple2, isNullable, innerSchema1, innerSchema2);
+            return Schema.CreateNonCustomSchema(SchemaType.Tuple2, innerSchema1, innerSchema2);
         }
 
         if (type.TryGetInnerTypesOfTuple3() is (Type item1, Type item2, Type item3))
@@ -156,7 +127,7 @@ internal sealed class SchemaByTypeStore
             var innerSchema2 = GetSchemaByType(item2);
             var innerSchema3 = GetSchemaByType(item3);
 
-            return Schema.CreateNonCustomSchema(SchemaType.Tuple3, isNullable, innerSchema1, innerSchema2, innerSchema3);
+            return Schema.CreateNonCustomSchema(SchemaType.Tuple3, innerSchema1, innerSchema2, innerSchema3);
         }
 
         throw new SchemaException($"No schema for type '{type}' found. Perhaps this type is missing a [BonObject] attribute?");
@@ -164,13 +135,13 @@ internal sealed class SchemaByTypeStore
 
     public void Clear()
     {
-        _schemaByAnnotatedType.Clear();
+        _schemaByType.Clear();
         _schemaByType.Clear();
     }
 
     public void AppendHash(ref HashCode hashCode)
     {
-        hashCode.AddMultipleUnordered(_schemaByAnnotatedType);
+        hashCode.AddMultipleUnordered(_schemaByType);
         hashCode.AddMultipleUnordered(_schemaByType);
     }
 }

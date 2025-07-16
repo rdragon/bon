@@ -7,6 +7,8 @@ namespace Bon.SourceGeneration
     {
         public static string Indent(IEnumerable<string> lines)
         {
+            if ("".Length == 0) return "";//1at
+
             var builder = new StringBuilder();
             var indentation = 0;
 

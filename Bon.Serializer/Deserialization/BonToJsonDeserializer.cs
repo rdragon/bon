@@ -12,58 +12,51 @@ internal static class BonToJsonDeserializer
             UnionSchema unionSchema => DeserializeUnion(reader, unionSchema),
             ArraySchema arraySchema => DeserializeArray(reader, arraySchema),
             DictionarySchema dictionarySchema => DeserializeDictionary(reader, dictionarySchema),
-            _ => DeserializeRecordLike(reader, schema.IsNullable, schema.GetInnerSchemas()),
+            _ => DeserializeRecordLike(reader, schema),
         };
     }
 
     private static JsonValue? DeserializeNative(BinaryReader reader, NativeSchema schema)
     {
-        return (schema.SchemaType, schema.IsNullable) switch
+        return schema.SchemaType switch
         {
-            (SchemaType.String, false) => JsonValue.Create(NativeSerializer.ReadString(reader)),
-            (SchemaType.Bool, false) => JsonValue.Create(NativeSerializer.ReadBool(reader)),
-            (SchemaType.Byte, false) => JsonValue.Create(NativeSerializer.ReadByte(reader)),
-            (SchemaType.SByte, false) => JsonValue.Create(NativeSerializer.ReadSByte(reader)),
-            (SchemaType.Short, false) => JsonValue.Create(NativeSerializer.ReadShort(reader)),
-            (SchemaType.UShort, false) => JsonValue.Create(NativeSerializer.ReadUShort(reader)),
-            (SchemaType.Int, false) => JsonValue.Create(NativeSerializer.ReadInt(reader)),
-            (SchemaType.UInt, false) => JsonValue.Create(NativeSerializer.ReadUInt(reader)),
-            (SchemaType.Long, false) => JsonValue.Create(NativeSerializer.ReadLong(reader)),
-            (SchemaType.ULong, false) => JsonValue.Create(NativeSerializer.ReadULong(reader)),
-            (SchemaType.Float, false) => JsonValue.Create(NativeSerializer.ReadFloat(reader)),
-            (SchemaType.Double, false) => JsonValue.Create(NativeSerializer.ReadDouble(reader)),
-            (SchemaType.Decimal, false) => JsonValue.Create(NativeSerializer.ReadDecimal(reader)),
-            (SchemaType.Guid, false) => JsonValue.Create(NativeSerializer.ReadGuid(reader)),
+            SchemaType.String => JsonValue.Create(NativeSerializer.ReadString(reader)),
+            SchemaType.Bool => JsonValue.Create(NativeSerializer.ReadBool(reader)),
+            SchemaType.Byte => JsonValue.Create(NativeSerializer.ReadByte(reader)),
+            SchemaType.SByte => JsonValue.Create(NativeSerializer.ReadSByte(reader)),
+            SchemaType.Short => JsonValue.Create(NativeSerializer.ReadShort(reader)),
+            SchemaType.UShort => JsonValue.Create(NativeSerializer.ReadUShort(reader)),
+            SchemaType.Int => JsonValue.Create(NativeSerializer.ReadInt(reader)),
+            SchemaType.UInt => JsonValue.Create(NativeSerializer.ReadUInt(reader)),
+            SchemaType.Long => JsonValue.Create(NativeSerializer.ReadLong(reader)),
+            SchemaType.ULong => JsonValue.Create(NativeSerializer.ReadULong(reader)),
+            SchemaType.Float => JsonValue.Create(NativeSerializer.ReadFloat(reader)),
+            SchemaType.Double => JsonValue.Create(NativeSerializer.ReadDouble(reader)),
+            SchemaType.Decimal => JsonValue.Create(NativeSerializer.ReadDecimal(reader)),
+            SchemaType.Guid => JsonValue.Create(NativeSerializer.ReadGuid(reader)),
 
-            (SchemaType.String, true) => JsonValue.Create(NativeSerializer.ReadNullableString(reader)),
-            (SchemaType.Bool, true) => JsonValue.Create(NativeSerializer.ReadNullableBool(reader)),
-            (SchemaType.WholeNumber, true) => JsonValue.Create(NativeSerializer.ReadNullableWholeNumber(reader)),
-            (SchemaType.SignedWholeNumber, true) => JsonValue.Create(NativeSerializer.ReadNullableSignedWholeNumber(reader)),
-            (SchemaType.Float, true) => JsonValue.Create(NativeSerializer.ReadNullableFloat(reader)),
-            (SchemaType.Double, true) => JsonValue.Create(NativeSerializer.ReadNullableDouble(reader)),
-            (SchemaType.Decimal, true) => JsonValue.Create(NativeSerializer.ReadNullableDecimal(reader)),
-            (SchemaType.Guid, true) => JsonValue.Create(NativeSerializer.ReadNullableGuid(reader)),
+            SchemaType.WholeNumber => JsonValue.Create(NativeSerializer.ReadWholeNumber(reader)),
+            SchemaType.SignedWholeNumber => JsonValue.Create(NativeSerializer.ReadSignedWholeNumber(reader)),
+            SchemaType.DoubleMaybe => JsonValue.Create(NativeSerializer.ReadNullableDouble(reader)),
 
             _ => throw new ArgumentOutOfRangeException(nameof(schema), schema, null)
         };
     }
 
-    private static JsonArray? DeserializeRecordLike(BinaryReader reader, bool isNullable, IEnumerable<Schema> memberSchemas)
+    private static JsonArray? DeserializeRecordLike(BinaryReader reader, Schema schema)
     {
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        if (isNullable)
+        if (schema.IsNullable)
         {
-            var firstByte = reader.ReadByte();
-
-            if (firstByte == NativeSerializer.NULL)
+            if (reader.ReadByte() == NativeSerializer.NULL)
             {
                 return null;
             }
         }
 
-        return new JsonArray(memberSchemas.Select(memberSchema => Deserialize(reader, memberSchema)).ToArray());
+        return new JsonArray(schema.GetInnerSchemas().Select(memberSchema => Deserialize(reader, memberSchema)).ToArray());
     }
 
     private static JsonArray? DeserializeUnion(BinaryReader reader, UnionSchema schema)
@@ -76,7 +69,7 @@ internal static class BonToJsonDeserializer
         }
 
         var recordSchema = (RecordSchema)schema.Members.First(member => member.Id == id).Schema;
-        var contents = DeserializeRecordLike(reader, recordSchema.IsNullable, recordSchema.GetInnerSchemas());
+        var contents = DeserializeRecordLike(reader, recordSchema);
 
         return [id, contents];
     }
@@ -104,13 +97,13 @@ internal static class BonToJsonDeserializer
     {
         // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
 
-        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2, false)
+        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2)
         {
             InnerSchema1 = schema.InnerSchema1,
             InnerSchema2 = schema.InnerSchema2,
         };
 
-        var arraySchema = new ArraySchema(SchemaType.Array, schema.IsNullable)
+        var arraySchema = new ArraySchema(SchemaType.Array)
         {
             InnerSchema = tupleSchema,
         };

@@ -4,30 +4,17 @@
 /// Determines the format in which a value is serialized.
 /// During deserialization the schema is used to give meaning to the bytes which are read.
 /// 
-/// There is a many-to-many relationship between schemas and types.
-/// 
-/// In general types that have the same structure (e.g. members of the same types with the same IDs) will share the same schema.
-/// As a schema can map to more than one type, during deserialization the schema doesn't give enough information to determine the
-/// type of the resulting value.
-/// 
-/// Some types have more than one schema.
-/// This is only the case for reference types or types that contain at least one reference type (e.g. as member or type argument).
-/// The reason is that a reference type does not have nullability information during runtime, while a schema has.
-/// For example, during runtime string and string? are the same type, but they have different schemas.
-/// 
 /// Enums use as schema the schema of their underlying type.
 /// Therefore there are no specific schemas for enums.
 /// The same holds for <see cref="char"/> and some other "weak" types (like <see cref="DateTime"/>).
 /// </summary>
-public abstract class Schema(SchemaType schemaType, bool isNullable)
+public abstract class Schema(SchemaType schemaType)
 {
     public SchemaType SchemaType { get; } = schemaType;
 
-    public bool IsNullable { get; } = isNullable;
+    public bool IsNullable { get; } = false;//1at
 
     public abstract IEnumerable<Schema> GetInnerSchemas();
-
-    public AnnotatedSchemaType AnnotatedSchemaType => new(SchemaType, IsNullable);
 
     public override int GetHashCode()
     {
@@ -60,8 +47,7 @@ public abstract class Schema(SchemaType schemaType, bool isNullable)
             return ancestors.TryGetValue(new(other, false), out var otherId) && id == otherId;
         }
 
-        if (SchemaType != other.SchemaType ||
-            IsNullable != other.IsNullable)
+        if (SchemaType != other.SchemaType)
         {
             return false;
         }
@@ -79,35 +65,35 @@ public abstract class Schema(SchemaType schemaType, bool isNullable)
         ancestors.Remove(new(other, false));
     }
 
-    public static Schema CreateNonCustomSchema(SchemaType schemaType, bool isNullable, params Schema[] innerSchemas)
+    public static Schema CreateNonCustomSchema(SchemaType schemaType, params Schema[] innerSchemas)
     {
         return schemaType switch
         {
-            SchemaType.Array => new ArraySchema(schemaType, isNullable)
+            SchemaType.Array => new ArraySchema(schemaType)
             {
                 InnerSchema = innerSchemas[0],
             },
 
-            SchemaType.Dictionary => new DictionarySchema(schemaType, isNullable)
+            SchemaType.Dictionary => new DictionarySchema(schemaType)
             {
                 InnerSchema1 = innerSchemas[0],
                 InnerSchema2 = innerSchemas[1],
             },
 
-            SchemaType.Tuple2 => new Tuple2Schema(schemaType, isNullable)
+            SchemaType.Tuple2 => new Tuple2Schema(schemaType)
             {
                 InnerSchema1 = innerSchemas[0],
                 InnerSchema2 = innerSchemas[1],
             },
 
-            SchemaType.Tuple3 => new Tuple3Schema(schemaType, isNullable)
+            SchemaType.Tuple3 => new Tuple3Schema(schemaType)
             {
                 InnerSchema1 = innerSchemas[0],
                 InnerSchema2 = innerSchemas[1],
                 InnerSchema3 = innerSchemas[2],
             },
 
-            _ => new AnnotatedSchemaType(schemaType, isNullable).ToNativeSchema(),
+            _ => NativeSchema.FromSchemaType(schemaType),
         };
     }
 }

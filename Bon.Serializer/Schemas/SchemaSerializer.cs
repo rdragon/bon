@@ -26,7 +26,6 @@ internal static class SchemaSerializer
     public static void Write(BinaryWriter writer, SchemaData schema)
     {
         WholeNumberSerializer.Write(writer, (int)schema.SchemaType);
-        writer.Write(schema.IsNullable);
 
         if (schema is CustomSchemaData custom)
         {
@@ -68,15 +67,14 @@ internal static class SchemaSerializer
     public static SchemaData ReadSchemaData(BinaryReader reader)
     {
         var schemaType = (SchemaType)WholeNumberSerializer.Read(reader);
-        var isNullable = reader.ReadBoolean();
 
         return schemaType switch
         {
-            SchemaType.Record or SchemaType.Union => new CustomSchemaData(schemaType, isNullable, (int)WholeNumberSerializer.Read(reader)),
-            SchemaType.Array => new SchemaData(schemaType, isNullable, [ReadSchemaData(reader)]),
-            SchemaType.Dictionary or SchemaType.Tuple2 => new SchemaData(schemaType, isNullable, [ReadSchemaData(reader), ReadSchemaData(reader)]),
-            SchemaType.Tuple3 => new SchemaData(schemaType, isNullable, [ReadSchemaData(reader), ReadSchemaData(reader), ReadSchemaData(reader)]),
-            _ => new SchemaData(schemaType, isNullable, []),
+            SchemaType.Record or SchemaType.Union => new CustomSchemaData(schemaType, (int)WholeNumberSerializer.Read(reader)),
+            SchemaType.Array => new SchemaData(schemaType, [ReadSchemaData(reader)]),
+            SchemaType.Dictionary or SchemaType.Tuple2 => new SchemaData(schemaType, [ReadSchemaData(reader), ReadSchemaData(reader)]),
+            SchemaType.Tuple3 => new SchemaData(schemaType, [ReadSchemaData(reader), ReadSchemaData(reader), ReadSchemaData(reader)]),
+            _ => new SchemaData(schemaType, []),
         };
     }
 }

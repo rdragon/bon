@@ -61,7 +61,7 @@ namespace Bon.SourceGeneration
         {
             var id = _codeGenerator.GetId(definition);
             var schemaType = $"SchemaType.{definition.SchemaType}";
-            var isNullable = definition.IsNullable.GetName();
+            var isNullable = definition.IsNullable.ToStringLower();
 
             _codeGenerator.AppendClassBody(
                 $"var schema{id} = {definition.SchemaBaseClass}.Create({schemaType}, {isNullable});");
@@ -99,12 +99,12 @@ namespace Bon.SourceGeneration
         {
             if (definition is NativeDefinition)
             {
-                return $"NativeSchema.{definition.AnnotatedSchemaType}";
+                return $"NativeSchema.{definition.SchemaType}";
             }
 
             if (definition is WeakDefinition)
             {
-                return $"NativeSchema.{definition.AnnotatedSchemaType}";
+                return $"NativeSchema.{definition.SchemaType}";
             }
 
             var id = _codeGenerator.GetId(definition);

@@ -1,6 +1,6 @@
 ﻿namespace Bon.Serializer.Deserialization;
 
-internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore, DefaultValueGetterFactory defaultValueGetterFactory) : IUseReflection
+internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : IUseReflection
 {
     public Delegate CreateDeserializer<T>(Tuple3Schema sourceSchema, Tuple3Schema targetSchema)
     {
@@ -21,7 +21,6 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore, De
         var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1, targetSchema.InnerSchema1.IsNullable);
         var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2, targetSchema.InnerSchema2.IsNullable);
         var readItem3 = deserializerStore.GetDeserializer<T3>(sourceSchema.InnerSchema3, targetSchema.InnerSchema3.IsNullable);
-        var getDefaultValue = defaultValueGetterFactory.GetDefaultValueGetter<(T1, T2, T3)>(targetSchema.IsNullable);
         var sourceIsNullable = sourceSchema.IsNullable;
         var targetIsNullable = targetSchema.IsNullable;
 
@@ -29,9 +28,7 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore, De
         {
             return (Read<(T1, T2, T3)?>)((BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeSerializer.NULL)
                 {
                     return null;
                 }
@@ -48,11 +45,9 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore, De
         {
             return (Read<(T1, T2, T3)>)((BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeSerializer.NULL)
                 {
-                    return getDefaultValue(input);
+                    return default;
                 }
 
                 var item1 = readItem1(input);

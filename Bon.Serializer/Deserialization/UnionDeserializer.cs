@@ -1,16 +1,14 @@
 ﻿namespace Bon.Serializer.Deserialization;
 
 internal sealed class UnionDeserializer(
-     DeserializerStore deserializerStore,
-     DefaultValueGetterFactory defaultValueGetterFactory) : IUseReflection
+     DeserializerStore deserializerStore) : IUseReflection
 {
-    public Read<T> CreateDeserializer<T>(UnionSchema sourceSchema, UnionSchema targetSchema)
+    public Read<T?> CreateDeserializer<T>(UnionSchema sourceSchema, UnionSchema targetSchema)
     {
         // See bookmark 628227999 for all places where a union is serialized/deserialized.
 
-        var deserializers = new Dictionary<int, Read<T>>();
+        var deserializers = new Dictionary<int, Read<T?>>();
         var targetMembers = targetSchema.Members.ToDictionary(member => member.Id);
-        var getDefaultValue = defaultValueGetterFactory.GetDefaultValueGetter<T>(targetSchema.IsNullable);
 
         foreach (var member in sourceSchema.Members)
         {
@@ -18,13 +16,13 @@ internal sealed class UnionDeserializer(
             {
                 var type = deserializerStore.MemberTypes[(typeof(T), member.Id)];
 
-                deserializers[member.Id] = (Read<T>)this.GetPrivateMethod(nameof(GetRecordDeserializer))
+                deserializers[member.Id] = (Read<T?>)this.GetPrivateMethod(nameof(GetRecordDeserializer))
                     .MakeGenericMethod(type)
-                    .Invoke(this, [member.Schema, targetSchema.IsNullable])!;
+                    .Invoke(this, [member.Schema])!;
             }
             else
             {
-                deserializers[member.Id] = deserializerStore.GetSkipper<T>(member.Schema, targetSchema.IsNullable);
+                deserializers[member.Id] = deserializerStore.GetSkipper<T>(member.Schema);
             }
         }
 
@@ -32,17 +30,14 @@ internal sealed class UnionDeserializer(
         {
             if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int id)
             {
-                return getDefaultValue(input);
+                return default;
             }
 
-            var deserialize = deserializers[id];
+            var deserializer = deserializers[id];
 
-            return deserialize(input);
+            return deserializer(input);
         };
     }
 
-    private Delegate GetRecordDeserializer<T>(Schema sourceSchema, bool isNullable)
-    {
-        return deserializerStore.GetDeserializer<T>(sourceSchema, isNullable);
-    }
+    private Delegate GetRecordDeserializer<T>(Schema sourceSchema) => deserializerStore.GetDeserializer<T>(sourceSchema);
 }

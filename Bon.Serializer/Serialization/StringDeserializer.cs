@@ -6,7 +6,7 @@ public static class StringDeserializer
 {
     private const int BufferSize = 128;
 
-    public static string? ReadNullableString(BinaryReader reader)
+    public static string? ReadString(BinaryReader reader)
     {
         if ((int?)WholeNumberSerializer.ReadNullable(reader) is not int totalByteCount)
         {
@@ -15,8 +15,6 @@ public static class StringDeserializer
 
         return ReadString(reader, totalByteCount);
     }
-
-    public static string ReadString(BinaryReader reader) => ReadNullableString(reader) ?? "";
 
     private static string ReadString(BinaryReader reader, int totalByteCount)
     {

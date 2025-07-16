@@ -28,8 +28,8 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
 
     private static byte[] GetSchemaStorageContents()
     {
-        var memberA = new SchemaMemberData(2, new CustomSchemaData(SchemaType.Record, true, ContentsId));
-        var memberB = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, false, []));
+        var memberA = new SchemaMemberData(2, new CustomSchemaData(SchemaType.RecordMaybe, ContentsId));
+        var memberB = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, []));
         var schema = new SchemaContentsData(ContentsId, [memberA, memberB]);
 
         var block = new Block(BlockId, [schema]);

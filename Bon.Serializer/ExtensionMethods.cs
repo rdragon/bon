@@ -113,14 +113,14 @@ internal static class ExtensionMethods
             throw new ArgumentException($"Method not found.", methodName);
     }
 
-    public static MethodInfo GetPrivateStaticMethodInfo(this Type type, string methodName)
+    public static MethodInfo GetPrivateStaticMethod(this Type type, string methodName)
     {
         return
             type.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static) ??
             throw new ArgumentException($"Method not found.", methodName);
     }
 
-    public static bool IsNullable(this Type type, bool seeReferenceTypeAsNullable)
+    public static bool IsNullable(this Type type, bool seeReferenceTypeAsNullable)//1at
     {
         return type.IsValueType ? Nullable.GetUnderlyingType(type) is { } : seeReferenceTypeAsNullable;
     }

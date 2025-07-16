@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a generic type with three type parameters.
 /// </summary>
-public abstract class GenericSchema3(SchemaType SchemaType, bool IsNullable) : Schema(SchemaType, IsNullable)
+public abstract class GenericSchema3(SchemaType SchemaType) : Schema(SchemaType)
 {
     public Schema InnerSchema1 { get; set; } = null!;
     public Schema InnerSchema2 { get; set; } = null!;
@@ -21,7 +21,6 @@ public abstract class GenericSchema3(SchemaType SchemaType, bool IsNullable) : S
     public override void AppendHashCode(Dictionary<Schema, int> ancestors, ref HashCode hashCode)
     {
         hashCode.Add(SchemaType);
-        hashCode.Add(IsNullable);
         InnerSchema1.AppendHashCode(ancestors, ref hashCode);
         InnerSchema2.AppendHashCode(ancestors, ref hashCode);
         InnerSchema3.AppendHashCode(ancestors, ref hashCode);
@@ -32,17 +31,16 @@ public abstract class GenericSchema3(SchemaType SchemaType, bool IsNullable) : S
         return
             obj is GenericSchema3 other &&
             SchemaType == other.SchemaType &&
-            IsNullable == other.IsNullable &&
             InnerSchema1.Equals(other.InnerSchema1, ancestors) &&
             InnerSchema2.Equals(other.InnerSchema2, ancestors) &&
             InnerSchema3.Equals(other.InnerSchema3, ancestors);
     }
 
-    public static GenericSchema3 Create(SchemaType schemaType, bool isNullable)
+    public static GenericSchema3 Create(SchemaType schemaType)
     {
         GenericSchema3 schema = schemaType switch
         {
-            SchemaType.Tuple3 => new Tuple3Schema(schemaType, isNullable),
+            SchemaType.Tuple3 => new Tuple3Schema(schemaType),
             _ => throw new ArgumentOutOfRangeException(nameof(schemaType), schemaType, null),
         };
 
@@ -53,4 +51,4 @@ public abstract class GenericSchema3(SchemaType SchemaType, bool IsNullable) : S
 /// <summary>
 /// Represents a value tuple with three elements.
 /// </summary>
-public sealed class Tuple3Schema(SchemaType schemaType, bool isNullable) : GenericSchema3(schemaType, isNullable);
+public sealed class Tuple3Schema(SchemaType schemaType) : GenericSchema3(schemaType);

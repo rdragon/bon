@@ -40,21 +40,20 @@ internal static class SchemaFileInspector
 
     private static string ConvertSchemaData(SchemaData schema)
     {
-        var questionMark = schema.IsNullable ? "?" : "";
-
         if (schema is CustomSchemaData customSchema)
         {
-            return $"{schema.SchemaType}_{customSchema.ContentsId}{questionMark}";
+            return $"{schema.SchemaType}_{customSchema.ContentsId}";
         }
 
         var text = string.Join(", ", schema.InnerSchemas.Select(ConvertSchemaData));
 
         return schema.SchemaType switch
         {
-            SchemaType.Array => $"{text}[]{questionMark}",
-            SchemaType.Dictionary => $"Dictionary<{text}>{questionMark}",
-            SchemaType.Tuple2 or SchemaType.Tuple3 => $"({text}){questionMark}",
-            _ => schema.SchemaType + questionMark,
+            SchemaType.Array => $"{text}[]",
+            SchemaType.Dictionary => $"Dictionary<{text}>",
+            SchemaType.Tuple2 or SchemaType.Tuple3 => $"({text})",
+            SchemaType.Tuple2Maybe or SchemaType.Tuple3Maybe => $"({text})?",
+            _ => schema.SchemaType.ToString(),
         };
     }
 }

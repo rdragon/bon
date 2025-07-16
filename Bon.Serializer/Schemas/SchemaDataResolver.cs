@@ -23,14 +23,14 @@ internal sealed class SchemaDataResolver(SchemaContentsStore schemaContentsStore
             return null;
         }
 
-        return Schema.CreateNonCustomSchema(schemaData.SchemaType, schemaData.IsNullable, innerSchemas);
+        return Schema.CreateNonCustomSchema(schemaData.SchemaType, innerSchemas);
     }
 
     private CustomSchema? TryGetSchemaByCustomSchemaData(CustomSchemaData schemaData)
     {
         if (schemaContentsStore.TryGet(schemaData.ContentsId, out var contents))
         {
-            return CustomSchema.Create(schemaData.SchemaType, schemaData.IsNullable, contents.Members, schemaData.ContentsId);
+            return CustomSchema.Create(schemaData.SchemaType, contents.Members, schemaData.ContentsId);
         }
 
         return null;

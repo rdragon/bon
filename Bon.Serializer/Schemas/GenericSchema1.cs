@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a generic type with one type parameter.
 /// </summary>
-public abstract class GenericSchema1(SchemaType schemaType, bool isNullable) : Schema(schemaType, isNullable)
+public abstract class GenericSchema1(SchemaType schemaType) : Schema(schemaType)
 {
     public Schema InnerSchema { get; set; } = null!;
 
@@ -14,7 +14,6 @@ public abstract class GenericSchema1(SchemaType schemaType, bool isNullable) : S
     public override void AppendHashCode(Dictionary<Schema, int> ancestors, ref HashCode hashCode)
     {
         hashCode.Add(SchemaType);
-        hashCode.Add(IsNullable);
         InnerSchema.AppendHashCode(ancestors, ref hashCode);
     }
 
@@ -23,15 +22,14 @@ public abstract class GenericSchema1(SchemaType schemaType, bool isNullable) : S
         return
             obj is GenericSchema1 other &&
             SchemaType == other.SchemaType &&
-            IsNullable == other.IsNullable &&
             InnerSchema.Equals(other.InnerSchema, ancestors);
     }
 
-    public static GenericSchema1 Create(SchemaType schemaType, bool isNullable)
+    public static GenericSchema1 Create(SchemaType schemaType)
     {
         GenericSchema1 schema = schemaType switch
         {
-            SchemaType.Array => new ArraySchema(schemaType, isNullable),
+            SchemaType.Array => new ArraySchema(schemaType),
             _ => throw new ArgumentOutOfRangeException(nameof(schemaType), schemaType, null),
         };
 
@@ -42,4 +40,4 @@ public abstract class GenericSchema1(SchemaType schemaType, bool isNullable) : S
 /// <summary>
 /// Represents an array, list or enumerable.
 /// </summary>
-public sealed class ArraySchema(SchemaType schemaType, bool isNullable) : GenericSchema1(schemaType, isNullable);
+public sealed class ArraySchema(SchemaType schemaType) : GenericSchema1(schemaType);

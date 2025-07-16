@@ -23,7 +23,7 @@ namespace Bon.SourceGeneration
 
         public NativeDefinition ChangeNullability(bool isNullable) => isNullable ? (NativeDefinition)ToNullable() : ToNonNullable();
 
-        public string GetWriteMethod() => "NativeSerializer.Write" + (SchemaType == SchemaType.String ? "String" : $"{SimpleType}");
+        public string GetWriteMethodName() => "NativeSerializer.Write" + (SchemaType == SchemaType.String ? "String" : $"{SimpleType}");
 
         public static NativeDefinition String { get; } = new NativeDefinition("string", "String", SchemaType.String, false);
         public static NativeDefinition Bool { get; } = new NativeDefinition("bool", "Bool", SchemaType.Bool, false);

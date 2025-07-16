@@ -3,8 +3,7 @@
 // See bookmark 831853187 for all places where a record is serialized/deserialized.
 internal sealed class RecordDeserializer(
      DeserializerStore deserializerStore,
-     SkipperStore skipperStore,
-     DefaultValueGetterFactory defaultValueGetterFactory) : IUseReflection
+     SkipperStore skipperStore) : IUseReflection
 {
     private const byte NULL = 255;
 
@@ -24,21 +23,19 @@ internal sealed class RecordDeserializer(
     /// </summary>
     public Dictionary<Type, Delegate> ReaderFactories { get; } = [];
 
-    public Read<T> CreateDeserializer<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
+    public Read<T?> CreateDeserializer<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
     {
-        var deserialize = CreateDeserializerNow<T>(sourceSchema, targetSchema);
+        var deserializer = CreateDeserializerNow<T>(sourceSchema, targetSchema);
 
         if (sourceSchema.IsNullable)
         {
-            var getDefaultValue = defaultValueGetterFactory.GetDefaultValueGetter<T>(targetSchema.IsNullable);
-
             return (BonInput input) =>
             {
-                return input.Reader.ReadByte() == NULL ? getDefaultValue(input) : deserialize(input);
+                return input.Reader.ReadByte() == NULL ? default : deserializer(input);
             };
         }
 
-        return deserialize;
+        return deserializer;
     }
 
     private Read<T> CreateDeserializerNow<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
@@ -67,23 +64,23 @@ internal sealed class RecordDeserializer(
 
     private Action<BonInput> GetSkipper(SchemaMember sourceMember) => skipperStore.GetSkipper(sourceMember.Schema);
 
-    private static Action<BonInput>? CombineSkippers(IReadOnlyList<Action<BonInput>> skippers)
+    private static Action<BonInput>? CombineSkippers(Action<BonInput>[] skippers)
     {
-        if (skippers.Count == 0)
+        if (skippers.Length == 0)
         {
             return null;
         }
 
         var skip1 = skippers[0];
 
-        if (skippers.Count == 1)
+        if (skippers.Length == 1)
         {
             return skip1;
         }
 
         var skip2 = skippers[1];
 
-        if (skippers.Count == 2)
+        if (skippers.Length == 2)
         {
             return (BonInput input) =>
             {
@@ -94,7 +91,7 @@ internal sealed class RecordDeserializer(
 
         var skip3 = skippers[2];
 
-        if (skippers.Count == 3)
+        if (skippers.Length == 3)
         {
             return (BonInput input) =>
             {
@@ -107,7 +104,7 @@ internal sealed class RecordDeserializer(
         // Bookmark 563732229
         return (BonInput input) =>
         {
-            for (int i = 0; i < skippers.Count; i++)
+            for (int i = 0; i < skippers.Length; i++)
             {
                 skippers[i](input);
             }
@@ -118,10 +115,10 @@ internal sealed class RecordDeserializer(
     {
         if (sourceMembers.TryPopMember(targetMember.Id) is SchemaMember sourceMember)
         {
-            return () => deserializerStore.GetDeserializer(sourceMember.Schema, targetMemberType, targetMember.IsNullable);
+            return () => deserializerStore.GetDeserializer(sourceMember.Schema, targetMemberType);
         }
 
-        return () => defaultValueGetterFactory.GetDefaultValueGetter(targetMemberType, targetMember.IsNullable); // Bookmark 359877524
+        return () => deserializerStore.LoadDefaultValueGetter(targetMemberType);
     }
 
     public class MemberCollection(IReadOnlyList<SchemaMember> members)

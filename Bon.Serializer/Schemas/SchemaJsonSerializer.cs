@@ -27,29 +27,25 @@ internal static class SchemaJsonSerializer
     // A class that can be serialized to JSON without a custom converter.
     public sealed record class ExplicitSchemaData(
          SchemaType SchemaType,
-         bool? IsNullable,
          int? ContentsId,
          IReadOnlyList<ExplicitSchemaData>? InnerSchemas)
     {
         public SchemaData ToSchemaData()
         {
-            var isNullable = IsNullable ?? false;
-
             if (ContentsId is null)
             {
-                return new SchemaData(SchemaType, isNullable, InnerSchemas?.Select(s => s.ToSchemaData()).ToArray() ?? []);
+                return new SchemaData(SchemaType, InnerSchemas?.Select(s => s.ToSchemaData()).ToArray() ?? []);
             }
 
-            return new CustomSchemaData(SchemaType, isNullable, ContentsId.Value);
+            return new CustomSchemaData(SchemaType, ContentsId.Value);
         }
 
         public static ExplicitSchemaData FromSchemaData(SchemaData schemaData)
         {
             var contentsId = (schemaData as CustomSchemaData)?.ContentsId;
             var innerSchemas = schemaData.InnerSchemas.Count == 0 ? null : schemaData.InnerSchemas.Select(FromSchemaData).ToArray();
-            bool? isNullable = schemaData.IsNullable ? true : null;
 
-            return new ExplicitSchemaData(schemaData.SchemaType, isNullable, contentsId, innerSchemas);
+            return new ExplicitSchemaData(schemaData.SchemaType, contentsId, innerSchemas);
         }
     }
 }

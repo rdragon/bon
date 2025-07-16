@@ -25,30 +25,31 @@ namespace Bon.SourceGeneration
 
             foreach (var definition in definitions)
             {
-                if (definition.IsNullable && definition.IsReferenceType)
-                {
-                    continue;
-                }
-
-                var id = GetId(definition);
-                var usesCustomSchemas = definition.GetType() != typeof(EnumDefinition);
-                var argument = usesCustomSchemas ? "true" : "false";
-
-                _codeGenerator.AddStatement(
-                    $"bonFacade.AddWriter<{definition.Type}>({GetMethodName(definition.IsNullable)}{id}, {argument});");
+                GetId(definition);
             }
         }
 
         private int GetId(IDefinition definition)
         {
             var id = _codeGenerator.GetId(definition.TypeNonNullable);
+            var methodName = GetMethodName(definition, id);
 
-            if (_writtenMethods.Add(definition.Type))
+            if (_writtenMethods.Add(methodName))
             {
                 AddWriteMethod(definition, id);
+                AddMethodToStore(definition, methodName);
             }
 
             return id;
+        }
+
+        private void AddMethodToStore(IDefinition definition, string methodName)
+        {
+            var usesCustomSchemas = definition.GetType() != typeof(EnumDefinition);
+            var argument = usesCustomSchemas ? "true" : "false";
+
+            _codeGenerator.AddStatement(
+                $"bonFacade.AddWriter<{definition.SafeType}>({methodName}, {argument});");
         }
 
         private void AddWriteMethod(IDefinition definition, int id)
@@ -97,26 +98,67 @@ namespace Bon.SourceGeneration
         {
             // See bookmark 831853187 for all places where a record is serialized/deserialized.
 
+            if (definition.IsReferenceType)
+            {
+                AddWriteMethodForClass(definition, id);
+            }
+            else if (definition.IsNullable)
+            {
+                AddWriteMethodForNullableStruct(definition, id);
+            }
+            else
+            {
+                AddWriteMethodForStruct(definition, id);
+            }
+        }
+
+        private void AddWriteMethodForClass(RecordDefinition definition, int id)
+        {
             var method = StartWriteMethod(id, definition, "value");
 
-            if (definition.IsNullable)
-            {
-                method.Add($"if (value is not {definition.TypeNonNullable} obj)");
-                method.Add("{");
-                Write(method, NativeDefinition.Byte, "NULL");
-                method.Add("return;");
-                method.Add("}");
-                Write(method, NativeDefinition.Byte, "NOT_NULL");
-                method.Add($"Write{id}(writer, obj);");
-                AddMethod(method);
+            method.Add($"if (value is null)");
+            method.Add("{");
+            Write(method, NativeDefinition.Byte, "NULL");
+            method.Add("return;");
+            method.Add("}");
+            Write(method, NativeDefinition.Byte, "NOT_NULL");
+            method.AddEmptyLine();
 
-                return;
-            }
+            WriteMembers(method, definition);
 
+            AddMethod(method);
+        }
+
+        private void WriteMembers(List<string> method, RecordDefinition definition)
+        {
             foreach (var member in definition.Members)
             {
                 Write(method, member.Definition, $"value.{member.Name}");
             }
+        }
+
+        private void AddWriteMethodForNullableStruct(RecordDefinition definition, int id)
+        {
+            var method = StartWriteMethod(id, definition, "maybeValue");
+
+            method.Add($"if (maybeValue is not {definition.TypeNonNullable} value)");
+            method.Add("{");
+            Write(method, NativeDefinition.Byte, "NULL");
+            method.Add("return;");
+            method.Add("}");
+            Write(method, NativeDefinition.Byte, "NOT_NULL");
+            method.AddEmptyLine();
+
+            WriteMembers(method, definition);
+
+            AddMethod(method);
+        }
+
+        private void AddWriteMethodForStruct(RecordDefinition definition, int id)
+        {
+            var method = StartWriteMethod(id, definition, "value");
+
+            WriteMembers(method, definition);
 
             AddMethod(method);
         }
@@ -127,18 +169,12 @@ namespace Bon.SourceGeneration
 
             var method = StartWriteMethod(id, definition, "value");
 
-            if (definition.IsNullable)
-            {
-                method.Add("if (value is null)");
-                method.Add("{");
-                method.Add($"WholeNumberSerializer.WriteNull(writer);");
-                method.Add("return;");
-                method.Add("}");
-                method.Add($"Write{id}(writer, value);");
-                AddMethod(method);
-
-                return;
-            }
+            method.Add("if (value is null)");
+            method.Add("{");
+            method.Add($"WholeNumberSerializer.WriteNull(writer);");
+            method.Add("return;");
+            method.Add("}");
+            method.AddEmptyLine();
 
             method.Add("switch (value)");
             method.Add("{");
@@ -165,16 +201,13 @@ namespace Bon.SourceGeneration
 
             var method = StartWriteMethod(id, definition, "values");
 
-            if (definition.IsNullable)
-            {
-                method.Add("if (values is null)");
-                method.Add("{");
-                method.Add("WholeNumberSerializer.WriteNull(writer);");
-                method.Add("return;");
-                method.Add("}");
-            }
-
+            method.Add("if (values is null)");
+            method.Add("{");
+            method.Add("WholeNumberSerializer.WriteNull(writer);");
+            method.Add("return;");
+            method.Add("}");
             method.AddEmptyLine();
+
             var values = "values";
             var collectionType = definition.CollectionType;
 
@@ -209,16 +242,13 @@ namespace Bon.SourceGeneration
 
             var method = StartWriteMethod(id, definition, "dictionary");
 
-            if (definition.IsNullable)
-            {
-                method.Add("if (dictionary is null)");
-                method.Add("{");
-                method.Add("WholeNumberSerializer.WriteNull(writer);");
-                method.Add("return;");
-                method.Add("}");
-            }
-
+            method.Add("if (dictionary is null)");
+            method.Add("{");
+            method.Add("WholeNumberSerializer.WriteNull(writer);");
+            method.Add("return;");
+            method.Add("}");
             method.AddEmptyLine();
+
             method.Add("var count = dictionary.Count;");
             method.Add($"WholeNumberSerializer.Write(writer, count);");
             method.Add("var actualCount = 0;");
@@ -251,8 +281,6 @@ namespace Bon.SourceGeneration
                 Write(method, NativeDefinition.Byte, "NULL");
                 method.Add("return;");
                 method.Add("}");
-                method.AddEmptyLine();
-
                 Write(method, NativeDefinition.Byte, "NOT_NULL");
             }
 
@@ -283,8 +311,9 @@ namespace Bon.SourceGeneration
         }
 
         private static List<string> StartWriteMethod(int id, IDefinition definition, string parameterName) =>
-            new List<string> { $"public static void {GetMethodName(definition.IsNullable)}{id}(BinaryWriter writer, {definition.Type} {parameterName})", "{" };
+            new List<string> { $"public static void {GetMethodName(definition, id)}(BinaryWriter writer, {definition.SafeType} {parameterName})", "{" };
 
+        /// <param name="lines">The lines of a method, but without the closing brace.</param>
         private void AddMethod(IReadOnlyList<string> lines)
         {
             _codeGenerator.AddMethod(lines);
@@ -296,21 +325,24 @@ namespace Bon.SourceGeneration
             switch (definition)
             {
                 case NativeDefinition native:
-                    lines.Add($"{native.GetWriteMethod()}(writer, {argument});");
+                    lines.Add($"{native.GetWriteMethodName()}(writer, {argument});");
                     break;
 
                 case WeakDefinition weak:
-                    lines.Add($"{weak.GetWriteMethod()}(writer, {argument});");
+                    lines.Add($"{weak.GetWriteMethodName()}(writer, {argument});");
                     break;
 
                 default:
-                    lines.Add(Write(GetId(definition), definition.IsNullable, argument));
+                    var id = GetId(definition);
+                    lines.Add($"{GetMethodName(definition, id)}(writer, {argument});");
                     break;
             }
         }
 
-        private string Write(int id, bool isNullable, string argument) => $"{GetMethodName(isNullable)}{id}(writer, {argument});";
-
-        private static string GetMethodName(bool isNullable) => isNullable ? "WriteNullable" : "Write";
+        private static string GetMethodName(IDefinition definition, int id)
+        {
+            var prefix = definition.IsNullable && definition.IsValueType ? "WriteNullable" : "Write";
+            return prefix + id;
+        }
     }
 }

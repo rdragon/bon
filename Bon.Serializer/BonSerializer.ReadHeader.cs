@@ -65,14 +65,14 @@ public partial class BonSerializer
         return formatType switch
         {
             FormatType.Full or FormatType.WithoutBlockId => SchemaSerializer.ReadSchemaData(reader),
-            FormatType.Byte => new SchemaData(SchemaType.Byte, false, []),
-            FormatType.SByte => new SchemaData(SchemaType.SByte, false, []),
-            FormatType.Short => new SchemaData(SchemaType.Short, false, []),
-            FormatType.UShort => new SchemaData(SchemaType.UShort, false, []),
-            FormatType.Int => new SchemaData(SchemaType.Int, false, []),
-            FormatType.UInt => new SchemaData(SchemaType.UInt, false, []),
-            FormatType.Long => new SchemaData(SchemaType.Long, false, []),
-            FormatType.ULong => new SchemaData(SchemaType.ULong, false, []),
+            FormatType.Byte => new SchemaData(SchemaType.Byte, []),
+            FormatType.SByte => new SchemaData(SchemaType.SByte, []),
+            FormatType.Short => new SchemaData(SchemaType.Short, []),
+            FormatType.UShort => new SchemaData(SchemaType.UShort, []),
+            FormatType.Int => new SchemaData(SchemaType.Int, []),
+            FormatType.UInt => new SchemaData(SchemaType.UInt, []),
+            FormatType.Long => new SchemaData(SchemaType.Long, []),
+            FormatType.ULong => new SchemaData(SchemaType.ULong, []),
             _ => throw new DeserializationFailedException($"Cannot handle format type {formatType}.")
         };
     }

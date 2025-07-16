@@ -22,7 +22,6 @@ namespace Bon.SourceGeneration
             var readerGenerator = new ReaderGenerator(codeGenerator);
             var memberTypeGenerator = new MemberTypeGenerator(codeGenerator);
             var enumConversionGenerator = new EnumConversionGenerator(codeGenerator);
-            var defaultValueGetterGenerator = new DefaultValueGetterGenerator(codeGenerator);
             var readerFactoryGenerator = new ReaderFactoryGenerator(codeGenerator);
 
             factoryMethodGenerator.Run(recordDefinitions);
@@ -31,7 +30,6 @@ namespace Bon.SourceGeneration
             readerGenerator.Run(allDefinitions);
             memberTypeGenerator.Run(definitions.OfType<ICustomDefinition>());
             enumConversionGenerator.Run(allEnumDefinitions);
-            defaultValueGetterGenerator.Run(recordDefinitions, unionDefinitions);
             readerFactoryGenerator.Run(recordDefinitions);
 
             return new CodeGeneratorOutput(Helper.Indent(codeGenerator.Build()), contextClass.ClassName);

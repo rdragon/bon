@@ -19,7 +19,7 @@ public class StorageTestBase(FakeBlob? blob = null) : BonSerializerTestBase(blob
 
     protected static byte[] GetSchemaStorageContents()
     {
-        var member = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, false, []));
+        var member = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, []));
         var schema = new SchemaContentsData(SchemaContentsId, [member]);
         var block = new Block(BlockId, [schema]);
         var stream = new MemoryStream();

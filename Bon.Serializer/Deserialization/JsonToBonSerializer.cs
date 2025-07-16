@@ -18,6 +18,7 @@ internal static class JsonToBonSerializer
 
     private static void SerializeNative(BinaryWriter writer, JsonNode? jsonNode, NativeSchema schema)
     {
+        //1at simpel
         switch ((schema.SchemaType, schema.IsNullable))
         {
             case (SchemaType.Bool, false): NativeSerializer.WriteBool(writer, ExpectNotNull(jsonNode).GetValue<bool>()); break;
@@ -113,13 +114,13 @@ internal static class JsonToBonSerializer
     {
         // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
 
-        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2, false)
+        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2)
         {
             InnerSchema1 = dictionarySchema.InnerSchema1,
             InnerSchema2 = dictionarySchema.InnerSchema2,
         };
 
-        var arraySchema = new ArraySchema(SchemaType.Array, dictionarySchema.IsNullable)
+        var arraySchema = new ArraySchema(SchemaType.Array)
         {
             InnerSchema = tupleSchema,
         };

@@ -28,10 +28,10 @@ public class TwoSchemasFromStorageTest : BonSerializerTestBase
 
     private static byte[] GetSchemaStorageContents()
     {
-        var memberA = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, false, []));
+        var memberA = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, []));
         var schemaA = new SchemaContentsData(ContentsIdA, [memberA]);
 
-        var memberB = new SchemaMemberData(MemberId, new CustomSchemaData(SchemaType.Record, false, ContentsIdA));
+        var memberB = new SchemaMemberData(MemberId, new CustomSchemaData(SchemaType.RecordMaybe, ContentsIdA));
         var schemaB = new SchemaContentsData(ContentsIdB, [memberB]);
 
         var block = new Block(BlockId, [schemaA, schemaB]);

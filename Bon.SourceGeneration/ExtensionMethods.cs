@@ -27,7 +27,7 @@ namespace Bon.SourceGeneration
         /// <summary>
         /// Returns "true" or "false".
         /// </summary>
-        public static string GetName(this bool b) => b ? "true" : "false";
+        public static string ToStringLower(this bool b) => b ? "true" : "false";
 
         /// <summary>
         /// Returns the read collection type of the given collection type symbol.

@@ -6,20 +6,17 @@ public sealed class BonFacade
     private readonly SchemaByTypeStore _schemaByTypeStore;
     private readonly DeserializerStore _deserializerStore;
     private readonly WriterStore _writerStore;
-    private readonly DefaultValueGetterFactory _defaultValueGetterFactory;
 
     internal BonFacade(
         SchemaContentsStore schemaContentsStore,
         SchemaByTypeStore schemaByTypeStore,
         DeserializerStore deserializerStore,
-        WriterStore writerStore,
-        DefaultValueGetterFactory defaultValueGetterFactory)
+        WriterStore writerStore)
     {
         _schemaContentsStore = schemaContentsStore;
         _schemaByTypeStore = schemaByTypeStore;
         _deserializerStore = deserializerStore;
         _writerStore = writerStore;
-        _defaultValueGetterFactory = defaultValueGetterFactory;
     }
 
     public void AddSchema(Type type, Schema schema)
@@ -41,9 +38,6 @@ public sealed class BonFacade
     public void AddMemberType(Type unionType, int memberId, Type memberType) =>
         _deserializerStore.AddMemberType(unionType, memberId, memberType);
 
-    public void AddDefaultValueGetter(Type type, Delegate getDefaultValue) =>
-        _defaultValueGetterFactory.AddDefaultValueGetter(type, getDefaultValue);
-
-    public void AddDeserializer(Type type, bool isNullable, Delegate deserializer) =>
-        _deserializerStore.Add(type, isNullable, deserializer);
+    public void AddDeserializer(Type type, Delegate deserializer) =>
+        _deserializerStore.Add(type, deserializer);
 }

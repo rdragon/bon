@@ -119,5 +119,5 @@ internal sealed class SchemaStoreUpdater(
         schemaByTypeStore.AppendHash(ref hashCode);
     }
 
-    public int GetContentsId(Type type) => ((CustomSchema)schemaByTypeStore.GetSchemaByType(new AnnotatedType(type, type.IsNullable(false)))).ContentsId;
+    public int GetContentsId(Type type) => ((CustomSchema)schemaByTypeStore.GetSchemaByType(type)).ContentsId;
 }

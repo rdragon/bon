@@ -1,6 +1,6 @@
 ﻿namespace Bon.Serializer.Deserialization;
 
-internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore, DefaultValueGetterFactory defaultValueGetterFactory) : IUseReflection
+internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : IUseReflection
 {
     public Delegate CreateDeserializer<T>(Tuple2Schema sourceSchema, Tuple2Schema targetSchema)
     {
@@ -20,7 +20,6 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore, De
 
         var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1, targetSchema.InnerSchema1.IsNullable);
         var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2, targetSchema.InnerSchema2.IsNullable);
-        var getDefaultValue = defaultValueGetterFactory.GetDefaultValueGetter<(T1, T2)>(targetSchema.IsNullable);
         var sourceIsNullable = sourceSchema.IsNullable;
         var targetIsNullable = targetSchema.IsNullable;
 
@@ -28,9 +27,7 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore, De
         {
             return (Read<(T1, T2)?>)((BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeSerializer.NULL)
                 {
                     return null;
                 }
@@ -46,11 +43,9 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore, De
         {
             return (Read<(T1, T2)>)((BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeSerializer.NULL)
                 {
-                    return getDefaultValue(input);
+                    return default;
                 }
 
                 var item1 = readItem1(input);

@@ -32,24 +32,6 @@ namespace Bon.SourceGeneration
             return $"new Dictionary<{KeyDefinition.Type}, {ValueDefinition.Type}>({count})";
         }
 
-        public string GetDefaultValue()
-        {
-            switch (DictionaryType)
-            {
-                case DictionaryType.Dictionary:
-                    return "[]";
-
-                case DictionaryType.IDictionary:
-                    return GetConstructor("0");
-
-                case DictionaryType.IReadOnlyDictionary:
-                    return $"System.Collections.ObjectModel.ReadOnlyDictionary<{KeyDefinition.Type}, {ValueDefinition.Type}>.Empty";
-
-                default:
-                    throw new InvalidOperationException($"Cannot handle '{DictionaryType}'.");
-            }
-        }
-
         public override IDefinition ToNullable() => throw new InvalidOperationException();
 
         public override IEnumerable<IDefinition> GetInnerDefinitions()

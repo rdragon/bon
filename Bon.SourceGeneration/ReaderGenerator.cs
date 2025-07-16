@@ -30,8 +30,8 @@ namespace Bon.SourceGeneration
                 _codeGenerator.AddStatement(
                     $"bonFacade.AddDeserializer(" +
                     $"{definition.TypeOf}, " +
-                    $"{definition.IsNullable.GetName()}, " +
-                    $"(Bon.Serializer.Deserialization.Read<{definition.Type}>){GetMethodName(definition.IsNullable)}{id});");
+                    $"{definition.IsNullable.ToStringLower()}, " +
+                    $"(Bon.Serializer.Deserialization.Read<{definition.Type}>){GetMethodName(definition.IsNullable, id)});");
             }
         }
 
@@ -91,16 +91,36 @@ namespace Bon.SourceGeneration
         {
             // See bookmark 831853187 for all places where a record is serialized/deserialized.
 
+            if (definition.IsReferenceType)
+            {
+                AddReadMethodForClass(definition, id);
+            }
+            else
+            {
+                if (definition.IsNullable)
+                {
+                    AddReadMethodForNullableStruct(definition, id);
+                }
+                else
+                {
+                    AddReadMethodForStruct(definition, id);
+                }
+            }
+        }
+
+        private void AddReadMethodForClass(RecordDefinition definition, int id)
+        {
             var method = StartReadMethod(id, definition);
 
-            if (definition.IsNullable)
-            {
-                method.Add($"return {Read(NativeDefinition.Byte)} == NULL ? null : {Read(id, false)};");
-                AddMethod(method);
+            method.Add($"if ({Read(NativeDefinition.Byte)} == NULL) return null;");
 
-                return;
-            }
+            ReadMembers(method, definition);
 
+            AddMethod(method);
+        }
+
+        private void ReadMembers(List<string> method, RecordDefinition definition)
+        {
             foreach (var member in definition.Members)
             {
                 method.Add($"var arg{member.ConstructorIndex} = {Read(member.Definition)};");
@@ -110,6 +130,22 @@ namespace Bon.SourceGeneration
 
             method.AddEmptyLine();
             method.Add($"return {definition.GetLongConstructorName(_codeGenerator)}({args});");
+        }
+
+        private void AddReadMethodForNullableStruct(RecordDefinition definition, int id)
+        {
+            var method = StartReadMethod(id, definition);
+
+            method.Add($"return {Read(NativeDefinition.Byte)} == NULL ? null : {Read(id, false)};");
+
+            AddMethod(method);
+        }
+
+        private void AddReadMethodForStruct(RecordDefinition definition, int id)
+        {
+            var method = StartReadMethod(id, definition);
+
+            ReadMembers(method, definition);
 
             AddMethod(method);
         }
@@ -118,14 +154,7 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            if (definition.IsNullable)
-            {
-                method.Add("if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count) return null;");
-            }
-            else
-            {
-                method.Add("var count = (int)WholeNumberSerializer.Read(input.Reader);");
-            }
+            method.Add($"if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count) return null;");
 
             if (definition.ReadCollectionType == ReadCollectionType.Array && definition.ElementDefinition.Type == "byte")
             {
@@ -163,14 +192,7 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            if (definition.IsNullable)
-            {
-                method.Add("if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count) return null;");
-            }
-            else
-            {
-                method.Add("var count = (int)WholeNumberSerializer.Read(input.Reader);");
-            }
+            method.Add($"if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count) return null;");
 
             method.Add($"var dictionary = {definition.GetConstructor("count")};");
             method.Add("for (var i = 0; i < count; i++)");
@@ -193,8 +215,7 @@ namespace Bon.SourceGeneration
 
             if (definition.IsNullable)
             {
-                method.Add($"var firstByte = {Read(NativeDefinition.Byte)};");
-                method.Add("if (firstByte == NULL) return null;");
+                method.Add($"if ({Read(NativeDefinition.Byte)} == NULL) return null;");
             }
 
             var counter = 0;
@@ -216,17 +237,10 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            if (definition.IsNullable)
-            {
-                method.Add($"return ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is int id) ? ReadNow{id}(input, id) : null;");
-            }
-            else
-            {
-                AddReadNowMethod(definition, id);
-                method.Add($"return ReadNow{id}(input, (int)WholeNumberSerializer.Read(input.Reader));");
-            }
+            method.Add($"return ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is int id) ? ReadNow{id}(input, id) : null;");
 
             AddMethod(method);
+            AddReadNowMethod(definition, id);
         }
 
         private void AddReadNowMethod(UnionDefinition definition, int id)
@@ -247,7 +261,7 @@ namespace Bon.SourceGeneration
         }
 
         private static List<string> StartReadMethod(int id, IDefinition definition) =>
-            new List<string> { $"private static {definition.Type} {GetMethodName(definition.IsNullable)}{id}(BonInput input)", "{" };
+            new List<string> { $"private static {definition.Type} {GetMethodName(definition.IsNullable, id)}(BonInput input)", "{" };
 
         private static List<string> StartReadNowMethod(int id, string type) =>
             new List<string> { $"private static {type} ReadNow{id}(BonInput input, int id)", "{" };
@@ -273,8 +287,8 @@ namespace Bon.SourceGeneration
             }
         }
 
-        private string Read(int id, bool isNullable) => $"{GetMethodName(isNullable)}{id}(input)";
+        private string Read(int id, bool isNullable) => $"{GetMethodName(isNullable, id)}(input)";
 
-        private static string GetMethodName(bool isNullable) => isNullable ? "ReadNullable" : "Read";
+        private static string GetMethodName(bool isNullable, int id) => (isNullable ? "ReadNullable" : "Read") + id;
     }
 }

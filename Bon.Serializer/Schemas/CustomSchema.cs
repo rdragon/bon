@@ -3,7 +3,7 @@
 /// <summary>
 /// A <see cref="RecordSchema"/> or <see cref="UnionSchema"/>.
 /// </summary>
-public abstract class CustomSchema(SchemaType schemaType, bool isNullable) : Schema(schemaType, isNullable)
+public abstract class CustomSchema(SchemaType schemaType) : Schema(schemaType)
 {
     /// <summary>
     /// The members of the record or union, ordered by ID.
@@ -52,7 +52,6 @@ public abstract class CustomSchema(SchemaType schemaType, bool isNullable) : Sch
     public override void AppendHashCode(Dictionary<Schema, int> ancestors, ref HashCode hashCode)
     {
         hashCode.Add(SchemaType);
-        hashCode.Add(IsNullable);
 
         if (ancestors.TryAdd(this, ancestors.Count))
         {
@@ -72,9 +71,9 @@ public abstract class CustomSchema(SchemaType schemaType, bool isNullable) : Sch
 
     public void SetMembers(params SchemaMember[] members) => Members = members;
 
-    public static CustomSchema Create(SchemaType schemaType, bool isNullable, IReadOnlyList<SchemaMember> members, int contentsId)
+    public static CustomSchema Create(SchemaType schemaType, IReadOnlyList<SchemaMember> members, int contentsId)
     {
-        var schema = Create(schemaType, isNullable);
+        var schema = Create(schemaType);
 
         schema.Members = members;
         schema.ContentsId = contentsId;
@@ -85,12 +84,12 @@ public abstract class CustomSchema(SchemaType schemaType, bool isNullable) : Sch
     /// <summary>
     /// Creates a custom schema that does not yet have any members nor a contents ID.
     /// </summary>
-    public static CustomSchema Create(SchemaType schemaType, bool isNullable)
+    public static CustomSchema Create(SchemaType schemaType)
     {
         CustomSchema schema = schemaType switch
         {
-            SchemaType.Record => new RecordSchema(schemaType, isNullable),
-            SchemaType.Union => new UnionSchema(schemaType, isNullable),
+            SchemaType.Record => new RecordSchema(schemaType),
+            SchemaType.Union => new UnionSchema(schemaType),
             _ => throw new ArgumentOutOfRangeException(nameof(schemaType), schemaType, null),
         };
 
@@ -113,11 +112,11 @@ public sealed record class SchemaMember(int Id, Schema Schema)
 /// Represents a class or a struct.
 /// The class or struct doesn't have to be a C# record (but it can be).
 /// </summary>
-public sealed class RecordSchema(SchemaType schemaType, bool isNullable) : CustomSchema(schemaType, isNullable);
+public sealed class RecordSchema(SchemaType schemaType) : CustomSchema(schemaType);
 
 /// <summary>
 /// Represents an interface or an abstract class.
 /// </summary>
 /// <param name="ContentsId">An ID that uniquely identifies the members inside the schema.</param>
 /// <param name="Members">The members of the union, ordered by ID.</param>
-public sealed class UnionSchema(SchemaType schemaType, bool isNullable) : CustomSchema(schemaType, isNullable);
+public sealed class UnionSchema(SchemaType schemaType) : CustomSchema(schemaType);

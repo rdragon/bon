@@ -44,6 +44,7 @@ namespace Bon.SourceGeneration
             AppendClassBody(
                 "#nullable enable",
                 "",
+                "// v3",
                 "using System;",
                 "using System.Collections.Generic;",
                 "using System.IO;",

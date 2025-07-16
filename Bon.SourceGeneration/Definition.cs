@@ -19,8 +19,6 @@ namespace Bon.SourceGeneration
             IsNullable = isNullable;
         }
 
-        public AnnotatedSchemaType AnnotatedSchemaType => new AnnotatedSchemaType(SchemaType, IsNullable);
-
         // Equality is important for incremental source generators.
         public override bool Equals(object obj)
         {
@@ -121,5 +119,7 @@ namespace Bon.SourceGeneration
         public bool IsReferenceType => !IsValueType;
 
         public virtual string SchemaBaseClass => "Schema";
+
+        public string SafeType => IsReferenceType ? TypeNonNullable + "?" : Type;
     }
 }

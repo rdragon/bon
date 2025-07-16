@@ -454,13 +454,6 @@ public class BonSerializerTestBase
 
     public int GetContentsId<T>() => BonSerializer.GetContentsId(typeof(T));
 
-    protected void TestDefaultValue<T>(T expected) => Assert.Equal(expected, GetDefaultValue<T>());
-
-    protected T GetDefaultValue<T>()
-    {
-        return (T)BonSerializer.LoadDefaultValue(typeof(T));
-    }
-
     protected void RequireSameSerialization<T1, T2>(T1 expected, T2 actual, BonSerializerOptions? expectedValueOptions = null) =>
         Assert.Equal(Serialize(expected, expectedValueOptions), Serialize(actual));
 

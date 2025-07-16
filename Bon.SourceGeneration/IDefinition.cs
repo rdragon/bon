@@ -19,11 +19,11 @@ namespace Bon.SourceGeneration
         /// </summary>
         string TypeNonNullable { get; }
 
+        string SafeType { get; }
+
         SchemaType SchemaType { get; }
 
         bool IsNullable { get; }
-
-        AnnotatedSchemaType AnnotatedSchemaType { get; }
 
         /// <summary>
         /// Returns e.g. "typeof(ExampleNamespace.ExampleClass)".

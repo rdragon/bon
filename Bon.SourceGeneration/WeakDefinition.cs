@@ -30,7 +30,7 @@ namespace Bon.SourceGeneration
 
         public override string SchemaBaseClass => "NativeSchema";
 
-        public string GetWriteMethod() => $"NativeSerializer.Write{SimpleType}";
+        public string GetWriteMethodName() => $"NativeSerializer.Write{SimpleType}";
 
         // Bookmark 659516266 (char serialization)
         public static WeakDefinition Char { get; } = new WeakDefinition("char", "Char", false, NativeDefinition.WholeNumber);
