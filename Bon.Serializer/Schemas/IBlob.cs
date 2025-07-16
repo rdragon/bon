@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Represents a single blob of binary data.
-/// This blob is used to store the schemas.
+/// This blob is used to store the layouts.
 /// </summary>
 public interface IBlob
 {
@@ -16,16 +16,16 @@ public interface IBlob
     /// <param name="entityTag">
     /// The blob will only be updated if the entity tag of the blob matches this entity tag.
     /// </param>
-    Task<EntityTag?> TryAppend(Stream stream, EntityTag entityTag);
+    Task<EntityTag?> TryAppendAsync(Stream stream, EntityTag entityTag);
 
     /// <summary>
     /// Loads the blob into the provided stream.
     /// Returns the entity tag of the blob.
     /// </summary>
-    Task<EntityTag> LoadTo(Stream stream);
+    Task<EntityTag> LoadToAsync(Stream stream);
 
     /// <summary>
     /// Returns the entity tag of the blob.
     /// </summary>
-    Task<EntityTag> GetEntityTag();
+    Task<EntityTag> GetEntityTagAsync();
 }

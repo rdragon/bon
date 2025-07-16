@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Bon.SourceGeneration
@@ -27,6 +28,16 @@ namespace Bon.SourceGeneration
             }
 
             return builder.ToString();
+        }
+
+        public static string SwapNullability(string type, bool isValueType)
+        {
+            if (isValueType)
+            {
+                return type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type + "?";
+            }
+
+            return type;
         }
     }
 }

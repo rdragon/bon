@@ -57,7 +57,7 @@ public class WholeNumberNullableBenchmark
         _stream.Position = 0;
         for (int i = 0; i < N; i++)
         {
-            WholeNumberSerializer.WriteNullable(_writer, _array[i]);
+            WholeNumberSerializer.Write(_writer, _array[i]);
         }
         return _stream;
     }
@@ -69,7 +69,7 @@ public class WholeNumberNullableBenchmark
         var sum = 0UL;
         for (int i = 0; i < N; i++)
         {
-            sum += WholeNumberSerializer.ReadNullable(_reader)!.Value;
+            sum += WholeNumberSerializer.Read(_reader)!.Value;
         }
         return sum;
     }

@@ -1,5 +1,4 @@
-﻿// Bookmark 413211217
-namespace Bon.Serializer.Test.Serialization;
+﻿namespace Bon.Serializer.Test.Serialization;
 
 public class NativeSerializerTest
 {
@@ -18,13 +17,10 @@ public class NativeSerializerTest
     public static TheoryData<long> Numbers => new(NumbersArray);
     public static TheoryData<long?> NumbersNullable => new([null, .. NumbersArray]);
 
-    [Fact]
-    public void SerializeString() => RoundTrip("abc", NativeSerializer.WriteString, NativeSerializer.ReadString);
-
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void SerializeNullableString(string? value) => RoundTrip(value, NativeSerializer.WriteString, NativeSerializer.ReadNullableString);
+    public void SerializeString(string? value) => RoundTrip(value, NativeSerializer.WriteString, NativeSerializer.ReadString);
 
     [Theory]
     [InlineData(false)]
@@ -86,15 +82,10 @@ public class NativeSerializerTest
     public void SerializeNullableDouble(long? value) => RoundTrip(value, NativeSerializer.WriteNullableDouble, NativeSerializer.ReadNullableDouble);
 
     [Theory]
-    [MemberData(nameof(Numbers))]
-    public void SerializeDecimal(long value) => RoundTrip(value, NativeSerializer.WriteDecimal, NativeSerializer.ReadDecimal);
-
-    [Theory]
     [MemberData(nameof(NumbersNullable))]
-    public void SerializeNullableDecimal(long? value) => RoundTrip(value, NativeSerializer.WriteNullableDecimal, NativeSerializer.ReadNullableDecimal);
+    public void SerializeDecimal(long? value) => RoundTrip(value, NativeSerializer.WriteNullableDecimal, NativeSerializer.ReadNullableDecimal);
 
-    [Fact] public void SerializeGuid() => RoundTrip(TestHelper.Guid, NativeSerializer.WriteGuid, NativeSerializer.ReadGuid);
-    [Fact] public void SerializeNullableGuid() => RoundTrip(TestHelper.Guid, NativeSerializer.WriteNullableGuid, NativeSerializer.ReadNullableGuid);
+    [Fact] public void SerializeGuid() => RoundTrip(TestHelper.Guid, NativeSerializer.WriteNullableGuid, NativeSerializer.ReadNullableGuid);
     [Fact] public void SerializeNullGuid() => RoundTrip(null, NativeSerializer.WriteNullableGuid, NativeSerializer.ReadNullableGuid);
 
     private static void RoundTrip<T>(T value, Action<BinaryWriter, T> writer, Func<BinaryReader, T> reader, int? expectedLength = null)

@@ -12,5 +12,11 @@ public sealed class BonSerializerOptions
     /// If true then the resulting schema type can be smaller.
     /// For example, if the value fits in a byte, its type doesn't matter, the resulting schema type will be that of a byte.
     /// </summary>
-    internal bool AllowSchemaTypeOptimization { get; init; } = true;
+    internal bool AllowSchemaTypeOptimization { get; set; } = true;
+
+    /// <summary>
+    /// A hidden option that is used by unit tests.
+    /// If false then the header is not included in the serialized message.
+    /// </summary>
+    internal bool IncludeHeader { get; set; } = true;
 }

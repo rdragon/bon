@@ -1,6 +1,6 @@
 ﻿namespace Bon.Serializer.Test.BonSerialization;
 
-// Bookmark 659516266 (char serialization)
+// Bookmark 659516266 (native serialization)
 public sealed class CharTest : BonSerializerTestBase
 {
     [Fact] public void SkipChar() => DeserializeSlow(WithChar, 0);
@@ -9,11 +9,6 @@ public sealed class CharTest : BonSerializerTestBase
 
     [Fact] public void DefaultNullableCharRoundTrip() => RoundTripSlow(DefaultNullableChar);
     [Fact] public void DefaultWithNullableCharRoundTrip() => RoundTripFast(DefaultWithNullableChar);
-
-    [Fact] public void CharDefaultValue() => TestDefaultValue(DefaultChar);
-    [Fact] public void NullableCharDefaultValue() => TestDefaultValue(DefaultNullableChar);
-    [Fact] public void WithCharDefaultValue() => TestDefaultValue(DefaultWithChar);
-    [Fact] public void WithNullableCharDefaultValue() => TestDefaultValue(DefaultWithNullableChar);
 
     [Fact] public void CharRoundTrip() => RoundTripSlow(Char);
     [Fact] public void NullableCharRoundTrip() => RoundTripSlow(NullableChar);

@@ -61,6 +61,9 @@ public sealed class SkipperTest : BonSerializerTestBase
     [Fact] public void SkipNode2() => DeserializeSlow(Node2, 0);
     [Fact] public void SkipNode3() => DeserializeSlow(Node3, 0);
 
+    [Fact] public void SkipIAnimal() => DeserializeSlow(IAnimal, 0);
+    [Fact] public void SkipIDog() => DeserializeSlow(IDog, 0);
+
     // Test the code at bookmark 563732229
     [Fact] public void SkipFourInts() => DeserializeSlow(new FourInts(1, 2, 3, 4), DefaultWithInt);
 }

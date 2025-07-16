@@ -1,8 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Bon.Serializer.Test")]
-[assembly: InternalsVisibleTo("Bon.FileInspector")]
-[assembly: InternalsVisibleTo("Bon.FileInspector.Test")]
 
 namespace Bon.Serializer;
 
@@ -11,103 +9,91 @@ namespace Bon.Serializer;
 /// </summary>
 public sealed partial class BonSerializer
 {
-    private readonly BlockStore _blockStore;
-    private readonly SchemaDataResolver _schemaDataResolver;
-    private readonly SchemaDataStore _schemaDataStore;
+    private readonly LayoutStore _layoutStore;
     private readonly WriterStore _writerStore;
-    private readonly SimpleWriterStore _simpleWriterStore;
-    private readonly SchemaStoreUpdater _schemaStoreUpdater;
+    private readonly LayoutStorage _layoutStorage;
     private readonly DeserializerStore _deserializerStore;
+    private readonly SchemaStore _schemaStore;
+
+    /// <summary>
+    /// Whether during the creation of the serializer new layouts were found and saved to the blob.
+    /// </summary>
+    public bool FoundNewLayouts { get; }
 
     private BonSerializer(
-        BlockStore blockStore,
-        SchemaDataResolver schemaDataResolver,
-        SchemaDataStore schemaDataStore,
+        LayoutStore layoutStore,
         WriterStore writerStore,
-        SimpleWriterStore simpleWriterStore,
-        SchemaStoreUpdater schemaStoreUpdater,
-        DeserializerStore deserializerStore)
+        LayoutStorage layoutStorage,
+        DeserializerStore deserializerStore,
+        SchemaStore schemaStore,
+        bool foundNewLayouts)
     {
-        _blockStore = blockStore;
-        _schemaDataResolver = schemaDataResolver;
-        _schemaDataStore = schemaDataStore;
+        _layoutStore = layoutStore;
         _writerStore = writerStore;
-        _simpleWriterStore = simpleWriterStore;
-        _schemaStoreUpdater = schemaStoreUpdater;
+        _layoutStorage = layoutStorage;
         _deserializerStore = deserializerStore;
+        _schemaStore = schemaStore;
+        FoundNewLayouts = foundNewLayouts;
     }
 
     /// <summary>
     /// Creates a new <see cref="BonSerializer"/> instance.
-    /// The serializer will contain the schemas found in <paramref name="bonSerializerContext"/> and <paramref name="schemasStorage"/>.
-    /// During creation the <paramref name="schemasStorage"/> blob is updated with all the schemas found in
-    /// <paramref name="bonSerializerContext"/>.
+    /// This method loads the layouts from the provided blob and updates the blob if any new layouts were found by
+    /// the source generation context.
     /// </summary>
-    /// <param name="bonSerializerContext"></param>
-    /// <param name="schemasStorage">
-    /// The blob that is used to save and load the schemas.
-    /// The same blob must be used for serialization and deserialization.
+    /// <param name="bonSerializerContext">
+    /// The context that contains information about the types that can be serialized and deserialized.
     /// </param>
-    public static async Task<BonSerializer> CreateAsync(IBonSerializerContext bonSerializerContext, IBlob schemasStorage)
+    /// <param name="blob">
+    /// The blob that is used to keep track of the known layouts.
+    /// </param>
+    public static async Task<BonSerializer> CreateAsync(IBonSerializerContext bonSerializerContext, IBlob blob)
     {
-        ISourceGenerationContext sourceGenerationContext = bonSerializerContext.SourceGenerationContext;
-        SchemaStorage schemaStorage = new(schemasStorage);
-        SchemaContentsStore schemaContentsStore = new();
-        SchemaByTypeStore schemaByTypeStore = new();
-        SchemaDataResolver schemaDataResolver = new(schemaContentsStore);
-        BlockStore blockStore = new();
+        LayoutStore layoutStore = new();
+        LayoutStorage layoutStorage = new(blob, layoutStore);
+        SchemaStore schemaStore = new();
         WriterStore writerStore = new();
-        SimpleWriterStore simpleWriterStore = new();
-        SchemaDataStore schemaDataStore = new(schemaByTypeStore);
-        DefaultValueGetterFactory defaultValueGetterFactory = new();
-        DeserializerStore deserializerStore = new(schemaByTypeStore, defaultValueGetterFactory);
-        BonFacade bonFacade = new(schemaContentsStore, schemaByTypeStore, deserializerStore, writerStore, defaultValueGetterFactory);
-        SchemaStoreUpdater schemaStoreUpdater = new(schemaStorage, blockStore, schemaContentsStore, schemaByTypeStore, schemaDataResolver, sourceGenerationContext, bonFacade);
+        DeserializerStore deserializerStore = new(schemaStore);
+        BonFacade bonFacade = new(deserializerStore, writerStore);
+        SchemaLoader schemaLoader = new(layoutStorage, layoutStore, schemaStore, bonSerializerContext.SourceGenerationContext);
 
-        await schemaStoreUpdater.InitializeSchemaStore().ConfigureAwait(false);
-        writerStore.AddBuiltInWriters();
+        var foundNewLayouts = await schemaLoader.RunAsync().ConfigureAwait(false);
+        writerStore.AddNativeWriters();
         deserializerStore.AddNativeReaders();
-        sourceGenerationContext.Run(bonFacade);
-        simpleWriterStore.Initialize();
+        bonSerializerContext.SourceGenerationContext.Run(bonFacade);
 
         return new BonSerializer(
-            blockStore,
-            schemaDataResolver,
-            schemaDataStore,
+            layoutStore,
             writerStore,
-            simpleWriterStore,
-            schemaStoreUpdater,
-            deserializerStore);
+            layoutStorage,
+            deserializerStore,
+            schemaStore,
+            foundNewLayouts);
     }
 
     /// <summary>
-    /// Creates a new <see cref="BonSerializer"/> instance.
-    /// The serializer will contain the schemas found in <paramref name="bonSerializerContext"/> and <paramref name="schemaStorageFile"/>.
-    /// During creation the <paramref name="schemaStorageFile"/> is updated with all the schemas found in
-    /// <paramref name="bonSerializerContext"/>.
+    /// Loads the latest layouts from the storage.
+    /// If the entity tag hasn't changed, the blob contents are not downloaded.
     /// </summary>
-    /// <param name="bonSerializerContext"></param>
-    /// <param name="schemaStorageFile">
-    /// The path to the file that is used to save and load the schemas.
-    /// The same file must be used for serialization and deserialization.
-    /// </param>
-    public static Task<BonSerializer> CreateAsync(IBonSerializerContext bonSerializerContext, string schemaStorageFile) =>
-        CreateAsync(bonSerializerContext, new FileSystemBlob(schemaStorageFile));
+    public async Task LoadLatestLayoutsAsync()
+    {
+        await _layoutStorage.LoadLatestLayoutsAsync().ConfigureAwait(false);
+    }
 
-    internal int GetContentsId(Type type) => _schemaStoreUpdater.GetContentsId(type);
-    internal object LoadDefaultValue(Type type) => _deserializerStore.LoadDefaultValue(type);
-    internal uint LastBlockId => _blockStore.LastBlockId;
+    /// <summary>
+    /// The number of layouts that are known.
+    /// </summary>
+    public int LayoutCount => _layoutStore.Count;
+
+    /// <summary>
+    /// Returns the schema for the provided type.
+    /// </summary>
+    internal Schema GetSchema(Type type) => _schemaStore.GetOrAddSchema(type);
+
+    /// <summary>
+    /// The number of cached deserializers.
+    /// </summary>
     internal int DeserializerCount => _deserializerStore.DeserializerCount;
 
-    /// <summary>
-    /// Returns a hash that is mostly based on the schemas inside this serializer.
-    /// </summary>
-    internal int GetSchemaHash()
-    {
-        var hashCode = new HashCode();
-        _blockStore.AppendHash(ref hashCode);
-        _schemaStoreUpdater.AppendHash(ref hashCode);
-
-        return hashCode.ToHashCode();
-    }
+    internal IEnumerable<Layout> KnownLayouts => _layoutStore.Layouts;
 }

@@ -20,58 +20,30 @@ partial class BonSerializer
     {
         var writer = new BinaryWriter(stream);
 
-        var (writeValue, usesCustomSchemas, simpleWriterType) = _writerStore.GetWriter<T>();
+        var (writeValue, simpleWriterType) = _writerStore.GetWriter<T>();
 
         if (options?.AllowSchemaTypeOptimization != false && simpleWriterType != SimpleWriterType.None)
         {
-            _simpleWriterStore.GetWriter<T>(simpleWriterType)(writer, value);
+            var output = new BonOutput(writer, options);
+            SimpleWriter.GetWriter<T>(simpleWriterType)(output, value);
             return;
         }
 
-        var blockId = usesCustomSchemas ? _blockStore.LastBlockId : 0;
+        if (options?.IncludeHeader != false)
+        {
+            WriteSchema(writer, typeof(T));
+        }
 
-        WriteHeader(writer, blockId, typeof(T));
         writeValue(writer, value);
     }
 
-    /// <param name="blockId">If zero then no block ID is included in the header.</param>
-    private void WriteHeader(BinaryWriter writer, uint blockId, Type type)
+    private void WriteSchema(BinaryWriter writer, Type type)
     {
-        var schemaData = _schemaDataStore.GetSchemaData(type);
-        WriteHeader(writer, blockId, schemaData);
+        WriteSchema(writer, _schemaStore.GetOrAddSchema(type));
     }
 
-    /// <param name="blockId">If zero then no block ID is included in the header.</param>
-    private static void WriteHeader(BinaryWriter writer, uint blockId, SchemaData schemaData)
+    private static void WriteSchema(BinaryWriter writer, Schema schema)
     {
-        var formatType = GetFormatType(blockId, schemaData);
-        writer.Write((byte)formatType);
-
-        if (formatType == FormatType.Full)
-        {
-            writer.Write(blockId);
-        }
-
-        if (formatType is FormatType.Full or FormatType.WithoutBlockId)
-        {
-            SchemaSerializer.Write(writer, schemaData);
-        }
-    }
-
-    private static FormatType GetFormatType(uint blockId, SchemaData schemaData)
-    {
-        return (blockId, schemaData.SchemaType, schemaData.IsNullable) switch
-        {
-            (_, SchemaType.Byte, false) => FormatType.Byte,
-            (_, SchemaType.SByte, false) => FormatType.SByte,
-            (_, SchemaType.Short, false) => FormatType.Short,
-            (_, SchemaType.UShort, false) => FormatType.UShort,
-            (_, SchemaType.Int, false) => FormatType.Int,
-            (_, SchemaType.UInt, false) => FormatType.UInt,
-            (_, SchemaType.Long, false) => FormatType.Long,
-            (_, SchemaType.ULong, false) => FormatType.ULong,
-            (0, _, _) => FormatType.WithoutBlockId,
-            _ => FormatType.Full
-        };
+        new LayoutWriter(writer).WriteSchema(schema);
     }
 }

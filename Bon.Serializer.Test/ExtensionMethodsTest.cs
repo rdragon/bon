@@ -27,8 +27,8 @@ public sealed class ExtensionMethodsTest
     [InlineData(typeof(Dictionary<int, int>), typeof(int))]
     [InlineData(typeof(IDictionary<int, int>), typeof(int))]
     [InlineData(typeof(IReadOnlyDictionary<int, int>), typeof(int))]
-    public void TryGetInnerTypesOfDictionary(Type type, Type? expectedKeyType)
+    public void TryGetTypeArgumentsOfDictionary(Type type, Type? expectedKeyType)
     {
-        Assert.Equal(expectedKeyType, type.TryGetInnerTypesOfDictionary()?.KeyType);
+        Assert.Equal(expectedKeyType, type.TryGetTypeArgumentsOfDictionary()?.KeyType);
     }
 }

@@ -8,75 +8,68 @@ internal static class JsonToBonSerializer
     {
         switch (schema)
         {
-            case NativeSchema nativeSchema: SerializeNative(writer, jsonNode, nativeSchema); break;
-            case UnionSchema unionSchema: SerializeUnion(writer, jsonNode, unionSchema); break;
-            case ArraySchema arraySchema: SerializeArray(writer, jsonNode, arraySchema); break;
-            case DictionarySchema dictionarySchema: SerializeDictionary(writer, jsonNode, dictionarySchema); break;
-            default: SerializeRecordLike(writer, jsonNode, schema.IsNullable, schema.GetInnerSchemas().ToArray()); break;
+            case { IsNative: true }: SerializeNative(writer, jsonNode, schema); break;
+            case { IsUnion: true }: SerializeUnion(writer, jsonNode, schema); break;
+            case { IsArray: true }: SerializeArray(writer, jsonNode, schema); break;
+            default: SerializeRecordLike(writer, jsonNode, schema.IsNullable, schema); break;
         }
     }
 
-    private static void SerializeNative(BinaryWriter writer, JsonNode? jsonNode, NativeSchema schema)
+    private static void SerializeNative(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
-        switch ((schema.SchemaType, schema.IsNullable))
+        switch (schema.SchemaType)
         {
-            case (SchemaType.Bool, false): NativeSerializer.WriteBool(writer, ExpectNotNull(jsonNode).GetValue<bool>()); break;
-            case (SchemaType.Byte, false): NativeSerializer.WriteByte(writer, ExpectNotNull(jsonNode).GetValue<byte>()); break;
-            case (SchemaType.SByte, false): NativeSerializer.WriteSByte(writer, ExpectNotNull(jsonNode).GetValue<sbyte>()); break;
-            case (SchemaType.Short, false): NativeSerializer.WriteShort(writer, ExpectNotNull(jsonNode).GetValue<short>()); break;
-            case (SchemaType.UShort, false): NativeSerializer.WriteUShort(writer, ExpectNotNull(jsonNode).GetValue<ushort>()); break;
-            case (SchemaType.Int, false): NativeSerializer.WriteInt(writer, ExpectNotNull(jsonNode).GetValue<int>()); break;
-            case (SchemaType.UInt, false): NativeSerializer.WriteUInt(writer, ExpectNotNull(jsonNode).GetValue<uint>()); break;
-            case (SchemaType.Long, false): NativeSerializer.WriteLong(writer, ExpectNotNull(jsonNode).GetValue<long>()); break;
-            case (SchemaType.ULong, false): NativeSerializer.WriteULong(writer, ExpectNotNull(jsonNode).GetValue<ulong>()); break;
-            case (SchemaType.Float, false): NativeSerializer.WriteFloat(writer, ExpectNotNull(jsonNode).GetValue<float>()); break;
-            case (SchemaType.Double, false): NativeSerializer.WriteDouble(writer, ExpectNotNull(jsonNode).GetValue<double>()); break;
-            case (SchemaType.Decimal, false): NativeSerializer.WriteDecimal(writer, ExpectNotNull(jsonNode).GetValue<decimal>()); break;
-            case (SchemaType.Guid, false): NativeSerializer.WriteGuid(writer, ExpectNotNull(jsonNode).GetValue<Guid>()); break;
-
-            case (SchemaType.String, _): NativeSerializer.WriteString(writer, jsonNode?.GetValue<string>()); break;
-            case (SchemaType.Bool, true): NativeSerializer.WriteNullableBool(writer, jsonNode?.GetValue<bool>()); break;
-            case (SchemaType.WholeNumber, true): WholeNumberSerializer.WriteNullable(writer, jsonNode?.GetValue<ulong>()); break;
-            case (SchemaType.SignedWholeNumber, true): WholeNumberSerializer.WriteNullableSigned(writer, jsonNode?.GetValue<long>()); break;
-            case (SchemaType.Float, true): NativeSerializer.WriteNullableFloat(writer, jsonNode?.GetValue<float>()); break;
-            case (SchemaType.Double, true): NativeSerializer.WriteNullableDouble(writer, jsonNode?.GetValue<double>()); break;
-            case (SchemaType.Decimal, true): NativeSerializer.WriteNullableDecimal(writer, jsonNode?.GetValue<decimal>()); break;
-            case (SchemaType.Guid, true): NativeSerializer.WriteNullableGuid(writer, jsonNode?.GetValue<Guid>()); break;
-
-            default: throw new ArgumentOutOfRangeException(nameof(schema), schema, null);
+            case SchemaType.String: NativeSerializer.WriteString(writer, jsonNode?.GetValue<string>()); break;
+            case SchemaType.Byte: NativeSerializer.WriteByte(writer, ExpectNotNull(jsonNode).GetValue<byte>()); break;
+            case SchemaType.SByte: NativeSerializer.WriteSByte(writer, ExpectNotNull(jsonNode).GetValue<sbyte>()); break;
+            case SchemaType.Short: NativeSerializer.WriteShort(writer, ExpectNotNull(jsonNode).GetValue<short>()); break;
+            case SchemaType.UShort: NativeSerializer.WriteUShort(writer, ExpectNotNull(jsonNode).GetValue<ushort>()); break;
+            case SchemaType.Int: NativeSerializer.WriteInt(writer, ExpectNotNull(jsonNode).GetValue<int>()); break;
+            case SchemaType.UInt: NativeSerializer.WriteUInt(writer, ExpectNotNull(jsonNode).GetValue<uint>()); break;
+            case SchemaType.Long: NativeSerializer.WriteLong(writer, ExpectNotNull(jsonNode).GetValue<long>()); break;
+            case SchemaType.ULong: NativeSerializer.WriteULong(writer, ExpectNotNull(jsonNode).GetValue<ulong>()); break;
+            case SchemaType.Float: NativeSerializer.WriteFloat(writer, ExpectNotNull(jsonNode).GetValue<float>()); break;
+            case SchemaType.Double: NativeSerializer.WriteDouble(writer, ExpectNotNull(jsonNode).GetValue<double>()); break;
+            case SchemaType.FractionalNumber: NativeSerializer.WriteNullableDouble(writer, jsonNode?.GetValue<double>()); break;
+            case SchemaType.NullableDecimal: NativeSerializer.WriteNullableDecimal(writer, jsonNode?.GetValue<decimal>()); break;
+            case SchemaType.WholeNumber: WholeNumberSerializer.Write(writer, jsonNode?.GetValue<ulong>()); break;
+            case SchemaType.SignedWholeNumber: WholeNumberSerializer.WriteSigned(writer, jsonNode?.GetValue<long>()); break;
         }
     }
 
-    private static void SerializeRecordLike(BinaryWriter writer, JsonNode? jsonNode, bool isNullable, IReadOnlyList<Schema> memberSchemas)
+    // for tuple and record
+    private static void SerializeRecordLike(BinaryWriter writer, JsonNode? jsonNode, bool isNullable, Schema schema)
     {
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
+
+        var valueSchemas = schema.IsTuple ? schema.SchemaArguments : schema.Members.Select(member => member.Schema).ToArray();
 
         if (isNullable)
         {
             if (jsonNode is null)
             {
-                writer.Write(NativeSerializer.NULL);
+                writer.Write(NativeWriter.NULL);
 
                 return;
             }
 
-            writer.Write(NativeSerializer.NOT_NULL);
+            writer.Write(NativeWriter.NOT_NULL);
         }
 
-        foreach (var (member, memberSchema) in ExpectArray(jsonNode, memberSchemas.Count).Zip(memberSchemas))
+        foreach (var (value, valueSchema) in ExpectArray(jsonNode, valueSchemas.Count).Zip(valueSchemas))
         {
-            Serialize(writer, member, memberSchema);
+            Serialize(writer, value, valueSchema);
         }
     }
 
-    private static void SerializeUnion(BinaryWriter writer, JsonNode? jsonNode, UnionSchema unionSchema)
+    private static void SerializeUnion(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
         // See bookmark 628227999 for all places where a union is serialized/deserialized.
 
-        if (unionSchema.IsNullable && jsonNode is null)
+        if (schema.IsNullable && jsonNode is null)
         {
-            WholeNumberSerializer.WriteNull(writer);
+            IntSerializer.WriteNull(writer);
 
             return;
         }
@@ -84,47 +77,29 @@ internal static class JsonToBonSerializer
         var parts = ExpectArray(jsonNode, 2);
         var unionId = ExpectNotNull(parts[0]).GetValue<int>();
         var unionNode = parts[1];
-        WholeNumberSerializer.Write(writer, unionId);
-        var recordSchema = unionSchema.Members.First(member => member.Id == unionId).Schema;
+        IntSerializer.Write(writer, unionId);
+        var recordSchema = schema.Members.First(member => member.Id == unionId).Schema;
         Serialize(writer, unionNode, recordSchema);
     }
 
-    private static void SerializeArray(BinaryWriter writer, JsonNode? jsonNode, ArraySchema arraySchema)
+    private static void SerializeArray(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
-        if (arraySchema.IsNullable && jsonNode is null)
+        if (jsonNode is null)
         {
-            WholeNumberSerializer.WriteNull(writer);
+            IntSerializer.WriteNull(writer);
 
             return;
         }
 
         var array = ExpectNotNull(jsonNode).AsArray();
-        WholeNumberSerializer.Write(writer, array.Count);
+        IntSerializer.Write(writer, array.Count);
 
         foreach (var element in array)
         {
-            Serialize(writer, element, arraySchema.InnerSchema);
+            Serialize(writer, element, schema.SchemaArguments[0]);
         }
-    }
-
-    private static void SerializeDictionary(BinaryWriter writer, JsonNode? jsonNode, DictionarySchema dictionarySchema)
-    {
-        // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
-
-        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2, false)
-        {
-            InnerSchema1 = dictionarySchema.InnerSchema1,
-            InnerSchema2 = dictionarySchema.InnerSchema2,
-        };
-
-        var arraySchema = new ArraySchema(SchemaType.Array, dictionarySchema.IsNullable)
-        {
-            InnerSchema = tupleSchema,
-        };
-
-        SerializeArray(writer, jsonNode, arraySchema);
     }
 
     private static JsonArray ExpectArray(JsonNode? jsonNode, int count) => ExpectCount(ExpectNotNull(jsonNode).AsArray(), count);

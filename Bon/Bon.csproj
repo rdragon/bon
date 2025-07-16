@@ -11,7 +11,7 @@
     <Copyright>ISC License</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>serializer;binary</PackageTags>
-    <Version>1.0.15</Version>
+    <Version>1.0.16</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

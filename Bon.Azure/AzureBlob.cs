@@ -7,7 +7,7 @@ namespace Bon.Azure;
 
 public sealed class AzureBlob(string connectionString, string container, string blobName) : IBlob
 {
-    public async Task<EntityTag?> TryAppend(Stream stream, EntityTag entityTag)
+    public async Task<EntityTag?> TryAppendAsync(Stream stream, EntityTag entityTag)
     {
         var client = GetBlobClient();
 
@@ -38,7 +38,7 @@ public sealed class AzureBlob(string connectionString, string container, string 
         }
     }
 
-    public async Task<EntityTag> LoadTo(Stream stream)
+    public async Task<EntityTag> LoadToAsync(Stream stream)
     {
         var client = GetBlobClient();
 
@@ -52,7 +52,7 @@ public sealed class AzureBlob(string connectionString, string container, string 
         return GetEntityTag(response);
     }
 
-    public async Task<EntityTag> GetEntityTag()
+    public async Task<EntityTag> GetEntityTagAsync()
     {
         var client = GetBlobClient();
 

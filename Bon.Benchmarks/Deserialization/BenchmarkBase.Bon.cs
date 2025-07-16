@@ -15,6 +15,6 @@ partial class BenchmarkBase<TIn, TOut>
     public TOut Bon()
     {
         _stream.Position = 0;
-        return _bonSerializer.Deserialize<TOut>(_stream);
+        return _bonSerializer.Deserialize<TOut>(_stream)!;
     }
 }

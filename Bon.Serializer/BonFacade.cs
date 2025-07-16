@@ -1,49 +1,30 @@
 ﻿namespace Bon.Serializer;
 
+/// <summary>
+/// This class is being called by the source generation context.
+/// </summary>
 public sealed class BonFacade
 {
-    private readonly SchemaContentsStore _schemaContentsStore;
-    private readonly SchemaByTypeStore _schemaByTypeStore;
     private readonly DeserializerStore _deserializerStore;
     private readonly WriterStore _writerStore;
-    private readonly DefaultValueGetterFactory _defaultValueGetterFactory;
 
     internal BonFacade(
-        SchemaContentsStore schemaContentsStore,
-        SchemaByTypeStore schemaByTypeStore,
         DeserializerStore deserializerStore,
-        WriterStore writerStore,
-        DefaultValueGetterFactory defaultValueGetterFactory)
+        WriterStore writerStore)
     {
-        _schemaContentsStore = schemaContentsStore;
-        _schemaByTypeStore = schemaByTypeStore;
         _deserializerStore = deserializerStore;
         _writerStore = writerStore;
-        _defaultValueGetterFactory = defaultValueGetterFactory;
     }
 
-    public void AddSchema(Type type, Schema schema)
-    {
-        if (_schemaByTypeStore.TryAdd(type, schema) && schema is CustomSchema customSchema)
-        {
-            var contentsId = _schemaContentsStore.GetOrAddContentsId(customSchema.Contents);
-            customSchema.ContentsId = contentsId;
-        }
-    }
+    public void AddWriter(Type type, Delegate writer) => _writerStore.Add(type, writer);
 
-    public void AddWriter<T>(Action<BinaryWriter, T> writeValue, bool usesCustomSchemas) => _writerStore.Add(writeValue, usesCustomSchemas);
-
-    public void AddEnumData(Type type, Type underlyingType, Func<Delegate, Delegate> addEnumCast) =>
-        _deserializerStore.AddEnumData(type, underlyingType, addEnumCast);
+    public void AddWeakDeserializerFactory<T1, T2>(Func<T2, T1> func) => _deserializerStore.AddWeakDeserializerFactory(func);
 
     public void AddReaderFactory(Type type, Delegate factory) => _deserializerStore.AddReaderFactory(type, factory);
 
     public void AddMemberType(Type unionType, int memberId, Type memberType) =>
-        _deserializerStore.AddMemberType(unionType, memberId, memberType);
+        _deserializerStore.MemberTypes[(unionType, memberId)] = memberType;
 
-    public void AddDefaultValueGetter(Type type, Delegate getDefaultValue) =>
-        _defaultValueGetterFactory.AddDefaultValueGetter(type, getDefaultValue);
-
-    public void AddDeserializer(Type type, bool isNullable, Delegate deserializer) =>
-        _deserializerStore.Add(type, isNullable, deserializer);
+    public void AddDeserializer(Type type, Delegate deserializer) =>
+        _deserializerStore.AddDeserializer(type, deserializer);
 }

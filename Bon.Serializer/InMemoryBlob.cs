@@ -5,7 +5,7 @@ public class InMemoryBlob : IBlob
 {
     protected readonly MemoryStream _stream = new();
 
-    public virtual Task<EntityTag?> TryAppend(Stream stream, EntityTag entityTag)
+    public virtual Task<EntityTag?> TryAppendAsync(Stream stream, EntityTag entityTag)
     {
         EntityTag? result = null;
 
@@ -19,15 +19,15 @@ public class InMemoryBlob : IBlob
         return Task.FromResult(result);
     }
 
-    public Task<EntityTag> LoadTo(Stream stream)
+    public Task<EntityTag> LoadToAsync(Stream stream)
     {
         _stream.Position = 0;
         _stream.CopyTo(stream);
 
-        return GetEntityTag();
+        return GetEntityTagAsync();
     }
 
-    public Task<EntityTag> GetEntityTag() => Task.FromResult(GetEntityTagNow());
+    public Task<EntityTag> GetEntityTagAsync() => Task.FromResult(GetEntityTagNow());
 
     public EntityTag GetEntityTagNow() => new(_stream.Length.ToString());
 }

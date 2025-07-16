@@ -13,86 +13,62 @@
 /// 
 /// Also, this class can serialize and deserialize the value null (null is represented by the byte 255).
 /// 
-/// Furthermore, the <see cref="WriteSigned"/> method can be used to also serialize negative numbers in a compact way.
+/// The <see cref="WriteSigned"/> method can be used to serialize negative numbers in a compact way.
 /// </summary>
 public static class WholeNumberSerializer
 {
-    private const byte NULL = 255;
-
-    /// <summary>
-    /// Writes the value to the stream using 1, 2, 3, 5, or 9 bytes.
-    /// Negative values always take up 9 bytes.
-    /// </summary>
-    public static void Write(BinaryWriter writer, int value) => Write(writer, (ulong)value);
-
     /// <summary>
     /// Writes the value to the stream using 1, 2, 3, 5, or 9 bytes.
     /// </summary>
-    public static void Write(BinaryWriter writer, ulong value)
+    public static void Write(BinaryWriter writer, ulong? value)
     {
-        switch (value)
+        if (value is not { } number)
+        {
+            writer.Write(NativeWriter.NULL);
+            return;
+        }
+
+        switch (number)
         {
             case < (1 << 7):
-                writer.Write((byte)value);
+                writer.Write((byte)number);
                 break;
 
             case < (1 << 14):
-                writer.Write((byte)(128 | (value >> 8)));
-                writer.Write((byte)value);
+                writer.Write((byte)(128 | (number >> 8)));
+                writer.Write((byte)number);
                 break;
 
             case < (1 << 21):
-                writer.Write((byte)(128 | 64 | (value >> 16)));
-                writer.Write((ushort)value);
+                writer.Write((byte)(128 | 64 | (number >> 16)));
+                writer.Write((ushort)number);
                 break;
 
             case < (1L << 36):
-                writer.Write((byte)(128 | 64 | 32 | (value >> 32)));
-                writer.Write((uint)value);
+                writer.Write((byte)(128 | 64 | 32 | (number >> 32)));
+                writer.Write((uint)number);
                 break;
 
             default:
                 writer.Write((byte)(128 | 64 | 32 | 16));
-                writer.Write(value);
+                writer.Write(number);
                 break;
         }
     }
 
     /// <summary>
     /// Writes the value to the stream using 1, 2, 3, 5, or 9 bytes.
-    /// </summary>
-    public static void WriteNullable(BinaryWriter writer, ulong? value)
-    {
-        if (value is ulong u)
-        {
-            Write(writer, u);
-        }
-        else
-        {
-            writer.Write(NULL);
-        }
-    }
-
-    /// <summary>
-    /// Writes the value to the stream using 1, 2, 3, 5, or 9 bytes.
     /// The ZigZag encoding is used so that negative values take up around the same amount of bytes as positive values.
     /// </summary>
-    public static void WriteSigned(BinaryWriter writer, long value) => Write(writer, ConvertToUnsigned(value));
+    public static void WriteSigned(BinaryWriter writer, long? value) => Write(writer, ConvertToUnsigned(value));
 
-    /// <summary>
-    /// Writes the value to the stream using 1, 2, 3, 5, or 9 bytes.
-    /// The ZigZag encoding is used so that negative values take up around the same amount of bytes as positive values.
-    /// </summary>
-    public static void WriteNullableSigned(BinaryWriter writer, long? value) => WriteNullable(writer, ConvertToUnsigned(value));
-
-    public static void WriteNull(BinaryWriter writer) => writer.Write(NULL);
-
-    public static ulong Read(BinaryReader reader)
+    public static ulong? Read(BinaryReader reader)
     {
         var b = reader.ReadByte();
 
         return b switch
         {
+            NativeWriter.NULL => null,
             < 128 => b,
             < 192 => ((ulong)(b & 127) << 8) | reader.ReadByte(),
             < 224 => ((ulong)(b & 63) << 16) | reader.ReadUInt16(),
@@ -101,25 +77,9 @@ public static class WholeNumberSerializer
         };
     }
 
-    public static ulong? ReadNullable(BinaryReader reader)
-    {
-        var b = reader.ReadByte();
+    public static long? ReadSigned(this BinaryReader reader) => ConvertToSigned(Read(reader));
 
-        return b switch
-        {
-            NULL => null,
-            < 128 => b,
-            < 192 => ((ulong)(b & 127) << 8) | reader.ReadByte(),
-            < 224 => ((ulong)(b & 63) << 16) | reader.ReadUInt16(),
-            < 240 => ((ulong)(b & 31) << 32) | reader.ReadUInt32(),
-            _ => reader.ReadUInt64(),
-        };
-    }
-
-    public static long ReadSigned(this BinaryReader reader) => ConvertToSigned(Read(reader));
-
-    public static long? ReadNullableSigned(this BinaryReader reader) => ConvertToSigned(ReadNullable(reader));
-
+    // The ZigZag encoding, see https://protobuf.dev/programming-guides/encoding/.
     private static ulong ConvertToUnsigned(long value) => (ulong)((value << 1) ^ (value >> 63));
 
     private static ulong? ConvertToUnsigned(long? value) => value is long l ? ConvertToUnsigned(l) : null;

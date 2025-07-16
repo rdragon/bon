@@ -7,11 +7,11 @@ namespace Bon.Serializer;
 /// </summary>
 /// <param name="path">Path to a file that will store the contents of the blob.</param>
 /// <param name="readOnly">If true then an exception will be thrown if data needs to be saved to the blob.</param>
-public class FileSystemBlob(string path, bool readOnly = false) : IBlob
+public class FileSystemBlob(string path = "layouts", bool readOnly = false) : IBlob
 {
     protected readonly string _path = path;
 
-    public async Task<EntityTag?> TryAppend(Stream stream, EntityTag entityTag)
+    public async Task<EntityTag?> TryAppendAsync(Stream stream, EntityTag entityTag)
     {
         if (readOnly)
         {
@@ -32,7 +32,7 @@ public class FileSystemBlob(string path, bool readOnly = false) : IBlob
         return await GetEntityTag(fileStream).ConfigureAwait(false);
     }
 
-    public async Task<EntityTag> LoadTo(Stream stream)
+    public async Task<EntityTag> LoadToAsync(Stream stream)
     {
         using var fileStream = GetFileStream();
         await fileStream.CopyToAsync(stream).ConfigureAwait(false);
@@ -41,7 +41,7 @@ public class FileSystemBlob(string path, bool readOnly = false) : IBlob
         return await GetEntityTag(fileStream).ConfigureAwait(false);
     }
 
-    public async Task<EntityTag> GetEntityTag()
+    public async Task<EntityTag> GetEntityTagAsync()
     {
         using var fileStream = GetFileStream();
 

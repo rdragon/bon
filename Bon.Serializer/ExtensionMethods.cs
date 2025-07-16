@@ -16,38 +16,44 @@ internal static class ExtensionMethods
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        if (innerTypes.Length != 1)
+        if (typeArguments.Length != 1)
         {
             return null;
         }
 
-        return innerTypes[0];
+        return typeArguments[0];
     }
 
-    public static Type UnwrapNullable(this Type type) => type.TryGetInnerTypeOfNullable() ?? type;
-
-    public static Type? TryGetInnerTypeOfNullable(this Type type)
+    /// <summary>
+    /// If the type is a nullable value type, its inner type is returned.
+    /// Otherwise the type is returned as is.
+    /// </summary>
+    public static Type UnwrapNullable(this Type type, out bool wasNullable)
     {
-        if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(Nullable<>))
-        {
-            return null;
-        }
-
-        return type.GetGenericArguments()[0];
+        wasNullable = type.IsNullableValueType();
+        return wasNullable ? type.GetGenericArguments()[0] : type;
     }
 
-    public static (Type KeyType, Type ValueType)? TryGetInnerTypesOfDictionary(this Type type)
+    public static bool IsNullableValueType(this Type type) =>
+        type.TryGetGenericTypeDefinition() == typeof(Nullable<>);
+
+    public static bool IsNullable(this Type type) => !type.IsValueType || IsNullable(type);
+
+    public static Type? TryGetGenericTypeDefinition(this Type type) =>
+        type.IsGenericType ? type.GetGenericTypeDefinition() : null;
+
+    public static (Type KeyType, Type ValueType)? TryGetTypeArgumentsOfDictionary(this Type type)
     {
         if (!type.IsGenericType)
         {
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        if (innerTypes.Length != 2)
+        if (typeArguments.Length != 2)
         {
             return null;
         }
@@ -61,49 +67,45 @@ internal static class ExtensionMethods
             return null;
         }
 
-        return (innerTypes[0], innerTypes[1]);
+        return (typeArguments[0], typeArguments[1]);
     }
 
-    public static (Type Item1Type, Type Item2Type)? TryGetInnerTypesOfTuple2(this Type type)
+    public static Tuple2Type? TryGetTuple2Type(this Type type)
     {
-        type = type.UnwrapNullable();
+        type = type.UnwrapNullable(out var isNullable);
 
         if (!type.IsGenericType)
         {
             return null;
         }
 
-        var genericTypeDefinition = type.GetGenericTypeDefinition();
-
-        if (genericTypeDefinition != typeof(ValueTuple<,>))
+        if (type.TryGetGenericTypeDefinition() != typeof(ValueTuple<,>))
         {
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        return (innerTypes[0], innerTypes[1]);
+        return new(typeArguments[0], typeArguments[1], isNullable);
     }
 
-    public static (Type Item1Type, Type Item2Type, Type Item3Type)? TryGetInnerTypesOfTuple3(this Type type)
+    public static Tuple3Type? TryGetTuple3Type(this Type type)
     {
-        type = type.UnwrapNullable();
+        type = type.UnwrapNullable(out var isNullable);
 
         if (!type.IsGenericType)
         {
             return null;
         }
 
-        var genericTypeDefinition = type.GetGenericTypeDefinition();
-
-        if (genericTypeDefinition != typeof(ValueTuple<,,>))
+        if (type.TryGetGenericTypeDefinition() != typeof(ValueTuple<,,>))
         {
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        return (innerTypes[0], innerTypes[1], innerTypes[2]);
+        return new(typeArguments[0], typeArguments[1], typeArguments[2], isNullable);
     }
 
     public static MethodInfo GetPrivateMethod(this IUseReflection instance, string methodName)
@@ -113,16 +115,19 @@ internal static class ExtensionMethods
             throw new ArgumentException($"Method not found.", methodName);
     }
 
-    public static MethodInfo GetPrivateStaticMethodInfo(this Type type, string methodName)
+    public static MethodInfo GetPrivateStaticMethod(this Type type, string methodName)
     {
         return
             type.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static) ??
             throw new ArgumentException($"Method not found.", methodName);
     }
 
-    public static bool IsNullable(this Type type, bool seeReferenceTypeAsNullable)
+    public static T CallPrivateStaticMethod<T>(this Type type, string methodName, Type[] typeArguments)
     {
-        return type.IsValueType ? Nullable.GetUnderlyingType(type) is { } : seeReferenceTypeAsNullable;
+        return (T)type
+            .GetPrivateStaticMethod(methodName)
+            .MakeGenericMethod(typeArguments)
+            .Invoke(null, null)!;
     }
 
     public static JsonNode GetPropertyValue(this JsonObject jsonObject, string propertyName)
@@ -135,47 +140,60 @@ internal static class ExtensionMethods
         throw new ArgumentException($"Property '{propertyName}' not found or null.", nameof(propertyName));
     }
 
-    public static Type ToNullable(this Type type)
-    {
-        if (type.IsNullable(true))
-        {
-            return type;
-        }
-
-        return typeof(Nullable<>).MakeGenericType(type);
-    }
-
-    public static void AddMultiple<T>(this ref HashCode hashCode, IEnumerable<T> values)
-    {
-        foreach (var value in values)
-        {
-            hashCode.Add(value);
-        }
-    }
-
-    public static void AddMultipleUnordered<T>(this ref HashCode hashCode, IEnumerable<T> values)
-    {
-        foreach (var hash in values.Select(x => x?.GetHashCode() ?? 0).Order())
-        {
-            hashCode.Add(hash);
-        }
-    }
-
     // The reason for using extension methods is that you can then use the null-conditional operator "?.".
-    // Bookmark 659516266 (char serialization)
 
-    public static ulong ToSchemaType(this char value) => value;
-    public static long ToSchemaType(this DateTime value) => value.ToUniversalTime().Ticks;
-    public static long ToSchemaType(this DateTimeOffset value) => value.UtcTicks;
-    public static long ToSchemaType(this TimeSpan value) => value.Ticks;
-    public static int ToSchemaType(this DateOnly value) => value.DayNumber;
-    public static long ToSchemaType(this TimeOnly value) => value.Ticks;
+    public static ulong? ToNullableULong(this char value) => value;
+    public static long ToLong(this DateTime value) => value.ToUniversalTime().Ticks;
+    public static long ToLong(this DateTimeOffset value) => value.UtcTicks;
+    public static long ToLong(this TimeSpan value) => value.Ticks;
+    public static int ToInt(this DateOnly value) => value.DayNumber;
+    public static long ToLong(this TimeOnly value) => value.Ticks;
+    public static byte[] ToByteArray(this Guid guid) => guid.ToByteArray();
 
-    public static char ToChar(this ulong value) => (char)value;
     public static DateTime ToDateTime(this long value) => new(value, DateTimeKind.Utc);
     public static DateTimeOffset ToDateTimeOffset(this long value) => new(value, TimeSpan.Zero);
     public static TimeSpan ToTimeSpan(this long value) => new(value);
     public static DateOnly ToDateOnly(this int value) => DateOnly.FromDayNumber(value);
     public static DateOnly ToDateOnly(this long value) => DateOnly.FromDayNumber((int)value);
     public static TimeOnly ToTimeOnly(this long value) => new(value);
+    public static Guid? ToGuid(this byte[]? value) => value?.Length == 16 ? new(value) : null;
+
+    public static string ToHexString(this byte[] bytes) =>
+        string.Join(" ", Convert.ToHexString(bytes).Chunk(2).Select(xs => new string(xs)));
+
+    public static bool IsNullable(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsNullable) != 0;
+
+    public static bool IsCustomSchema(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsCustom) != 0;
+
+    public static bool IsNativeSchema(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsNative) != 0;
+
+    public static bool IsTupleSchema(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsTuple) != 0;
+
+    public static SchemaFlags GetSchemaFlags(this SchemaType schemaType) => schemaType switch
+    {
+        SchemaType.Record => SchemaFlags.IsCustom,
+        SchemaType.NullableRecord => SchemaFlags.IsCustom | SchemaFlags.IsNullable,
+        SchemaType.Union => SchemaFlags.IsCustom | SchemaFlags.IsNullable,
+        SchemaType.String => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.Byte => SchemaFlags.IsNative,
+        SchemaType.SByte => SchemaFlags.IsNative,
+        SchemaType.Short => SchemaFlags.IsNative,
+        SchemaType.UShort => SchemaFlags.IsNative,
+        SchemaType.Int => SchemaFlags.IsNative,
+        SchemaType.UInt => SchemaFlags.IsNative,
+        SchemaType.Long => SchemaFlags.IsNative,
+        SchemaType.ULong => SchemaFlags.IsNative,
+        SchemaType.Float => SchemaFlags.IsNative,
+        SchemaType.Double => SchemaFlags.IsNative,
+        SchemaType.NullableDecimal => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.WholeNumber => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.SignedWholeNumber => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.FractionalNumber => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.Array => SchemaFlags.IsNullable,
+        SchemaType.Dictionary => SchemaFlags.IsNullable,
+        SchemaType.Tuple2 => SchemaFlags.IsTuple,
+        SchemaType.NullableTuple2 => SchemaFlags.IsTuple | SchemaFlags.IsNullable,
+        SchemaType.Tuple3 => SchemaFlags.IsTuple,
+        SchemaType.NullableTuple3 => SchemaFlags.IsTuple | SchemaFlags.IsNullable,
+    };
 }

@@ -2,88 +2,118 @@
 
 public sealed class BytesTest : BonSerializerTestBase
 {
-    // A class does not take up more space than the space of its members.
+    // Integer types are serialized with their native number of bytes.
 
     [Fact]
-    public void EmptyClassBytes() => GetManualSerializer()
-        .WriteClassHeader<EmptyClass>()
-        .ShouldEqual(EmptyClass);
+    public void IntBytes() => GetManualSerializer()
+        .WriteFullInt(Int)
+        .ShouldBeBodyFor(Int);
+
+    // Except if you serialize an integer directly and its small enough to fit in a smaller schema.
 
     [Fact]
-    public void DogBytes() => GetManualSerializer()
-        .WriteClassHeader<Dog>()
-        .WriteInt(Dog.Age)
-        .ShouldEqual(Dog);
+    public void SmallIntBytes() => GetManualSerializer()
+        .WriteByte((byte)SmallInt)
+        .ShouldBeBodyFor(SmallInt);
+
+    // Nullable integer types are serialized using a variable width schema.
+
+    [Fact]
+    public void NullableIntBytes() => GetManualSerializer()
+        .WriteSignedWholeNumber(NullableInt)
+        .ShouldBeBodyFor(NullableInt);
+
+    // A struct does not take up more space than the space of its members.
+
+    [Fact]
+    public void HoldsIntBytes() => GetManualSerializer()
+        .WriteFullInt(Int)
+        .ShouldBeBodyFor(HoldsInt);
+
+    [Fact]
+    public void HoldsSmallIntBytes() => GetManualSerializer()
+        .WriteFullInt(SmallInt)
+        .ShouldBeBodyFor(HoldsSmallInt);
+
+    // A class does not take up more space than the space of its members, except for a nullability byte at the start.
+
+    [Fact]
+    public void EmptyClass_Body() => GetManualSerializer()
+        .WriteNotNull()
+        .ShouldBeBodyFor(EmptyClass);
+
+    [Fact]
+    public void WithInt70_Body() => GetManualSerializer()
+        .WriteNotNull()
+        .WriteFullInt(70)
+        .ShouldBeBodyFor(WithInt70);
+
+    [Fact]
+    public void NullClass_Body() => GetManualSerializer()
+        .WriteNull()
+        .ShouldBeBodyFor(NullWithInt);
 
     [Fact]
     public void WithDogBytes() => GetManualSerializer()
-        .WriteClassHeader<WithDog>()
-        .WriteInt(Dog.Age)
-        .ShouldEqual(WithDog);
+        .WriteNotNull()
+        .WriteNotNull()
+        .WriteFullInt(WithDog.Dog.Age)
+        .ShouldBeBodyFor(WithDog);
 
     [Fact]
-    public void WithWithDogBytes() => GetManualSerializer()
-        .WriteClassHeader<WithWithDog>()
-        .WriteInt(Dog.Age)
-        .ShouldEqual(WithWithDog);
-
-    // A nullable class takes up one more byte. However, if the class is null it takes up only one byte.
-
-    [Fact]
-    public void WithNullableDogBytes() => GetManualSerializer()
-        .WriteClassHeader<WithNullableDog>()
-        .WriteByte(NOT_NULL)
-        .WriteInt(WithDog.Dog.Age)
-        .ShouldEqual(WithNullableDog);
+    public void WithNullableDogBytes() => RequireSameSerialization(WithDog, WithNullableDog);
 
     [Fact]
     public void DefaultWithNullableDogBytes() => GetManualSerializer()
-        .WriteClassHeader<WithNullableDog>()
-        .WriteByte(NULL)
-        .ShouldEqual(DefaultWithNullableDog);
+        .WriteNotNull()
+        .WriteNull()
+        .ShouldBeBodyFor(DefaultWithNullableDog);
 
     // The members of a class are serialized by member ID ascending.
 
     [Fact]
     public void ThreeIntsScrambledBytes() => GetManualSerializer()
-        .WriteClassHeader<ThreeIntsScrambled>()
-        .WriteInt(ThreeIntsScrambled.Int1)
-        .WriteInt(ThreeIntsScrambled.Int3)
-        .WriteInt(ThreeIntsScrambled.Int2)
-        .ShouldEqual(ThreeIntsScrambled);
+        .WriteNotNull()
+        .WriteFullInt(ThreeIntsScrambled.Int1)
+        .WriteFullInt(ThreeIntsScrambled.Int3)
+        .WriteFullInt(ThreeIntsScrambled.Int2)
+        .ShouldBeBodyFor(ThreeIntsScrambled);
 
     // Gaps between the member IDs do not affect the serialization.
 
     [Fact]
     public void TwoIntsWithGapBytes() => GetManualSerializer()
-        .WriteClassHeader<TwoIntsWithGap>()
-        .WriteInt(TwoIntsWithGap.Int1)
-        .WriteInt(TwoIntsWithGap.Int2)
-        .ShouldEqual(TwoIntsWithGap);
+        .WriteNotNull()
+        .WriteFullInt(TwoIntsWithGap.Int1)
+        .WriteFullInt(TwoIntsWithGap.Int2)
+        .ShouldBeBodyFor(TwoIntsWithGap);
 
-    // A struct is serialized exactly like a class.
+    // A nullable struct is serialized exactly like a class.
 
-    [Fact] public void EmptyStructBytes() => RequireSameSerialization(EmptyClass, EmptyStruct);
-    [Fact] public void HouseBytes() => RequireSameSerialization(Dog, House);
-    [Fact] public void HoldsHouseBytes() => RequireSameSerialization(WithDog, HoldsHouse);
-    [Fact] public void HoldsNullableHouseBytes() => RequireSameSerialization(WithNullableDog, HoldsNullableHouse);
-    [Fact] public void DefaultHoldsNullableHouseBytes() => RequireSameSerialization(DefaultWithNullableDog, DefaultHoldsNullableHouse);
+    [Fact] public void NullableEmptyStructBytes() => RequireSameSerialization(EmptyClass, NullableEmptyStruct);
+    [Fact] public void NullableHouseBytes() => RequireSameSerialization(Dog, NullableHouse);
+    [Fact] public void NullableHoldsNullableHouseBytes() => RequireSameSerialization(WithDog, NullableHoldsNullableHouse);
+    [Fact] public void DefaultHoldsNullableHouseBytes() => RequireSameSerialization(DefaultWithNullableDog, NullableDefaultHoldsNullableHouse);
 
     // An interface is serialized by writing the ID of the concrete type followed by the concrete type.
 
     [Fact]
     public void IDogBytes() => GetManualSerializer()
-        .WriteInterfaceHeader<IDog>()
-        .WriteWholeNumber(DogId)
-        .WriteInt(Dog.Age)
-        .ShouldEqual(IDog);
+        .WriteCompactInt(DogId)
+        .WriteFullInt(Dog.Age)
+        .ShouldBeBodyFor(IDog);
 
     [Fact]
     public void WithIDogBytes() => GetManualSerializer()
-        .WriteClassHeader<WithIDog>()
-        .WriteWholeNumber(DogId)
-        .WriteInt(Dog.Age)
-        .ShouldEqual(WithIDog);
+        .WriteNotNull()
+        .WriteCompactInt(DogId)
+        .WriteFullInt(Dog.Age)
+        .ShouldBeBodyFor(WithIDog);
+
+    [Fact]
+    public void RealDefaultIDogBytes() => GetManualSerializer()
+        .WriteNull()
+        .ShouldBeBodyFor(RealDefaultIDog);
 
     // An enum is serialized as its underlying type.
 
@@ -95,35 +125,51 @@ public sealed class BytesTest : BonSerializerTestBase
     // An array is serialized by writing the element count followed by the elements.
 
     [Fact]
-    public void WithArrayBytes() => GetManualSerializer()
-        .WriteClassHeader<WithArray>()
-        .WriteWholeNumber(2)
-        .WriteInt(WithArray[0].Age)
-        .WriteInt(WithArray[1].Age)
-        .ShouldEqual(WithArray);
+    public void IntArrayBytes() => GetManualSerializer()
+        .WriteCompactInt(2)
+        .WriteFullInt(IntArray[0])
+        .WriteFullInt(IntArray[1])
+        .ShouldBeBodyFor(IntArray);
 
     [Fact]
-    public void WithArrayOfNullableBytes() => GetManualSerializer()
-        .WriteClassHeader<WithArrayOfNullable>()
-        .WriteWholeNumber(2)
-        .WriteByte(NOT_NULL)
-        .WriteInt(WithArray[0].Age)
-        .WriteByte(NULL)
-        .ShouldEqual(WithArrayOfNullable);
+    public void RealDefaultIntArrayBytes() => GetManualSerializer()
+        .WriteNull()
+        .ShouldBeBodyFor(RealDefaultIntArray);
+
+    [Fact]
+    public void ByteArrayBytes() => GetManualSerializer()
+        .WriteCompactInt(3)
+        .WriteByte(ByteArray[0])
+        .WriteByte(ByteArray[1])
+        .WriteByte(ByteArray[2])
+        .ShouldBeBodyFor(ByteArray);
+
+    [Fact]
+    public void WithArrayBytes() => GetManualSerializer()
+        .WriteNotNull()
+        .WriteCompactInt(2)
+        .WriteNotNull()
+        .WriteFullInt(WithArray[0].Age)
+        .WriteNotNull()
+        .WriteFullInt(WithArray[1].Age)
+        .ShouldBeBodyFor(WithArray);
+
+    [Fact]
+    public void AnotherWithArrayOfNullableBytes() => RequireSameSerialization(WithArray, AnotherWithArrayOfNullable);
 
     [Fact]
     public void WithArrayOfEmptyClassBytes() => GetManualSerializer()
-        .WriteClassHeader<WithArrayOfEmptyClass>()
-        .WriteWholeNumber(2)
-        .ShouldEqual(WithArrayOfEmptyClass);
-
-    // A nullable array that is null takes up one byte.
+        .WriteNotNull()
+        .WriteCompactInt(2)
+        .WriteNotNull()
+        .WriteNotNull()
+        .ShouldBeBodyFor(WithArrayOfEmptyClass);
 
     [Fact]
     public void DefaultWithNullableArrayOfDogsBytes() => GetManualSerializer()
-        .WriteClassHeader<WithNullableArray>()
-        .WriteWholeNumber(null)
-        .ShouldEqual(DefaultWithNullableArray);
+        .WriteNotNull()
+        .WriteNull()
+        .ShouldBeBodyFor(DefaultWithNullableArray);
 
     // All collection types are serialized exactly the same way.
 
@@ -144,29 +190,63 @@ public sealed class BytesTest : BonSerializerTestBase
     // A dictionary is serialized by writing the element count followed by the elements.
 
     [Fact]
+    public void DictionaryBytes() => GetManualSerializer()
+        .WriteCompactInt(1)
+        .WriteFullInt(Int)
+        .WriteNotNull()
+        .WriteFullInt(Dog.Age)
+        .ShouldBeBodyFor(Dictionary);
+
+    [Fact]
+    public void RealDefaultDictionaryBytes() => GetManualSerializer()
+        .WriteNull()
+        .ShouldBeBodyFor(RealDefaultDictionary);
+
+    [Fact]
     public void WithDictionaryBytes() => GetManualSerializer()
-        .WriteClassHeader<WithDictionary>()
-        .WriteWholeNumber(1)
-        .WriteInt(Int)
-        .WriteInt(Dog.Age)
-        .ShouldEqual(WithDictionary);
+        .WriteNotNull()
+        .WriteCompactInt(1)
+        .WriteFullInt(Int)
+        .WriteNotNull()
+        .WriteFullInt(Dog.Age)
+        .ShouldBeBodyFor(WithDictionary);
 
     // A 2-tuple is serialized by writing the two elements.
 
     [Fact]
+    public void IntTuple2Bytes() => GetManualSerializer()
+        .WriteFullInt(Int)
+        .WriteFullInt(OtherInt)
+        .ShouldBeBodyFor(IntTuple2);
+
+    [Fact]
+    public void NullableIntTuple2Bytes() => GetManualSerializer()
+        .WriteNotNull()
+        .WriteFullInt(Int)
+        .WriteFullInt(OtherInt)
+        .ShouldBeBodyFor(NullableIntTuple2);
+
+    [Fact]
+    public void DefaultNullableIntTuple2Bytes() => GetManualSerializer()
+        .WriteNull()
+        .ShouldBeBodyFor(DefaultNullableIntTuple2);
+
+    [Fact]
     public void WithTuple2Bytes() => GetManualSerializer()
-        .WriteClassHeader<WithTuple2>()
-        .WriteInt(Dog.Age)
-        .WriteInt(Int)
-        .ShouldEqual(WithTuple2);
+        .WriteNotNull()
+        .WriteNotNull()
+        .WriteFullInt(Dog.Age)
+        .WriteFullInt(Int)
+        .ShouldBeBodyFor(WithTuple2);
 
     [Fact]
     public void WithNullableTuple2Bytes() => GetManualSerializer()
-        .WriteClassHeader<WithNullableTuple2>()
-        .WriteByte(NOT_NULL)
-        .WriteInt(Dog.Age)
-        .WriteInt(Int)
-        .ShouldEqual(WithNullableTuple2);
+        .WriteNotNull()
+        .WriteNotNull()
+        .WriteNotNull()
+        .WriteFullInt(Dog.Age)
+        .WriteFullInt(Int)
+        .ShouldBeBodyFor(WithNullableTuple2);
 
     // byte?, ushort?, uint?, ulong?, char? are serialized in the same way.
 
@@ -179,7 +259,7 @@ public sealed class BytesTest : BonSerializerTestBase
 
     [Fact] public void NullableSByteBytes() => RequireSameSerialization((long?)NullableSByte, NullableSByte);
     [Fact] public void NullableShortBytes() => RequireSameSerialization((long?)NullableShort, NullableShort);
-    [Fact] public void NullableIntBytes() => RequireSameSerialization((long?)NullableInt, NullableInt);
+    [Fact] public void NullableIntBytes1() => RequireSameSerialization((long?)NullableInt, NullableInt);
 
     // DateTime, DateTimeOffset, TimeSpan, TimeOnly are serialized as long. DateOnly is serialized as int.
 
@@ -189,27 +269,27 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact] public void DateOnlyBytes() => RequireSameSerialization(TestHelper.DateOnly.DayNumber, TestHelper.DateOnly, ForbidSchemaTypeOptimization);
     [Fact] public void TimeOnlyBytes() => RequireSameSerialization(TestHelper.TimeOnly.Ticks, TestHelper.TimeOnly, ForbidSchemaTypeOptimization);
 
-    // The integer types are serialized in an optimized way.
+    // If you serialize an integer type directly, its schema is implicit.
 
     [Fact]
     public void ByteMessage() => GetManualSerializer()
         .WriteByteMessage(Byte)
-        .ShouldEqual(Byte);
+        .ShouldBeMessageFor(Byte);
 
     [Fact]
     public void UShortMessage() => GetManualSerializer()
         .WriteUShortMessage(UShort)
-        .ShouldEqual(UShort);
+        .ShouldBeMessageFor(UShort);
 
     [Fact]
     public void UIntMessage() => GetManualSerializer()
         .WriteUIntMessage(UInt)
-        .ShouldEqual(UInt);
+        .ShouldBeMessageFor(UInt);
 
     [Fact]
     public void ULongMessage() => GetManualSerializer()
         .WriteULongMessage(ULong)
-        .ShouldEqual(ULong);
+        .ShouldBeMessageFor(ULong);
 
     // If an integer is small enough then it is serialized using a smaller schema.
 
@@ -225,28 +305,28 @@ public sealed class BytesTest : BonSerializerTestBase
     [InlineData(sbyte.MinValue)]
     public void SByteMessage(sbyte value) => GetManualSerializer()
         .WriteSByteMessage(value)
-        .ShouldEqual(value);
+        .ShouldBeMessageFor(value);
 
     [Theory]
     [InlineData(short.MaxValue)]
     [InlineData(short.MinValue)]
     public void ShortMessage(short value) => GetManualSerializer()
         .WriteShortMessage(value)
-        .ShouldEqual(value);
+        .ShouldBeMessageFor(value);
 
     [Theory]
     [InlineData(int.MaxValue)]
     [InlineData(int.MinValue)]
     public void IntMessage(int value) => GetManualSerializer()
         .WriteIntMessage(value)
-        .ShouldEqual(value);
+        .ShouldBeMessageFor(value);
 
     [Theory]
     [InlineData(long.MaxValue)]
     [InlineData(long.MinValue)]
     public void LongMessage(long value) => GetManualSerializer()
         .WriteLongMessage(value)
-        .ShouldEqual(value);
+        .ShouldBeMessageFor(value);
 
     [Fact] public void ShortAsByte() => RequireSameSerialization(Byte, (short)Byte);
     [Fact] public void IntAsByte() => RequireSameSerialization(Byte, (int)Byte);

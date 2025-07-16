@@ -33,12 +33,12 @@ public sealed class BoolConverterTest : BonSerializerTestBase
     [Theory]
     [InlineData(false, "0")]
     [InlineData(true, "1")]
-    [InlineData(null, "")]
-    public void NullableBoolToString(bool? input, string expected) => DeserializeSlow(input, expected);
+    [InlineData(null, null)]
+    public void NullableBoolToString(bool? input, string? expected) => DeserializeSlow(input, expected);
 
     [Theory]
     [InlineData("-3.7", false)]
-    [InlineData("-1", true)]
+    [InlineData("-1", false)]
     [InlineData("0", false)]
     [InlineData("1", true)]
     [InlineData(" 1 ", true)]
@@ -50,7 +50,7 @@ public sealed class BoolConverterTest : BonSerializerTestBase
     public void StringToBool(string input, bool expected) => DeserializeSlow(input, expected);
 
     [Theory]
-    [InlineData("-1", true)]
+    [InlineData("-1", null)]
     [InlineData("0", false)]
     [InlineData("1", true)]
     [InlineData(" 1 ", true)]

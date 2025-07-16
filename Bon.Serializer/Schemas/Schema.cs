@@ -1,124 +1,137 @@
 ﻿namespace Bon.Serializer.Schemas;
 
 /// <summary>
-/// Determines the format in which a value is serialized.
-/// During deserialization the schema is used to give meaning to the bytes which are read.
-/// 
-/// There is a many-to-many relationship between schemas and types.
-/// 
-/// In general types that have the same structure (e.g. members of the same types with the same IDs) will share the same schema.
-/// As a schema can map to more than one type, during deserialization the schema doesn't give enough information to determine the
-/// type of the resulting value.
-/// 
-/// Some types have more than one schema.
-/// This is only the case for reference types or types that contain at least one reference type (e.g. as member or type argument).
-/// The reason is that a reference type does not have nullability information during runtime, while a schema has.
-/// For example, during runtime string and string? are the same type, but they have different schemas.
-/// 
-/// Enums use as schema the schema of their underlying type.
-/// Therefore there are no specific schemas for enums.
-/// The same holds for <see cref="char"/> and some other "weak" types (like <see cref="DateTime"/>).
+/// Represents the way in which a value is serialized.
+/// A schema is critical in correctly deserializing a value.
+/// Without knowing the schema, the bytes do not have any meaning.
+/// A schema can only be used to obtain the members of a record or union.
 /// </summary>
-public abstract class Schema(SchemaType schemaType, bool isNullable)
+public sealed partial class Schema
 {
-    public SchemaType SchemaType { get; } = schemaType;
+    private SchemaType _schemaType;
 
-    public bool IsNullable { get; } = isNullable;
+    private SchemaFlags _schemaFlags;
 
-    public abstract IEnumerable<Schema> GetInnerSchemas();
+    /// <summary>
+    /// The schema arguments.
+    /// Contains at least one value if this is a generic schema.
+    /// </summary>
+    public IReadOnlyList<Schema> SchemaArguments { get; set; } = null!;
 
-    public AnnotatedSchemaType AnnotatedSchemaType => new(SchemaType, IsNullable);
+    /// <summary>
+    /// The ID of the layout corresponding to this schema.
+    /// Only set for custom schemas (records and unions).
+    /// This field contains a "fake" layout ID if the schema was created by the
+    /// source generation context and not yet assigned a "real" layout ID.
+    /// </summary>
+    public int LayoutId { get; set; }
 
-    public override int GetHashCode()
+    /// <summary>
+    /// The members of the schema.
+    /// For records, these are the fields of the record.
+    /// For unions, these are the cases of the union.
+    /// For other schemas, this field is empty.
+    /// </summary>
+    public IReadOnlyList<SchemaMember> Members { get; set; } = null!;
+
+    public SchemaType SchemaType
     {
-        var hashCode = new HashCode();
+        get => _schemaType;
 
-        AppendHashCode(new Dictionary<Schema, int>(ReferenceEqualityComparer.Instance), ref hashCode);
-
-        return hashCode.ToHashCode();
-    }
-
-    public override bool Equals(object? obj) => Equals(obj, new Dictionary<Ancestor, int>(AncestorEqualityComparer.Instance));
-
-    public abstract void AppendHashCode(Dictionary<Schema, int> ancestors, ref HashCode hashCode);
-
-    public abstract bool Equals(object? obj, Dictionary<Ancestor, int> ancestors);
-
-    protected bool? StartEquals<T>(object? obj, Dictionary<Ancestor, int> ancestors, out T other) where T : Schema
-    {
-        if (obj is not T value)
+        private set
         {
-            other = null!;
-
-            return false;
+            _schemaType = value;
+            _schemaFlags = value.GetSchemaFlags();
         }
-
-        other = value;
-
-        if (ancestors.TryGetValue(new(this, true), out var id))
-        {
-            return ancestors.TryGetValue(new(other, false), out var otherId) && id == otherId;
-        }
-
-        if (SchemaType != other.SchemaType ||
-            IsNullable != other.IsNullable)
-        {
-            return false;
-        }
-
-        var currentId = ancestors.Count;
-        ancestors[new(this, true)] = currentId;
-        ancestors[new(other, false)] = currentId;
-
-        return null;
     }
 
-    protected void EndEquals(Schema other, Dictionary<Ancestor, int> ancestors)
-    {
-        ancestors.Remove(new(this, true));
-        ancestors.Remove(new(other, false));
-    }
+    /// <summary>
+    /// Whether this is a custom schema (record or union).
+    /// </summary>
+    public bool IsCustom => (_schemaFlags & SchemaFlags.IsCustom) != 0;
 
-    public static Schema CreateNonCustomSchema(SchemaType schemaType, bool isNullable, params Schema[] innerSchemas)
-    {
-        return schemaType switch
-        {
-            SchemaType.Array => new ArraySchema(schemaType, isNullable)
-            {
-                InnerSchema = innerSchemas[0],
-            },
+    /// <summary>
+    /// Whether this is a (nullable) record schema (struct or class).
+    /// </summary>
+    public bool IsRecord => SchemaType == SchemaType.Record || SchemaType == SchemaType.NullableRecord;
 
-            SchemaType.Dictionary => new DictionarySchema(schemaType, isNullable)
-            {
-                InnerSchema1 = innerSchemas[0],
-                InnerSchema2 = innerSchemas[1],
-            },
+    /// <summary>
+    /// Whether this is a union schema (interface or abstract class).
+    /// </summary>
+    public bool IsUnion => SchemaType == SchemaType.Union;
 
-            SchemaType.Tuple2 => new Tuple2Schema(schemaType, isNullable)
-            {
-                InnerSchema1 = innerSchemas[0],
-                InnerSchema2 = innerSchemas[1],
-            },
+    /// <summary>
+    /// Whether this is a native schema.
+    /// </summary>
+    public bool IsNative => (_schemaFlags & SchemaFlags.IsNative) != 0;
 
-            SchemaType.Tuple3 => new Tuple3Schema(schemaType, isNullable)
-            {
-                InnerSchema1 = innerSchemas[0],
-                InnerSchema2 = innerSchemas[1],
-                InnerSchema3 = innerSchemas[2],
-            },
+    /// <summary>
+    /// Whether this is a (nullable) tuple schema (value tuple).
+    /// </summary>
+    public bool IsTuple => (_schemaFlags & SchemaFlags.IsTuple) != 0;
 
-            _ => new AnnotatedSchemaType(schemaType, isNullable).ToNativeSchema(),
-        };
-    }
+    /// <summary>
+    /// Whether this is a (nullable) tuple2 schema (value tuple with two elements).
+    /// </summary>
+    public bool IsTuple2 => SchemaType == SchemaType.Tuple2 || SchemaType == SchemaType.NullableTuple2;
+
+    /// <summary>
+    /// Whether this is a (nullable) tuple3 schema (value tuple with three elements).
+    /// </summary>
+    public bool IsTuple3 => SchemaType == SchemaType.Tuple3 || SchemaType == SchemaType.NullableTuple3;
+
+    /// <summary>
+    /// Whether this is a nullable schema.
+    /// </summary>
+    public bool IsNullable => (_schemaFlags & SchemaFlags.IsNullable) != 0;
+
+    /// <summary>
+    /// Whether this is an array schema.
+    /// </summary>
+    public bool IsArray => SchemaType == SchemaType.Array;
+
+    /// <summary>
+    /// Whether this is a dictionary schema.
+    /// </summary>
+    public bool IsDictionary => SchemaType == SchemaType.Dictionary;
+
+    public override bool Equals(object? obj) => obj is Schema schema && SchemaComparer.Equals(this, schema);
+
+    public override int GetHashCode() => SchemaComparer.GetHashCode(this);
+
+    public Schema GetClone(SchemaType schemaType) => Create(schemaType, SchemaArguments, LayoutId, Members);
 }
 
-public readonly record struct Ancestor(Schema Schema, bool MyAncestor);
+/// <summary>
+/// A member of a schema.
+/// Represents a field of a record or a case of a union.
+/// </summary>
+/// <param name="Id">
+/// The ID of the member.
+/// This is the value from the BonMember or BonInclude attribute.
+/// This value is non-negative.
+/// </param>
+/// <param name="Schema">The schema of the member.</param>
+public readonly record struct SchemaMember(int Id, Schema Schema);
 
-public sealed class AncestorEqualityComparer : IEqualityComparer<Ancestor>
-{
-    public static AncestorEqualityComparer Instance { get; } = new();
-
-    public bool Equals(Ancestor x, Ancestor y) => ReferenceEquals(x.Schema, y.Schema) && x.MyAncestor == y.MyAncestor;
-
-    public int GetHashCode(Ancestor obj) => HashCode.Combine(ReferenceEqualityComparer.Instance.GetHashCode(obj.Schema), obj.MyAncestor);
-}
+/// <summary>
+/// A layout is a schema without a schema type and without schema arguments.
+/// A layout is the object that is saved to the storage.
+/// Layouts only exist for custom schemas (records and unions).
+/// 
+/// There are two reasons why the schema type is not part of a layout:
+/// 1. The schema type is already included in the header of a message.
+/// 2. By excluding the schema type, there are less layouts to save to the storage.
+/// 
+/// The schema arguments are not part of a layout because only custom schemas have
+/// a layout, and custom schemas currently have no schema arguments (we don't support
+/// generic custom schemas yet).
+/// 
+/// Layouts do not exist for tuples and arrays because it is not possible to create
+/// a layout for every possible tuple and array. Also, we should only add new layouts
+/// when a BonSerializer instance is created, and at that moment in time we don't know
+/// which tuples and arrays the user is going to serialize.
+/// </summary>
+/// <param name="Id">The ID of the layout. The first layout has ID 1 and the next layout has ID 2, etc.</param>
+/// <param name="Members">The members of the layout.</param>
+public readonly record struct Layout(int Id, IReadOnlyList<SchemaMember> Members);

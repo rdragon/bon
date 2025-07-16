@@ -2,9 +2,6 @@
 
 public static class TestHelper
 {
-    public const byte NULL = 255;
-    public const byte NOT_NULL = 254;
-
     public static bool SequenceEqual<T>(IEnumerable<T>? left, IEnumerable<T>? right)
     {
         if (left is null)

@@ -40,7 +40,7 @@ public sealed class WholeNumberSerializerTest
     [InlineData(68719476736UL, 9)]
     public void ReadNullable(ulong? value, int expectedLength)
     {
-        RoundTrip(value, WholeNumberSerializer.WriteNullable, WholeNumberSerializer.ReadNullable, expectedLength);
+        RoundTrip(value, WholeNumberSerializer.Write, WholeNumberSerializer.Read, expectedLength);
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public sealed class WholeNumberSerializerTest
     [InlineData(0L, 1)]
     public void ReadSignedNullable(long? value, int expectedLength)
     {
-        RoundTrip(value, WholeNumberSerializer.WriteNullableSigned, WholeNumberSerializer.ReadNullableSigned, expectedLength);
+        RoundTrip(value, WholeNumberSerializer.WriteSigned, WholeNumberSerializer.ReadSigned, expectedLength);
     }
 
     private static void RoundTrip<T>(T value, Action<BinaryWriter, T> write, Func<BinaryReader, T> read, int? expectedLength = null)

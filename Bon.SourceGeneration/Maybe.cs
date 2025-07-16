@@ -2,7 +2,7 @@
 
 namespace Bon.SourceGeneration
 {
-    internal class Maybe<T>
+    internal sealed class Maybe<T>
     {
         public bool HasData { get; }
 

@@ -2,30 +2,32 @@
 
 internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseReflection
 {
-    private const byte NULL = 255;
+    private const byte NULL = NativeWriter.NULL;
 
-    public Action<BonInput> GetSkipper(Schema sourceSchema)
+    /// <summary>
+    /// Returns a method that reads binary data formatted according to the schema and throws away the result.
+    /// </summary>
+    public Action<BonInput> GetSkipper(Schema schema)
     {
-        return sourceSchema switch
+        return schema switch
         {
-            ArraySchema arraySchema => GetArraySkipper(arraySchema),
-            DictionarySchema dictionarySchema => GetDictionarySkipper(dictionarySchema),
-            Tuple2Schema tuple2Schema => GetTuple2Skipper(tuple2Schema),
-            Tuple3Schema tuple3Schema => GetTuple3Skipper(tuple3Schema),
-            NativeSchema nativeSchema => GetNativeSkipper(nativeSchema),
-            RecordSchema recordSchema => GetRecordSkipper(recordSchema),
-            UnionSchema unionSchema => GetUnionSkipper(unionSchema),
-            _ => throw new ArgumentOutOfRangeException(nameof(sourceSchema), sourceSchema, null),
+            { IsArray: true } => GetArraySkipper(schema),
+            { IsDictionary: true } => GetDictionarySkipper(schema),
+            { IsTuple2: true } => GetTuple2Skipper(schema),
+            { IsTuple3: true } => GetTuple3Skipper(schema),
+            { IsNative: true } => GetNativeSkipper(schema),
+            { IsRecord: true } => GetRecordSkipper(schema),
+            { IsUnion: true } => GetUnionSkipper(schema),
         };
     }
 
-    private Action<BonInput> GetArraySkipper(ArraySchema sourceSchema)
+    private Action<BonInput> GetArraySkipper(Schema schema)
     {
-        var skipElement = GetSkipper(sourceSchema.InnerSchema);
+        var skipElement = GetSkipper(schema.SchemaArguments[0]);
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
                 return;
             }
@@ -37,14 +39,14 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetDictionarySkipper(DictionarySchema sourceSchema)
+    private Action<BonInput> GetDictionarySkipper(Schema schema)
     {
-        var skipKey = GetSkipper(sourceSchema.InnerSchema1);
-        var skipValue = GetSkipper(sourceSchema.InnerSchema2);
+        var skipKey = GetSkipper(schema.SchemaArguments[0]);
+        var skipValue = GetSkipper(schema.SchemaArguments[1]);
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
                 return;
             }
@@ -57,18 +59,16 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetTuple2Skipper(Tuple2Schema sourceSchema)
+    private Action<BonInput> GetTuple2Skipper(Schema schema)
     {
-        var skipItem1 = GetSkipper(sourceSchema.InnerSchema1);
-        var skipItem2 = GetSkipper(sourceSchema.InnerSchema2);
+        var skipItem1 = GetSkipper(schema.SchemaArguments[0]);
+        var skipItem2 = GetSkipper(schema.SchemaArguments[1]);
 
-        if (sourceSchema.IsNullable)
+        if (schema.IsNullable)
         {
             return (BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NULL)
+                if (input.Reader.ReadByte() == NULL)
                 {
                     return;
                 }
@@ -85,19 +85,17 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetTuple3Skipper(Tuple3Schema sourceSchema)
+    private Action<BonInput> GetTuple3Skipper(Schema schema)
     {
-        var skipItem1 = GetSkipper(sourceSchema.InnerSchema1);
-        var skipItem2 = GetSkipper(sourceSchema.InnerSchema2);
-        var skipItem3 = GetSkipper(sourceSchema.InnerSchema3);
+        var skipItem1 = GetSkipper(schema.SchemaArguments[0]);
+        var skipItem2 = GetSkipper(schema.SchemaArguments[1]);
+        var skipItem3 = GetSkipper(schema.SchemaArguments[2]);
 
-        if (sourceSchema.IsNullable)
+        if (schema.IsNullable)
         {
             return (BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NULL)
+                if (input.Reader.ReadByte() == NULL)
                 {
                     return;
                 }
@@ -116,36 +114,17 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetNativeSkipper(NativeSchema sourceSchema)
-    {
-        var type = sourceSchema.AnnotatedSchemaType.ToNativeType();
+    private Action<BonInput> GetNativeSkipper(Schema schema) => deserializerStore.GetNativeSkipper(schema.SchemaType);
 
-        return (Action<BonInput>)this.GetPrivateMethod(nameof(CreateNativeSkipperFor))
-            .MakeGenericMethod(type)
-            .Invoke(this, [sourceSchema])!;
-    }
-
-    private Action<BonInput> CreateNativeSkipperFor<T>(Schema sourceSchema)
-    {
-        var reader = deserializerStore.GetDeserializer<T>(sourceSchema, typeof(T).IsNullable(true));
-
-        return (BonInput input) =>
-        {
-            reader(input);
-        };
-    }
-
-    private Action<BonInput> GetRecordSkipper(RecordSchema sourceSchema)
+    private Action<BonInput> GetRecordSkipper(Schema schema)
     {
         Action<BonInput>[]? skippers = null;
 
-        if (sourceSchema.IsNullable)
+        if (schema.IsNullable)
         {
             return (BonInput input) =>
             {
-                var firstByte = input.Reader.ReadByte();
-
-                if (firstByte == NULL)
+                if (input.Reader.ReadByte() == NULL)
                 {
                     return;
                 }
@@ -169,16 +148,16 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
             }
         };
 
-        Action<BonInput>[] getSkippers() => sourceSchema.Members.Select(member => GetSkipper(member.Schema)).ToArray();
+        Action<BonInput>[] getSkippers() => schema.Members.Select(member => GetSkipper(member.Schema)).ToArray();
     }
 
-    private Action<BonInput> GetUnionSkipper(UnionSchema sourceSchema)
+    private Action<BonInput> GetUnionSkipper(Schema schema)
     {
-        var skippers = sourceSchema.Members.ToDictionary(member => member.Id, member => GetSkipper(member.Schema));
+        var skippers = schema.Members.ToDictionary(member => member.Id, member => GetSkipper(member.Schema));
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int id)
+            if (IntSerializer.Read(input.Reader) is not int id)
             {
                 return;
             }

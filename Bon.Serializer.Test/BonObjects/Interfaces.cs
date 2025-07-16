@@ -19,6 +19,6 @@ public interface ICat : IAnimal;
 public interface IAnimalImitation;
 
 [BonObject]
-[BonInclude(BonSerializerTestBase.DogId, typeof(WithInt))]
-[BonInclude(BonSerializerTestBase.CatId, typeof(WithNullableString))]
+[BonInclude(BonSerializerTestBase.DogId, typeof(WithNullableInt))]
+[BonInclude(BonSerializerTestBase.CatId, typeof(WithString))]
 public interface IAnimalFailedImitation;

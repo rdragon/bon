@@ -82,14 +82,12 @@ public sealed class StringConverterTest : BonSerializerTestBase
 
     [Theory]
     [MemberData(nameof(NullableDecimalRoundTripData))]
-    public void NullableDecimalRoundTrip(decimal? value) => RoundTrip(value, x => x?.ToString(Culture) ?? "");
+    public void NullableDecimalRoundTrip(decimal? value) => RoundTrip(value, x => x?.ToString(Culture));
 
     public static TheoryData<decimal?> NullableDecimalRoundTripData => new() {
         { decimal.MinValue },
         { null },
     };
-
-    [Fact] public void GuidRoundTrip() => RoundTrip(TestHelper.Guid);
 
     private void RoundTrip<T>(T value, Func<T, string?>? toString = null)
     {

@@ -3,8 +3,8 @@
 public class NativeDeserializerTest : BonSerializerTestBase
 {
     [Fact] public void BoolToString() => DeserializeSlow(true, "1", ForbidSchemaTypeOptimization);
-    [Fact] public void BoolToBool() => DeserializeFast(true, true, ForbidSchemaTypeOptimization);
-    [Fact] public void BoolToByte() => DeserializeSlow(true, (byte)1, ForbidSchemaTypeOptimization);
+    [Fact] public void BoolToBool() => DeserializeSlow(true, true, ForbidSchemaTypeOptimization);
+    [Fact] public void BoolToByte() => DeserializeFast(true, (byte)1, ForbidSchemaTypeOptimization);
     [Fact] public void BoolToSByte() => DeserializeSlow(true, (sbyte)1, ForbidSchemaTypeOptimization);
     [Fact] public void BoolToShort() => DeserializeSlow(true, (short)1, ForbidSchemaTypeOptimization);
     [Fact] public void BoolToUShort() => DeserializeSlow(true, (ushort)1, ForbidSchemaTypeOptimization);
@@ -311,7 +311,7 @@ public class NativeDeserializerTest : BonSerializerTestBase
     [Fact] public void DecimalToULong() => DeserializeSlow((decimal)1, (ulong)1, ForbidSchemaTypeOptimization);
     [Fact] public void DecimalToFloat() => DeserializeSlow((decimal)1, (float)1, ForbidSchemaTypeOptimization);
     [Fact] public void DecimalToDouble() => DeserializeSlow((decimal)1, (double)1, ForbidSchemaTypeOptimization);
-    [Fact] public void DecimalToDecimal() => DeserializeFast((decimal)1, (decimal)1, ForbidSchemaTypeOptimization);
+    [Fact] public void DecimalToDecimal() => DeserializeSlow((decimal)1, (decimal)1, ForbidSchemaTypeOptimization);
 
     [Fact] public void DecimalToNullableBool() => DeserializeSlow((decimal)1, (bool?)true, ForbidSchemaTypeOptimization);
     [Fact] public void DecimalToNullableByte() => DeserializeSlow((decimal)1, (byte?)1, ForbidSchemaTypeOptimization);
@@ -324,7 +324,7 @@ public class NativeDeserializerTest : BonSerializerTestBase
     [Fact] public void DecimalToNullableULong() => DeserializeSlow((decimal)1, (ulong?)1, ForbidSchemaTypeOptimization);
     [Fact] public void DecimalToNullableFloat() => DeserializeSlow((decimal)1, (float?)1, ForbidSchemaTypeOptimization);
     [Fact] public void DecimalToNullableDouble() => DeserializeSlow((decimal)1, (double?)1, ForbidSchemaTypeOptimization);
-    [Fact] public void DecimalToNullableDecimal() => DeserializeSlow((decimal)1, (decimal?)1, ForbidSchemaTypeOptimization);
+    [Fact] public void DecimalToNullableDecimal() => DeserializeFast((decimal)1, (decimal?)1, ForbidSchemaTypeOptimization);
 
     [Fact] public void NullableIntToString() => DeserializeSlow((int?)1, "1", ForbidSchemaTypeOptimization);
     [Fact] public void NullableIntToBool() => DeserializeSlow((int?)1, true, ForbidSchemaTypeOptimization);
