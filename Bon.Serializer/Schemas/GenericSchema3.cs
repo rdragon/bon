@@ -11,6 +11,9 @@ public abstract class GenericSchema3(SchemaType SchemaType) : Schema(SchemaType)
 
     public override IEnumerable<Schema> GetInnerSchemas() => [InnerSchema1, InnerSchema2, InnerSchema3];
 
+    /// <summary>
+    /// Used by source generated code.
+    /// </summary>
     public void SetInnerSchemas(Schema innerSchema1, Schema innerSchema2, Schema innerSchema3)
     {
         InnerSchema1 = innerSchema1;
@@ -36,12 +39,14 @@ public abstract class GenericSchema3(SchemaType SchemaType) : Schema(SchemaType)
             InnerSchema3.Equals(other.InnerSchema3, ancestors);
     }
 
+    /// <summary>
+    /// Used by source generated code.
+    /// </summary>
     public static GenericSchema3 Create(SchemaType schemaType)
     {
         GenericSchema3 schema = schemaType switch
         {
-            SchemaType.Tuple3 => new Tuple3Schema(schemaType),
-            _ => throw new ArgumentOutOfRangeException(nameof(schemaType), schemaType, null),
+            SchemaType.Tuple3 or SchemaType.NullableTuple3 => new Tuple3Schema(schemaType),
         };
 
         return schema;

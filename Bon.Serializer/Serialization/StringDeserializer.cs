@@ -8,7 +8,7 @@ public static class StringDeserializer
 
     public static string? ReadString(BinaryReader reader)
     {
-        if ((int?)WholeNumberSerializer.ReadNullable(reader) is not int totalByteCount)
+        if (IntSerializer.Read(reader) is not int totalByteCount)
         {
             return null;
         }

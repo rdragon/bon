@@ -1,5 +1,8 @@
 ﻿namespace Bon.Serializer;
 
+/// <summary>
+/// //2at
+/// </summary>
 public sealed class BonFacade
 {
     private readonly SchemaContentsStore _schemaContentsStore;
@@ -36,8 +39,8 @@ public sealed class BonFacade
     public void AddReaderFactory(Type type, Delegate factory) => _deserializerStore.AddReaderFactory(type, factory);
 
     public void AddMemberType(Type unionType, int memberId, Type memberType) =>
-        _deserializerStore.AddMemberType(unionType, memberId, memberType);
+        _deserializerStore.MemberTypes[(unionType, memberId)] = memberType;
 
     public void AddDeserializer(Type type, Delegate deserializer) =>
-        _deserializerStore.Add(type, deserializer);
+        _deserializerStore.AddDeserializer(type, deserializer);
 }

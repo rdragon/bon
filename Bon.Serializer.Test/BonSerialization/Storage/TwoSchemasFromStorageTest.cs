@@ -31,7 +31,7 @@ public class TwoSchemasFromStorageTest : BonSerializerTestBase
         var memberA = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, []));
         var schemaA = new SchemaContentsData(ContentsIdA, [memberA]);
 
-        var memberB = new SchemaMemberData(MemberId, new CustomSchemaData(SchemaType.RecordMaybe, ContentsIdA));
+        var memberB = new SchemaMemberData(MemberId, new CustomSchemaData(SchemaType.NullableRecord, ContentsIdA));
         var schemaB = new SchemaContentsData(ContentsIdB, [memberB]);
 
         var block = new Block(BlockId, [schemaA, schemaB]);
@@ -43,10 +43,10 @@ public class TwoSchemasFromStorageTest : BonSerializerTestBase
 
     private byte[] GetInstanceBytes() => [.. GetManualSerializer()
         .WriteFirstPartOfHeader(BlockId)
-        .WriteWholeNumber((int)SchemaType.Record)
+        .WriteSchemaType(SchemaType.NullableRecord)
         .WriteBool(false)
-        .WriteWholeNumber(ContentsIdB)
-        .WriteInt(Value)];
+        .WriteCompactInt(ContentsIdB)
+        .WriteFullInt(Value)];
 
     private static ClassB Instance => new(0, new(0, Value));
 

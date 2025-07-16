@@ -2,7 +2,7 @@
 
 internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseReflection
 {
-    private const byte NULL = 255;
+    private const byte NULL = NativeWriter.NULL;
 
     /// <summary>
     /// Returns a method that reads binary data formatted according to the schema and throws away the result.
@@ -18,7 +18,6 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
             NativeSchema nativeSchema => GetNativeSkipper(nativeSchema),
             RecordSchema recordSchema => GetRecordSkipper(recordSchema),
             UnionSchema unionSchema => GetUnionSkipper(unionSchema),
-            _ => throw new ArgumentOutOfRangeException(nameof(schema), schema, null),
         };
     }
 
@@ -28,7 +27,7 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
                 return;
             }
@@ -47,7 +46,7 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
                 return;
             }
@@ -158,7 +157,7 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int id)
+            if (IntSerializer.Read(input.Reader) is not int id)
             {
                 return;
             }

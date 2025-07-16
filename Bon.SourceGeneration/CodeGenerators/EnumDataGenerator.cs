@@ -1,12 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using Bon.SourceGeneration.Definitions;
+using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
-    internal sealed class EnumConversionGenerator
+    /// <summary>
+    /// Generates for each enum two EnumData instances (for the nullable and non-nullable versions). 
+    /// </summary>
+    internal sealed class EnumDataGenerator
     {
         private readonly CodeGenerator _codeGenerator;
 
-        public EnumConversionGenerator(CodeGenerator codeGenerator)
+        public EnumDataGenerator(CodeGenerator codeGenerator)
         {
             _codeGenerator = codeGenerator;
         }

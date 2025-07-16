@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Bon.SourceGeneration.Definitions;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -141,7 +142,7 @@ namespace Bon.SourceGeneration
         {
             if (symbol is INamedTypeSymbol named)
             {
-                named = named.TryGetUnderlyingTypeFromNullableType() ?? named;
+                named = named.UnwrapNullable() ?? named;
 
                 if (named.IsGenericType)
                 {
@@ -165,7 +166,7 @@ namespace Bon.SourceGeneration
         {
             if (symbol is INamedTypeSymbol named)
             {
-                named = named.TryGetUnderlyingTypeFromNullableType() ?? named;
+                named = named.UnwrapNullable() ?? named;
 
                 if (named.IsGenericType)
                 {
@@ -192,14 +193,33 @@ namespace Bon.SourceGeneration
         /// </summary>
         public static string GetTypeName(this ITypeSymbol symbol) => symbol.ToString();
 
-        public static INamedTypeSymbol TryGetUnderlyingTypeFromNullableType(this INamedTypeSymbol symbol)
+        //1at: maak dat ie altijd iets teruggeeft? dat ie dus zelfde werkt als functie in serializer.
+        public static INamedTypeSymbol UnwrapNullable(this INamedTypeSymbol symbol)
+        {
+            return symbol.UnwrapNullable(out var type) ? type : null;
+        }
+
+        public static bool IsNullable(this ITypeSymbol symbol) => symbol.NullableAnnotation == NullableAnnotation.Annotated;
+
+        /// <summary>
+        /// //2at
+        /// </summary>
+        public static ITypeSymbol UpdateNullability(this ITypeSymbol symbol) =>
+            symbol.IsValueType ? symbol : symbol.WithNullableAnnotation(NullableAnnotation.Annotated);
+
+        public static INamedTypeSymbol ToNamedTypeSymbol(this ITypeSymbol symbol) =>
+            symbol as INamedTypeSymbol ?? throw new SourceGenerationException($"Cannot handle '{symbol}'.", 8468, symbol);
+
+        public static bool UnwrapNullable(this INamedTypeSymbol symbol, out INamedTypeSymbol result)
         {
             if (symbol.IsValueType && symbol.NullableAnnotation == NullableAnnotation.Annotated)
             {
-                return symbol.TypeArguments[0] as INamedTypeSymbol;
+                result = (INamedTypeSymbol)symbol.TypeArguments[0];
+                return true;
             }
 
-            return null;
+            result = null;
+            return false;
         }
 
         public static void RequireAll<T>(this IEnumerable<T> enumerable, Func<T, bool> condition)
@@ -239,6 +259,11 @@ namespace Bon.SourceGeneration
             }
 
             return null;
+        }
+
+        public static bool IsNullable(this INamedTypeSymbol symbol)
+        {
+            return !symbol.IsValueType || symbol.NullableAnnotation == NullableAnnotation.Annotated;
         }
     }
 }

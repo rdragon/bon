@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
     internal sealed class DictionaryDefinition : Definition
     {
@@ -14,10 +13,9 @@ namespace Bon.SourceGeneration
         public DictionaryDefinition(
             string type,
             SchemaType schemaType,
-            bool isNullable,
             IDefinition keyDefinition,
             IDefinition valueDefinition,
-            DictionaryType dictionaryType) : base(type, schemaType, isNullable)
+            DictionaryType dictionaryType) : base(type, schemaType)
         {
             KeyDefinition = keyDefinition;
             ValueDefinition = valueDefinition;
@@ -31,8 +29,6 @@ namespace Bon.SourceGeneration
         {
             return $"new Dictionary<{KeyDefinition.Type}, {ValueDefinition.Type}>({count})";
         }
-
-        public override IDefinition ToNullable() => throw new InvalidOperationException();
 
         public override IEnumerable<IDefinition> GetInnerDefinitions()
         {

@@ -64,7 +64,7 @@ public sealed partial class BonSerializer
         SchemaStoreUpdater schemaStoreUpdater = new(schemaStorage, blockStore, schemaContentsStore, schemaByTypeStore, schemaDataResolver, sourceGenerationContext, bonFacade);
 
         await schemaStoreUpdater.InitializeSchemaStore().ConfigureAwait(false);
-        writerStore.AddBuiltInWriters();
+        writerStore.AddNativeWriters();
         deserializerStore.AddNativeReaders();
         sourceGenerationContext.Run(bonFacade);
         simpleWriterStore.Initialize();

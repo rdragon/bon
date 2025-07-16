@@ -5,7 +5,7 @@ internal sealed class RecordDeserializer(
      DeserializerStore deserializerStore,
      SkipperStore skipperStore) : IUseReflection
 {
-    private const byte NULL = 255;
+    private const byte NULL = NativeWriter.NULL;
 
     /// <summary>
     /// Contains for each record a factory method that creates a deserializer for that record.
@@ -23,7 +23,20 @@ internal sealed class RecordDeserializer(
     /// </summary>
     public Dictionary<Type, Delegate> ReaderFactories { get; } = [];
 
-    public Read<T?> CreateDeserializer<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
+    /// <summary>
+    /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
+    /// </summary>
+    public Read<T?>? TryCreateDeserializer<T>(Schema sourceSchema, Schema? targetSchema)
+    {
+        if (sourceSchema is not RecordSchema recordSourceSchema || targetSchema is not RecordSchema recordTargetSchema)
+        {
+            return null;
+        }
+
+        return CreateDeserializer<T>(recordSourceSchema, recordTargetSchema);
+    }
+
+    private Read<T?> CreateDeserializer<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
     {
         var deserializer = CreateDeserializerNow<T>(sourceSchema, targetSchema);
 
@@ -43,7 +56,7 @@ internal sealed class RecordDeserializer(
         var index = 0;
         var arguments = new object?[targetSchema.Members.Count * 2 + 1];
         var sourceMembers = new MemberCollection(sourceSchema.Members);
-        var nonNullableTargetType = typeof(T).UnwrapNullable();
+        var nonNullableTargetType = typeof(T).UnwrapNullable(out _);
 
         foreach (var targetMember in targetSchema.Members)
         {

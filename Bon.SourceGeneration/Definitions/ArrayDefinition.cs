@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
     /// <summary>
     /// Represents any collection type, e.g. <see cref="List{T}"/> or <see cref="IEnumerable{T}"/>.
@@ -27,10 +27,9 @@ namespace Bon.SourceGeneration
         public ArrayDefinition(
             string type,
             SchemaType schemaType,
-            bool isNullable,
             IDefinition elementDefinition,
             ReadCollectionType readCollectionType,
-            CollectionType collectionType) : base(type, schemaType, isNullable)
+            CollectionType collectionType) : base(type, schemaType)
         {
             ElementDefinition = elementDefinition;
             ReadCollectionType = readCollectionType;
@@ -54,8 +53,6 @@ namespace Bon.SourceGeneration
 
             throw new InvalidOperationException();
         }
-
-        public override IDefinition ToNullable() => throw new InvalidOperationException();
 
         public override IEnumerable<IDefinition> GetInnerDefinitions()
         {

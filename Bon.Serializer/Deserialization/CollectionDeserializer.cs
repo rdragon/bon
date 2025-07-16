@@ -4,33 +4,39 @@
 internal sealed class CollectionDeserializer(
     DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate CreateDeserializer<T>(Schema sourceSchema, Schema targetSchema)
+    /// <summary>
+    /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
+    /// </summary>
+    public Delegate? TryCreateDeserializer<T>(Schema sourceSchema)
     {
-        if (targetSchema is ArraySchema)
+        if (TryParseAsCollectionType(typeof(T)) is { } tuple)
         {
-            var (elementType, collectionKind) = GetElementType(typeof(T));
-
             return (Delegate)this.GetPrivateMethod(nameof(CreateCollectionDeserializerFor))
-                .MakeGenericMethod(elementType)
-                .Invoke(this, [sourceSchema, targetSchema, collectionKind])!;
+                .MakeGenericMethod(tuple.ElementType)
+                .Invoke(this, [sourceSchema, tuple.CollectionKind])!;
         }
 
-        return CreateCollectionToElementReader<T>(sourceSchema);
+        if (sourceSchema is ArraySchema)
+        {
+            return CreateCollectionToElementReader<T>(sourceSchema);
+        }
+
+        return null;
     }
 
-    private Delegate CreateCollectionDeserializerFor<T>(Schema sourceSchema, ArraySchema targetSchema, CollectionKind collectionKind)
+    private Delegate CreateCollectionDeserializerFor<T>(Schema sourceSchema, CollectionKind collectionKind)
     {
         if (sourceSchema is ArraySchema sourceArraySchema)
         {
-            return CreateCollectionReaderFor<T>(sourceArraySchema, targetSchema, collectionKind);
+            return CreateCollectionReaderFor<T>(sourceArraySchema, collectionKind);
         }
 
-        return CreateElementToCollectionReaderFor<T>(sourceSchema, targetSchema, collectionKind);
+        return CreateElementToCollectionReaderFor<T>(sourceSchema, collectionKind);
     }
 
     private Read<T?> CreateCollectionToElementReader<T>(Schema sourceSchema)
     {
-        var readArray = deserializerStore.GetDeserializer<T[]>(sourceSchema, false);
+        var readArray = deserializerStore.GetDeserializer<T[]>(sourceSchema);
 
         return (BonInput input) =>
         {
@@ -40,17 +46,17 @@ internal sealed class CollectionDeserializer(
         };
     }
 
-    private static (Type ElementType, CollectionKind CollectionKind) GetElementType(Type collectionType)
+    private static (Type ElementType, CollectionKind CollectionKind)? TryParseAsCollectionType(Type type)
     {
-        if (collectionType.IsArray && collectionType.GetElementType() is Type elementType)
+        if (type.IsArray && type.GetElementType() is Type elementType)
         {
             return (elementType, CollectionKind.Array);
         }
 
-        if (collectionType.IsGenericType)
+        if (type.IsGenericType)
         {
-            var genericTypeDefinition = collectionType.GetGenericTypeDefinition();
-            var genericArguments = collectionType.GetGenericArguments();
+            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericArguments = type.GetGenericArguments();
             elementType = genericArguments[0];
 
             if (genericTypeDefinition == typeof(IEnumerable<>) ||
@@ -68,35 +74,37 @@ internal sealed class CollectionDeserializer(
             }
         }
 
-        throw new ArgumentOutOfRangeException(nameof(collectionType), collectionType, null);
+        return null;
     }
 
-    private Delegate CreateCollectionReaderFor<T>(ArraySchema sourceSchema, ArraySchema targetSchema, CollectionKind collectionKind)
+    private Delegate CreateCollectionReaderFor<T>(ArraySchema sourceSchema, CollectionKind collectionKind)
     {
         return collectionKind switch
         {
-            CollectionKind.Array => CreateArrayReaderFor<T>(sourceSchema, targetSchema),
-            CollectionKind.List => CreateListReaderFor<T>(sourceSchema, targetSchema),
-            _ => throw new ArgumentOutOfRangeException(nameof(collectionKind), collectionKind, null),
+            CollectionKind.Array => CreateArrayReaderFor<T>(sourceSchema),
+            CollectionKind.List => CreateListReaderFor<T>(sourceSchema),
         };
     }
 
-    private Read<T[]?> CreateArrayReaderFor<T>(ArraySchema sourceSchema, ArraySchema targetSchema)
+    private Read<T[]?> CreateArrayReaderFor<T>(ArraySchema sourceSchema)
     {
-        var targetIsNullable = targetSchema.IsNullable;
-
         if (typeof(T) == typeof(byte) && sourceSchema.InnerSchema == NativeSchema.Byte)
         {
-            return (Read<T[]?>)(object)CreateByteArrayReader(targetIsNullable);
+            return (Read<T[]?>)(object)ReadByteArray;
         }
 
-        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchema, targetSchema.InnerSchema.IsNullable);
+        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchema);
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
-                return targetIsNullable ? null : [];
+                return null;
+            }
+
+            if (count == 0)
+            {
+                return [];
             }
 
             var array = new T[count];
@@ -110,29 +118,27 @@ internal sealed class CollectionDeserializer(
         };
     }
 
-    private static Read<byte[]?> CreateByteArrayReader(bool targetIsNullable)
-    {
-        return (BonInput input) =>
-        {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
-            {
-                return targetIsNullable ? null : [];
-            }
+    private static Read<byte[]?> CreateByteArrayReader() => input => ReadByteArray(input.Reader);
 
-            return input.Reader.ReadBytes(count);
-        };
+    public static byte[]? ReadByteArray(BinaryReader reader)
+    {
+        if (IntSerializer.Read(reader) is not int count)
+        {
+            return null;
+        }
+
+        return reader.ReadBytes(count);
     }
 
-    private Read<List<T>?> CreateListReaderFor<T>(ArraySchema sourceSchema, ArraySchema targetSchema)
+    private Read<List<T>?> CreateListReaderFor<T>(ArraySchema sourceSchema)
     {
-        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchema, typeof(T).IsNullable(false));
-        var targetIsNullable = targetSchema.IsNullable;
+        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchema);
 
         return (BonInput input) =>
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
-                return targetIsNullable ? null : [];
+                return null;
             }
 
             var list = new List<T>(count);
@@ -146,21 +152,19 @@ internal sealed class CollectionDeserializer(
         };
     }
 
-    private Delegate CreateElementToCollectionReaderFor<T>(Schema sourceSchema, ArraySchema targetSchema, CollectionKind collectionKind)
+    private Delegate CreateElementToCollectionReaderFor<T>(Schema sourceSchema, CollectionKind collectionKind)
     {
         return collectionKind switch
         {
-            CollectionKind.Array => CreateElementToArrayReaderFor<T>(sourceSchema, targetSchema),
-            CollectionKind.List => CreateElementToListReaderFor<T>(sourceSchema, targetSchema),
-            _ => throw new ArgumentOutOfRangeException(nameof(collectionKind), collectionKind, null),
+            CollectionKind.Array => CreateElementToArrayReaderFor<T>(sourceSchema),
+            CollectionKind.List => CreateElementToListReaderFor<T>(sourceSchema),
         };
     }
 
-    private Read<T[]?> CreateElementToArrayReaderFor<T>(Schema sourceSchema, ArraySchema targetSchema)
+    private Read<T[]?> CreateElementToArrayReaderFor<T>(Schema sourceSchema)
     {
         // Bookmark 943797192
-        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema, typeof(T).IsValueType ? null : true);
-        var targetIsNullable = targetSchema.IsNullable;
+        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema);
 
         return (BonInput input) =>
         {
@@ -168,18 +172,17 @@ internal sealed class CollectionDeserializer(
 
             if (element is null)
             {
-                return targetIsNullable ? null : [];
+                return null;
             }
 
             return [element];
         };
     }
 
-    private Read<List<T>?> CreateElementToListReaderFor<T>(Schema sourceSchema, ArraySchema targetSchema)
+    private Read<List<T>?> CreateElementToListReaderFor<T>(Schema sourceSchema)
     {
         // Bookmark 943797192
-        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema, typeof(T).IsValueType ? null : true);
-        var targetIsNullable = targetSchema.IsNullable;
+        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema);
 
         return (BonInput input) =>
         {
@@ -187,7 +190,7 @@ internal sealed class CollectionDeserializer(
 
             if (element is null)
             {
-                return targetIsNullable ? null : [];
+                return null;
             }
 
             return [element];

@@ -1,8 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using Bon.SourceGeneration.Definitions;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
+    /// <summary>
+    /// Generates a reader factory for each record (for values types even two).
+    /// These reader factories are used by the Bon serializer when deserializing a record that was serialized using an "unexpected" schema.
+    /// </summary>
     internal class ReaderFactoryGenerator
     {
         private readonly CodeGenerator _codeGenerator;
@@ -20,12 +25,6 @@ namespace Bon.SourceGeneration
             foreach (var definition in definitions)
             {
                 AddReaderFactory(definition, index);
-
-                if (definition.IsValueType)
-                {
-                    AddReaderFactory((RecordDefinition)definition.ToNullable(), index);
-                }
-
                 index++;
             }
         }
@@ -41,7 +40,7 @@ namespace Bon.SourceGeneration
                 .Concat(new[] { "Action<BonInput>? skipRest" });
 
             var parameterText = string.Join(", ", parameters);
-            var methodName = $"CreateReader{index}" + (definition.IsNullable ? "Nullable" : "");
+            var methodName = $"CreateReader{index}";
 
             _codeGenerator.AddMethod(
                 $"private static Read<{definition.Type}> {methodName}({parameterText})",
@@ -85,7 +84,7 @@ namespace Bon.SourceGeneration
 
             _codeGenerator.AppendClassBody(
                 "skipRest?.Invoke(input);",
-                $"return {((RecordDefinition)definition.ToNonNullable()).GetLongConstructorName(_codeGenerator)}({argText});",
+                $"return {definition.GetLongConstructorName(_codeGenerator)}({argText});",
                 "};",
                 "}");
 

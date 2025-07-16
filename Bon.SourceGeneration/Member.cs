@@ -1,4 +1,6 @@
-﻿namespace Bon.SourceGeneration
+﻿using Bon.SourceGeneration.Definitions;
+
+namespace Bon.SourceGeneration
 {
     /// <summary>
     /// Represents a property or field of a custom class or struct.

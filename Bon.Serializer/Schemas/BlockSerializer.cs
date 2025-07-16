@@ -12,7 +12,7 @@ internal static class BlockSerializer
         writer.Write(BLOCK_MARKER);
         writer.Write(VERSION);
         writer.Write(block.BlockId);
-        WholeNumberSerializer.Write(writer, block.Schemas.Count);
+        IntSerializer.Write(writer, block.Schemas.Count);
 
         foreach (var schema in block.Schemas)
         {
@@ -29,7 +29,7 @@ internal static class BlockSerializer
             ReadMarker(reader);
             ReadVersion(reader);
             var blockId = reader.ReadUInt32();
-            var count = (int)WholeNumberSerializer.Read(reader);
+            var count = IntSerializer.Read(reader) ?? 0;
             var schemas = new List<SchemaContentsData>(count);
 
             for (var i = 0; i < count; i++)

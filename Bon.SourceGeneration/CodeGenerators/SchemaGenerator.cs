@@ -1,8 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using Bon.SourceGeneration.Definitions;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
+    /// <summary>
+    /// Generates for each and every definition it can find a schema (except the native definitions, as for those we can
+    /// use the NativeSchema class).
+    /// It then publishes the schemas of all found <see cref="ICriticalDefinition"/>s.
+    /// </summary>
     internal sealed class SchemaGenerator
     {
         private readonly CodeGenerator _codeGenerator;
@@ -30,7 +36,7 @@ namespace Bon.SourceGeneration
                 UpdateSchema(definition);
             }
 
-            foreach (var definition in definitions.OfType<IMajorDefinition>())
+            foreach (var definition in definitions.OfType<ICriticalDefinition>())
             {
                 PushSchema(definition);
             }
@@ -50,7 +56,7 @@ namespace Bon.SourceGeneration
         private void AddDefinitionsRecursive(HashSet<IDefinition> definitions, IEnumerable<IDefinition> definitionsToAdd)
         {
             foreach (var definition in definitionsToAdd.Where(definition =>
-                !(definition is NativeDefinition || definition is WeakDefinition) &&
+                !(definition is NativeDefinition) &&
                 definitions.Add(definition)))
             {
                 AddDefinitionsRecursive(definitions, definition.GetInnerDefinitions());
@@ -61,10 +67,9 @@ namespace Bon.SourceGeneration
         {
             var id = _codeGenerator.GetId(definition);
             var schemaType = $"SchemaType.{definition.SchemaType}";
-            var isNullable = definition.IsNullable.ToStringLower();
 
             _codeGenerator.AppendClassBody(
-                $"var schema{id} = {definition.SchemaBaseClass}.Create({schemaType}, {isNullable});");
+                $"var schema{id} = {definition.SchemaBaseClass}.Create({schemaType});");
         }
 
         private void UpdateSchema(IDefinition definition)
@@ -77,34 +82,29 @@ namespace Bon.SourceGeneration
             }
 
             var id = _codeGenerator.GetId(definition);
-            var argument = string.Join(", ", definition.GetInnerDefinitions().Select(GetSchemaArgument));
+            var arguments = string.Join(", ", definition.GetInnerDefinitions().Select(GetSchemaArgument));
 
-            if (argument.Length > 0)
+            if (arguments.Length > 0)
             {
                 _codeGenerator.AppendClassBody(
-                    $"schema{id}.SetInnerSchemas({argument});");
+                    $"schema{id}.SetInnerSchemas({arguments});");
             }
         }
 
         private void UpdateCustomSchema(ICustomDefinition definition)
         {
             var id = _codeGenerator.GetId(definition);
-            var argument = string.Join(", ", definition.Members.Select(GetMemberArgument));
+            var arguments = string.Join(", ", definition.Members.Select(GetMemberArgument));
 
             _codeGenerator.AppendClassBody(
-                $"schema{id}.SetMembers({argument});");
+                $"schema{id}.SetMembers({arguments});");
         }
 
         private string GetSchemaArgument(IDefinition definition)
         {
-            if (definition is NativeDefinition)
+            if (definition is NativeDefinition nativeDefinition)
             {
-                return $"NativeSchema.{definition.SchemaType}";
-            }
-
-            if (definition is WeakDefinition)
-            {
-                return $"NativeSchema.{definition.SchemaType}";
+                return nativeDefinition.SchemaIdentifier;
             }
 
             var id = _codeGenerator.GetId(definition);

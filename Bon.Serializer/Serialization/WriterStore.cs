@@ -5,21 +5,18 @@ internal sealed class WriterStore : IUseReflection
     /// <summary>
     /// Contains for every type that can be serialized a writer.
     /// There are a couple of ways in which this dictionary is filled:
-    /// 1. by the method <see cref="AddBuiltInWriters"/>,
+    /// 1. by the method <see cref="AddNativeWriters"/>,
     /// 2. by the source generation context, see WriterGenerator,
     /// 3. by the method <see cref="CreateWriter"/>.
     /// </summary>
     private readonly ConcurrentDictionary<Type, Writer> _writers = new();
     private Func<Type, Writer>? _createWriter;
 
-    public void AddBuiltInWriters()
+    public void AddNativeWriters()
     {
-        AddNativeWriters();
-        AddWeakWriters();
-    }
-
-    private void AddNativeWriters()
-    {
+        // Bookmark 659516266 (native serialization)
+        // All non-generic types for which the source generation context does not provide a writer should be added here.
+        // This is the same set of types as can be found at bookmark 293228595.
         Add<string>(NativeSerializer.WriteString, false);
         Add<bool>(NativeSerializer.WriteBool, false);
         Add<byte>(NativeSerializer.WriteByte, false, SimpleWriterType.Byte);
@@ -34,6 +31,12 @@ internal sealed class WriterStore : IUseReflection
         Add<double>(NativeSerializer.WriteDouble, false);
         Add<decimal>(NativeSerializer.WriteDecimal, false);
         Add<Guid>(NativeSerializer.WriteGuid, false);
+        Add<char>(NativeSerializer.WriteChar, false);
+        Add<DateTime>(NativeSerializer.WriteDateTime, false);
+        Add<DateTimeOffset>(NativeSerializer.WriteDateTimeOffset, false);
+        Add<TimeSpan>(NativeSerializer.WriteTimeSpan, false);
+        Add<DateOnly>(NativeSerializer.WriteDateOnly, false);
+        Add<TimeOnly>(NativeSerializer.WriteTimeOnly, false);
 
         Add<bool?>(NativeSerializer.WriteNullableBool, false);
         Add<byte?>(NativeSerializer.WriteNullableByte, false);
@@ -48,22 +51,11 @@ internal sealed class WriterStore : IUseReflection
         Add<double?>(NativeSerializer.WriteNullableDouble, false);
         Add<decimal?>(NativeSerializer.WriteNullableDecimal, false);
         Add<Guid?>(NativeSerializer.WriteNullableGuid, false);
-    }
-
-    private void AddWeakWriters()
-    {
-        // Bookmark 659516266 (char serialization)
-        Add<char>(NativeSerializer.WriteChar, false);
         Add<char?>(NativeSerializer.WriteNullableChar, false);
-        Add<DateTime>(NativeSerializer.WriteDateTime, false);
         Add<DateTime?>(NativeSerializer.WriteNullableDateTime, false);
-        Add<DateTimeOffset>(NativeSerializer.WriteDateTimeOffset, false);
         Add<DateTimeOffset?>(NativeSerializer.WriteNullableDateTimeOffset, false);
-        Add<TimeSpan>(NativeSerializer.WriteTimeSpan, false);
         Add<TimeSpan?>(NativeSerializer.WriteNullableTimeSpan, false);
-        Add<DateOnly>(NativeSerializer.WriteDateOnly, false);
         Add<DateOnly?>(NativeSerializer.WriteNullableDateOnly, false);
-        Add<TimeOnly>(NativeSerializer.WriteTimeOnly, false);
         Add<TimeOnly?>(NativeSerializer.WriteNullableTimeOnly, false);
     }
 
@@ -106,14 +98,14 @@ internal sealed class WriterStore : IUseReflection
             return CreateArrayWriter(elementType);
         }
 
-        if (type.TryGetInnerTypesOfTuple2() is (Type item1Type, Type item2Type))
+        if (type.TryGetTuple2Type() is { } tuple2)
         {
-            return CreateTuple2Writer(item1Type, item2Type, type.IsNullable(false));
+            return CreateTuple2Writer(tuple2);
         }
 
-        if (type.TryGetInnerTypesOfTuple3() is (Type item1, Type item2, Type item3))
+        if (type.TryGetTuple3Type() is { } tuple3)
         {
-            return CreateTuple3Writer(item1, item2, item3, type.IsNullable(false));
+            return CreateTuple3Writer(tuple3);
         }
 
         if (type.IsGenericType)
@@ -161,10 +153,10 @@ internal sealed class WriterStore : IUseReflection
         var (writeElement, usesCustomSchemas, _) = GetWriter<TElement>();
 
         return new((BinaryWriter writer, IEnumerable<TElement> collection) =>
-        {
+        {//0at: goed met nullable omgaan, 791351735
             var elements = collection as IReadOnlyList<TElement> ?? collection.ToArray();
             var count = elements.Count;
-            WholeNumberSerializer.Write(writer, count);
+            IntSerializer.Write(writer, count);
 
             for (int i = 0; i < count; i++)
             {
@@ -175,14 +167,22 @@ internal sealed class WriterStore : IUseReflection
 
     private static Writer CreateByteArrayWriter()
     {
+        return new(WriteByteArray, false);
+    }
+
+    public static void WriteByteArray(BinaryWriter writer, byte[]? array)
+    {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
-        return new((BinaryWriter writer, byte[] array) =>
+        if (array is null)
         {
-            var count = array.Length;
-            WholeNumberSerializer.Write(writer, count);
-            writer.Write(array);
-        }, false);
+            IntSerializer.WriteNull(writer);
+            return;
+        }
+
+        var count = array.Length;
+        IntSerializer.Write(writer, count);
+        writer.Write(array);
     }
 
     private Writer CreateDictionaryWriter(Type keyType, Type valueType, Type genericTypeDefinition)
@@ -213,7 +213,7 @@ internal sealed class WriterStore : IUseReflection
         return new((BinaryWriter writer, IDictionary<TKey, TValue> dictionary) =>
         {
             var count = dictionary.Count;
-            WholeNumberSerializer.Write(writer, count);
+            IntSerializer.Write(writer, count);
             var actualCount = 0;
 
             foreach (var (key, value) in dictionary)
@@ -242,7 +242,7 @@ internal sealed class WriterStore : IUseReflection
         return new((BinaryWriter writer, IReadOnlyDictionary<TKey, TValue> dictionary) =>
         {
             var count = dictionary.Count;
-            WholeNumberSerializer.Write(writer, count);
+            IntSerializer.Write(writer, count);
             var actualCount = 0;
 
             foreach (var (key, value) in dictionary)
@@ -259,11 +259,11 @@ internal sealed class WriterStore : IUseReflection
         }, usesCustomSchemas);
     }
 
-    private Writer CreateTuple2Writer(Type item1Type, Type item2Type, bool isNullable)
+    private Writer CreateTuple2Writer(Tuple2Type tuple2)
     {
         return (Writer)this.GetPrivateMethod(nameof(CreateTuple2WriterFor))
-            .MakeGenericMethod(item1Type, item2Type)
-            .Invoke(this, [isNullable])!;
+            .MakeGenericMethod(tuple2.Item1Type, tuple2.Item2Type)
+            .Invoke(this, [tuple2.IsNullable])!;
     }
 
     private Writer CreateTuple2WriterFor<T1, T2>(bool isNullable)
@@ -281,12 +281,12 @@ internal sealed class WriterStore : IUseReflection
             {
                 if (tuple is null)
                 {
-                    writer.Write(NativeSerializer.NULL);
+                    writer.Write(NativeWriter.NULL);
 
                     return;
                 }
 
-                writer.Write(NativeSerializer.NOT_NULL);
+                writer.Write(NativeWriter.NOT_NULL);
                 writeItem1(writer, tuple.Value.Item1);
                 writeItem2(writer, tuple.Value.Item2);
             }, usesCustomSchemas);
@@ -299,11 +299,11 @@ internal sealed class WriterStore : IUseReflection
         }, usesCustomSchemas);
     }
 
-    private Writer CreateTuple3Writer(Type item1Type, Type item2Type, Type item3Type, bool isNullable)
+    private Writer CreateTuple3Writer(Tuple3Type tuple3)
     {
         return (Writer)this.GetPrivateMethod(nameof(CreateTuple3WriterFor))
-            .MakeGenericMethod(item1Type, item2Type, item3Type)
-            .Invoke(this, [isNullable])!;
+            .MakeGenericMethod(tuple3.Item1Type, tuple3.Item2Type, tuple3.Item3Type)
+            .Invoke(this, [tuple3.IsNullable])!;
     }
 
     private Writer CreateTuple3WriterFor<T1, T2, T3>(bool isNullable)
@@ -322,12 +322,12 @@ internal sealed class WriterStore : IUseReflection
             {
                 if (tuple is null)
                 {
-                    writer.Write(NativeSerializer.NULL);
+                    writer.Write(NativeWriter.NULL);
 
                     return;
                 }
 
-                writer.Write(NativeSerializer.NOT_NULL);
+                writer.Write(NativeWriter.NOT_NULL);
                 writeItem1(writer, tuple.Value.Item1);
                 writeItem2(writer, tuple.Value.Item2);
                 writeItem3(writer, tuple.Value.Item3);

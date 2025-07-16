@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
     /// <summary>
     /// Represents a type that can be serialized.
@@ -8,9 +8,11 @@ namespace Bon.SourceGeneration
     internal interface IDefinition : IRecursiveEquatable
     {
         /// <summary>
+        /// The type that this definition represents.
         /// A value like "ExampleNamespace.ExampleClass?" or "int" or "System.IEnumerable&lt;string?&gt;".
         /// Two definitions with the same <see cref="Type"/> are considered equal (assuming they were created from the same version
         /// of the code).
+        /// Reference types always end with a question mark.
         /// </summary>
         string Type { get; }
 
@@ -19,10 +21,22 @@ namespace Bon.SourceGeneration
         /// </summary>
         string TypeNonNullable { get; }
 
+        /// <summary>
+        /// //2at
+        /// </summary>
         string SafeType { get; }
 
+        /// <summary>
+        /// The schema type that will be used when serializing this type.
+        /// This property is only used when obtaining the schema corresponding to this definition.
+        /// (And it is used when comparing two definitions.)
+        /// Therefore, if you have a custom way to obtain the schema, you can set this property to anything you like.
+        /// </summary>
         SchemaType SchemaType { get; }
 
+        /// <summary>
+        /// Returns whether this is a nullable value type or (any) reference type.
+        /// </summary>
         bool IsNullable { get; }
 
         /// <summary>
@@ -30,11 +44,11 @@ namespace Bon.SourceGeneration
         /// </summary>
         string TypeOf { get; }
 
-        IDefinition ToNullable();
-
         bool IsReferenceType { get; }
 
         bool IsValueType { get; }
+
+        bool IsNullableValueType { get; }
 
         /// <summary>
         /// Returns the definitions of the type parameters for generic types.
@@ -51,12 +65,12 @@ namespace Bon.SourceGeneration
 
     /// <summary>
     /// A <see cref="RecordDefinition"/>, <see cref="UnionDefinition"/>, or <see cref="EnumDefinition"/>.
-    /// These are all the types for which the serialization and deserialization is dependent on the source generated code.
-    /// For other types, like arrays and tuples, reflection is used for (at least part of) the serialization and deserialization.
+    /// For these types the source generation is critical.
+    /// Other types can also be created using reflection.
     /// </summary>
-    internal interface IMajorDefinition : IDefinition
+    internal interface ICriticalDefinition : IDefinition
     {
-        IMajorDefinition ToNonNullable();
+        ICriticalDefinition SwapNullability();
     }
 
     /// <summary>

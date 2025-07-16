@@ -28,7 +28,7 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
 
     private static byte[] GetSchemaStorageContents()
     {
-        var memberA = new SchemaMemberData(2, new CustomSchemaData(SchemaType.RecordMaybe, ContentsId));
+        var memberA = new SchemaMemberData(2, new CustomSchemaData(SchemaType.NullableRecord, ContentsId));
         var memberB = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, []));
         var schema = new SchemaContentsData(ContentsId, [memberA, memberB]);
 
@@ -41,13 +41,13 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
 
     private byte[] GetInstanceBytes() => [.. GetManualSerializer()
         .WriteFirstPartOfHeader(BlockId)
-        .WriteWholeNumber((int)SchemaType.Record)
+        .WriteSchemaType(SchemaType.NullableRecord)
         .WriteBool(false)
-        .WriteWholeNumber(ContentsId)
+        .WriteCompactInt(ContentsId)
         .WriteByte(NOT_NULL)
         .WriteByte(NULL)
-        .WriteInt(Value1)
-        .WriteInt(Value2)];
+        .WriteFullInt(Value1)
+        .WriteFullInt(Value2)];
 
     private static Class Instance => new(0, new(0, null, Value1), Value2);
 

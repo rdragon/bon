@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
+    /// <summary>
+    /// Represents a type that can be serialized.
+    /// </summary>
     internal abstract class Definition : IDefinition
     {
         public string Type { get; }
@@ -12,12 +15,18 @@ namespace Bon.SourceGeneration
 
         public bool IsNullable { get; }
 
-        protected Definition(string type, SchemaType schemaType, bool isNullable)
+        public string TypeNonNullable { get; }
+
+        protected Definition(string type, SchemaType schemaType)
         {
+            var isNullable = Helper.IsNullableType(type);
             Type = type;
             SchemaType = schemaType;
             IsNullable = isNullable;
+            TypeNonNullable = isNullable ? Helper.SwapNullability(type) : type;
         }
+
+        public bool IsNullableValueType => IsNullable && IsValueType;
 
         // Equality is important for incremental source generators.
         public override bool Equals(object obj)
@@ -46,8 +55,9 @@ namespace Bon.SourceGeneration
                 return result;
             }
 
+            // We also compare the IsValueType because a struct can become a class and vice versa.
             if (SchemaType != other.SchemaType ||
-                Type != other.Type || // IsNullable is determined by Type.
+                Type != other.Type ||
                 IsValueType != other.IsValueType)
             {
                 return false;
@@ -106,11 +116,7 @@ namespace Bon.SourceGeneration
 
         public string TypeOf => $"typeof({(IsValueType ? Type : TypeNonNullable)})";
 
-        public string TypeNonNullable => Type.TrimEnd('?');
-
         public virtual bool IsValueType => false;
-
-        public abstract IDefinition ToNullable();
 
         public virtual IEnumerable<IDefinition> GetInnerDefinitions() => Array.Empty<IDefinition>();
 
@@ -120,6 +126,6 @@ namespace Bon.SourceGeneration
 
         public virtual string SchemaBaseClass => "Schema";
 
-        public string SafeType => IsReferenceType ? TypeNonNullable + "?" : Type;
+        public string SafeType => IsReferenceType ? TypeNonNullable + "?" : Type;//0at
     }
 }

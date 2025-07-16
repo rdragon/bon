@@ -1,6 +1,6 @@
-﻿// Bookmark 413211217
-namespace Bon.Serializer.Schemas;
+﻿namespace Bon.Serializer.Schemas;
 
+// Keeps this enum identical to the enum at bookmark 954139432.
 public enum SchemaType
 {
     /// <summary>
@@ -8,7 +8,7 @@ public enum SchemaType
     /// </summary>
     Record = 1,
 
-    RecordMaybe = 24,
+    NullableRecord = 24,
 
     /// <summary>
     /// An interface or abstract class.
@@ -26,7 +26,6 @@ public enum SchemaType
     Dictionary = 4,
 
     String = 5,
-    Bool = 6,
     Byte = 7,
     SByte = 8,
     Short = 9,
@@ -37,22 +36,20 @@ public enum SchemaType
     ULong = 14,
     Float = 15,
     Double = 16,
-    DoubleMaybe = 23,//1at => double? (maar kost soms maar 5 ipv 9 bytes)
-    Decimal = 17,//1at altijd nullable, dus => decimal?
-    Guid = 18,//1at altijd nullable, dus => Guid?
+    NullableDecimal = 17,
+    WholeNumber = 21,
+    SignedWholeNumber = 22,
+    FractionalNumber = 23,
 
     /// <summary>
     /// A value tuple with two elements.
     /// </summary>
     Tuple2 = 19,
-    Tuple2Maybe = 25,
+    NullableTuple2 = 25,
 
     /// <summary>
     /// A value tuple with three elements.
     /// </summary>
     Tuple3 = 20,
-    Tuple3Maybe = 26,
-
-    WholeNumber = 21, //1at => ulong? als tussenliggende waarde (voor nu)
-    SignedWholeNumber = 22,//1at => long? als tussenliggende waarde (voor nu)
+    NullableTuple3 = 26,
 }

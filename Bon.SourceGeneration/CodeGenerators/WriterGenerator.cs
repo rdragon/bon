@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Bon.SourceGeneration.Definitions;
+using System;
 using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
     /// <summary>
     /// Generates source code that can serialize:
@@ -118,15 +119,24 @@ namespace Bon.SourceGeneration
 
             method.Add($"if (value is null)");
             method.Add("{");
-            Write(method, NativeDefinition.Byte, "NULL");
+            WriteNull(method);
             method.Add("return;");
             method.Add("}");
-            Write(method, NativeDefinition.Byte, "NOT_NULL");
+            WriteNotNull(method);
             method.AddEmptyLine();
 
             WriteMembers(method, definition);
 
             AddMethod(method);
+        }
+
+        private void WriteNull(List<string> method) => WriteByte(method, "NULL");
+
+        private void WriteNotNull(List<string> method) => WriteByte(method, "NOT_NULL");
+
+        private void WriteByte(List<string> method, string value)
+        {
+            method.Add($"NativeSerializer.WriteByte(writer, {value});");
         }
 
         private void WriteMembers(List<string> method, RecordDefinition definition)
@@ -143,10 +153,10 @@ namespace Bon.SourceGeneration
 
             method.Add($"if (maybeValue is not {definition.TypeNonNullable} value)");
             method.Add("{");
-            Write(method, NativeDefinition.Byte, "NULL");
+            WriteNull(method);
             method.Add("return;");
             method.Add("}");
-            Write(method, NativeDefinition.Byte, "NOT_NULL");
+            WriteNotNull(method);
             method.AddEmptyLine();
 
             WriteMembers(method, definition);
@@ -171,7 +181,7 @@ namespace Bon.SourceGeneration
 
             method.Add("if (value is null)");
             method.Add("{");
-            method.Add($"WholeNumberSerializer.WriteNull(writer);");
+            method.Add($"IntSerializer.WriteNull(writer);");
             method.Add("return;");
             method.Add("}");
             method.AddEmptyLine();
@@ -182,7 +192,7 @@ namespace Bon.SourceGeneration
             foreach (var member in definition.Members)
             {
                 method.Add($"case {member.Definition.Type} obj:");
-                method.Add($"WholeNumberSerializer.Write(writer, {member.Id});");
+                method.Add($"IntSerializer.Write(writer, {member.Id});");
                 Write(method, member.Definition, "obj");
                 method.Add("break;");
                 method.AddEmptyLine();
@@ -203,7 +213,7 @@ namespace Bon.SourceGeneration
 
             method.Add("if (values is null)");
             method.Add("{");
-            method.Add("WholeNumberSerializer.WriteNull(writer);");
+            method.Add("IntSerializer.WriteNull(writer);");
             method.Add("return;");
             method.Add("}");
             method.AddEmptyLine();
@@ -219,7 +229,7 @@ namespace Bon.SourceGeneration
             }
 
             method.Add($"var count = {values}.{GetCountMemberName(collectionType)};");
-            method.Add($"WholeNumberSerializer.Write(writer, count);");
+            method.Add($"IntSerializer.Write(writer, count);");
 
             if (collectionType == CollectionType.Array && definition.ElementDefinition.Type == "byte")
             {
@@ -244,13 +254,13 @@ namespace Bon.SourceGeneration
 
             method.Add("if (dictionary is null)");
             method.Add("{");
-            method.Add("WholeNumberSerializer.WriteNull(writer);");
+            method.Add("IntSerializer.WriteNull(writer);");
             method.Add("return;");
             method.Add("}");
             method.AddEmptyLine();
 
             method.Add("var count = dictionary.Count;");
-            method.Add($"WholeNumberSerializer.Write(writer, count);");
+            method.Add($"IntSerializer.Write(writer, count);");
             method.Add("var actualCount = 0;");
             method.AddEmptyLine();
             method.Add("foreach (var (key, value) in dictionary)");
@@ -278,10 +288,10 @@ namespace Bon.SourceGeneration
             {
                 method.Add("if (tuple is null)");
                 method.Add("{");
-                Write(method, NativeDefinition.Byte, "NULL");
+                WriteNull(method);
                 method.Add("return;");
                 method.Add("}");
-                Write(method, NativeDefinition.Byte, "NOT_NULL");
+                WriteNotNull(method);
             }
 
             var dotValue = definition.IsNullable ? ".Value" : "";
@@ -326,10 +336,6 @@ namespace Bon.SourceGeneration
             {
                 case NativeDefinition native:
                     lines.Add($"{native.GetWriteMethodName()}(writer, {argument});");
-                    break;
-
-                case WeakDefinition weak:
-                    lines.Add($"{weak.GetWriteMethodName()}(writer, {argument});");
                     break;
 
                 default:

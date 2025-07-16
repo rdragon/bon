@@ -2,16 +2,50 @@
 //1at
 namespace Bon.Serializer.Deserialization;
 
-internal static partial class NativeDeserializer
+internal partial class NativeDeserializer(DeserializerStore deserializerStore)
 {
     private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
     /// <summary>
+    /// Contains for each enum type the underlying type and a method that adds a cast to the enum type.
+    /// This dictionary becomes read-only after the source generation context has run.
+    /// </summary>
+    private readonly Dictionary<Type, EnumData> _enumDatas = [];
+
+    private Dictionary<Type, NativeType>? _nativeTypes = null;
+
+    public void AddEnumData(Type type, Type underlyingType, Func<Delegate, Delegate> addEnumCast) =>
+        _enumDatas[type] = new(underlyingType, addEnumCast);
+
+    /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public static Delegate? TryCreateDeserializer(DeserializerStore deserializerStore, NativeSchema sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        if (TryGetTargetType(targetType) is not { } foundTargetType)
+        Func<Delegate, Delegate>? addEnumCast = null;
+
+        if (sourceSchema is not NativeSchema)
+        {
+            return null;
+        }
+
+        if (_enumDatas.TryGetValue(targetType, out var enumData))
+        {
+            addEnumCast = enumData.AddEnumCast;
+            targetType = enumData.UnderlyingType;
+        }
+
+        var method = TryCreateDeserializerNow(sourceSchema, targetType);
+
+        return addEnumCast is null || method is null ? method : addEnumCast(method);
+    }
+
+    /// <summary>
+    /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
+    /// </summary>
+    private Delegate? TryCreateDeserializerNow(Schema sourceSchema, Type targetType)
+    {
+        if (TryGetNativeType(targetType) is not { } foundTargetType)
         {
             return null;
         }
@@ -19,50 +53,64 @@ internal static partial class NativeDeserializer
         var outputType = GetOutputType(sourceSchema.SchemaType);
         var method = deserializerStore.GetDefaultNativeReader(sourceSchema.SchemaType);
 
-        return AddTransformation(method, outputType, foundTargetType);
+        return CreateDeserializer_ChangeOutputType(method, outputType, foundTargetType);
     }
 
     /// <summary>
     /// The type returned by this method can be used as target type when deserializing binary data with the given schema type.
     /// This deserialization is supported directly after startup.
     /// </summary>
-    private static OutputType GetOutputType(SchemaType schemaType)
+    private static NativeType GetOutputType(SchemaType schemaType)
     {
+        // The native types should match the types at bookmark 683558879.
         return schemaType switch
         {
-            SchemaType.String => OutputType.String,
+            SchemaType.String => NativeType.String,
+            SchemaType.Byte => NativeType.Byte,
+            SchemaType.SByte => NativeType.SByte,
+            SchemaType.Short => NativeType.Short,
+            SchemaType.UShort => NativeType.UShort,
+            SchemaType.Int => NativeType.Int,
+            SchemaType.UInt => NativeType.UInt,
+            SchemaType.Long => NativeType.Long,
+            SchemaType.ULong => NativeType.ULong,
+            SchemaType.Float => NativeType.Float,
+            SchemaType.Double => NativeType.Double,
+            SchemaType.NullableDecimal => NativeType.NullableDecimal,
+            SchemaType.WholeNumber => NativeType.NullableULong,
+            SchemaType.SignedWholeNumber => NativeType.NullableLong,
+            SchemaType.FractionalNumber => NativeType.NullableDouble,
         };
-
-        //return schemaType switch
-        //{
-        //    // These output types should match the types at bookmark 683558879.
-        //    SchemaType.String => typeof(string),
-        //    SchemaType.Bool => typeof(bool),
-        //    SchemaType.Byte => typeof(byte),
-        //    SchemaType.SByte => typeof(sbyte),
-        //    SchemaType.Short => typeof(short),
-        //    SchemaType.UShort => typeof(ushort),
-        //    SchemaType.Int => typeof(int),
-        //    SchemaType.UInt => typeof(uint),
-        //    SchemaType.Long => typeof(long),
-        //    SchemaType.ULong => typeof(ulong),
-        //    SchemaType.WholeNumber => typeof(ulong?),
-        //    SchemaType.SignedWholeNumber => typeof(long?),
-        //    SchemaType.Float => typeof(float),
-        //    SchemaType.Double => typeof(double),
-        //    SchemaType.Decimal => typeof(decimal?),
-        //    SchemaType.Guid => typeof(Guid?),
-        //    SchemaType.NullableDouble => typeof(double?),
-        //    _ => throw new ArgumentException($"No default output type for '{schemaType}' found"),
-        //};
     }
 
-    private static TargetType? TryGetTargetType(Type targetType)
+    private Dictionary<Type, NativeType> NativeTypes => _nativeTypes ??= new()
     {
-        return true switch
-        {
-            _ when targetType == typeof(string) => TargetType.String,
-            _ => null,
-        };
-    }
+        // The native types should match the types at bookmark 683558879.
+        { typeof(string), NativeType.String },
+        { typeof(byte), NativeType.Byte },
+        { typeof(sbyte), NativeType.SByte },
+        { typeof(short), NativeType.Short },
+        { typeof(ushort), NativeType.UShort },
+        { typeof(int), NativeType.Int },
+        { typeof(uint), NativeType.UInt },
+        { typeof(long), NativeType.Long },
+        { typeof(ulong), NativeType.ULong },
+        { typeof(float), NativeType.Float },
+        { typeof(double), NativeType.Double },
+        { typeof(decimal?), NativeType.NullableDecimal },
+        { typeof(ulong?), NativeType.NullableULong },
+        { typeof(long?), NativeType.NullableLong },
+        { typeof(double?), NativeType.NullableDouble },
+    };
+
+    private NativeType? TryGetNativeType(Type type) => NativeTypes.TryGetValue(type, out var nativeType) ? nativeType : null;
+
+    /// <param name="UnderlyingType">
+    /// The underlying type of the enum.
+    /// Nullable if the enum is nullable.
+    /// </param>
+    /// <param name="AddEnumCast">
+    /// A method that converts a Read{UnderlyingType} to a Read{EnumType}.
+    /// </param>
+    private readonly record struct EnumData(Type UnderlyingType, Func<Delegate, Delegate> AddEnumCast);
 }

@@ -21,7 +21,6 @@ internal static class BonToJsonDeserializer
         return schema.SchemaType switch
         {
             SchemaType.String => JsonValue.Create(NativeSerializer.ReadString(reader)),
-            SchemaType.Bool => JsonValue.Create(NativeSerializer.ReadBool(reader)),
             SchemaType.Byte => JsonValue.Create(NativeSerializer.ReadByte(reader)),
             SchemaType.SByte => JsonValue.Create(NativeSerializer.ReadSByte(reader)),
             SchemaType.Short => JsonValue.Create(NativeSerializer.ReadShort(reader)),
@@ -32,14 +31,11 @@ internal static class BonToJsonDeserializer
             SchemaType.ULong => JsonValue.Create(NativeSerializer.ReadULong(reader)),
             SchemaType.Float => JsonValue.Create(NativeSerializer.ReadFloat(reader)),
             SchemaType.Double => JsonValue.Create(NativeSerializer.ReadDouble(reader)),
-            SchemaType.Decimal => JsonValue.Create(NativeSerializer.ReadDecimal(reader)),
-            SchemaType.Guid => JsonValue.Create(NativeSerializer.ReadGuid(reader)),
+            SchemaType.NullableDecimal => JsonValue.Create(NativeSerializer.ReadDecimal(reader)),
 
-            SchemaType.WholeNumber => JsonValue.Create(NativeSerializer.ReadWholeNumber(reader)),
-            SchemaType.SignedWholeNumber => JsonValue.Create(NativeSerializer.ReadSignedWholeNumber(reader)),
-            SchemaType.DoubleMaybe => JsonValue.Create(NativeSerializer.ReadNullableDouble(reader)),
-
-            _ => throw new ArgumentOutOfRangeException(nameof(schema), schema, null)
+            SchemaType.WholeNumber => JsonValue.Create(WholeNumberSerializer.Read(reader)),
+            SchemaType.SignedWholeNumber => JsonValue.Create(WholeNumberSerializer.ReadSigned(reader)),
+            SchemaType.FractionalNumber => JsonValue.Create(FractionalNumberSerializer.Read(reader)),
         };
     }
 
@@ -50,7 +46,7 @@ internal static class BonToJsonDeserializer
 
         if (schema.IsNullable)
         {
-            if (reader.ReadByte() == NativeSerializer.NULL)
+            if (reader.ReadByte() == NativeWriter.NULL)
             {
                 return null;
             }
@@ -63,7 +59,7 @@ internal static class BonToJsonDeserializer
     {
         // See bookmark 628227999 for all places where a union is serialized/deserialized.
 
-        if ((int?)WholeNumberSerializer.ReadNullable(reader) is not int id)
+        if (IntSerializer.Read(reader) is not int id)
         {
             return null;
         }
@@ -78,7 +74,7 @@ internal static class BonToJsonDeserializer
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
-        if ((int?)WholeNumberSerializer.ReadNullable(reader) is not int count)
+        if (IntSerializer.Read(reader) is not int count)
         {
             return null;
         }

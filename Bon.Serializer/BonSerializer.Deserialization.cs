@@ -58,7 +58,7 @@ partial class BonSerializer
     private T DeserializeBody<T>(BinaryReader reader, SchemaData schemaData)
     {
         var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
-        var deserialize = _deserializerStore.GetDeserializer<T>(schema, null);
+        var deserialize = _deserializerStore.GetDeserializer<T>(schema);
         var input = new BonInput(reader);
 
         return deserialize(input);

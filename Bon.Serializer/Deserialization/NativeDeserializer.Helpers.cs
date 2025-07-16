@@ -2,11 +2,21 @@
 
 partial class NativeDeserializer
 {
-    private static decimal DoubleToDecimal(double y)
+    /// <summary>
+    /// Converts a double to a decimal.
+    /// This method exists because we don't want to throw exceptions.
+    /// An explicit cast (or using the Convert class) can throw overflow exceptions.
+    /// </summary>
+    private static decimal? DoubleToDecimal(double? x)
     {
+        if (x is not { } y)
+        {
+            return null;
+        }
+
         if (double.IsNaN(y))
         {
-            return 0;
+            return null;
         }
 
         const double limit = (double)decimal.MaxValue;
@@ -19,49 +29,52 @@ partial class NativeDeserializer
         return y < limit ? (decimal)y : decimal.MaxValue;
     }
 
-    private static decimal? DoubleToDecimal(double? x) => x is double y ? DoubleToDecimal(y) : null;
-
-    private static long DecimalToLong(decimal x)
+    /// <summary>
+    /// Converts a decimal to a long.
+    /// This method exists because we don't want to throw exceptions.
+    /// An explicit cast (or using the Convert class) can throw overflow exceptions.
+    /// </summary>
+    private static long? DecimalToLong(decimal? x)
     {
-        if (x <= long.MinValue)
+        if (x is not { } y)
+        {
+            return null;
+        }
+
+        // Here we copy the native double to long conversion logic.
+
+        if (y <= long.MinValue)
         {
             return long.MinValue;
         }
 
-        return x < long.MaxValue ? (long)x : long.MaxValue;
+        return y < long.MaxValue ? (long)y : long.MaxValue;
     }
 
-    private static long? DecimalToLong(decimal? x) => x is decimal y ? DecimalToLong(y) : null;
-
-    private static ulong DecimalToULong(decimal x)
+    /// <summary>
+    /// Converts a decimal to a ulong.
+    /// This method exists because we don't want to throw exceptions.
+    /// An explicit cast (or using the Convert class) can throw overflow exceptions.
+    /// </summary>
+    private static ulong? DecimalToULong(decimal? x)
     {
-        if (x <= 0)
+        if (x is not { } y)
+        {
+            return null;
+        }
+
+        // Here we copy the native double to ulong conversion logic.
+
+        if (y <= 0)
         {
             return 0;
         }
 
-        return x < ulong.MaxValue ? (ulong)x : ulong.MaxValue;
+        return y < ulong.MaxValue ? (ulong)y : ulong.MaxValue;
     }
 
-    private static ulong? DecimalToULong(decimal? x) => x is decimal y ? DecimalToULong(y) : null;
-
-    private static long? BoolToLong(bool? x)
-    {
-        if (x is bool y)
-        {
-            return y ? 1 : 0;
-        }
-
-        return null;
-    }
-
-    private static long ParseLong(string? x) => long.TryParse(x, Culture, out var result) ? result : 0;
-    private static ulong ParseULong(string? x) => ulong.TryParse(x, Culture, out var result) ? result : 0;
-    private static double ParseDouble(string? x) => double.TryParse(x, Culture, out var result) ? result : double.NaN;
-    private static decimal ParseDecimal(string? x) => decimal.TryParse(x, Culture, out var result) ? result : 0;
-
-    private static long? TryParseLong(string? x) => long.TryParse(x, Culture, out var result) ? result : null;
-    private static ulong? TryParseULong(string? x) => ulong.TryParse(x, Culture, out var result) ? result : null;
-    private static double? TryParseDouble(string? x) => double.TryParse(x, Culture, out var result) ? result : null;
-    private static decimal? TryParseDecimal(string? x) => decimal.TryParse(x, Culture, out var result) ? result : null;
+    private static long? StringToLong(string? x) => long.TryParse(x, Culture, out var result) ? result : null;
+    private static ulong? StringToULong(string? x) => ulong.TryParse(x, Culture, out var result) ? result : null;
+    private static double? StringToDouble(string? x) => double.TryParse(x, Culture, out var result) ? result : null;
+    private static decimal? StringToDecimal(string? x) => decimal.TryParse(x, Culture, out var result) ? result : null;
 }

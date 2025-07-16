@@ -1,8 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Bon.SourceGeneration.Definitions;
+using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.DefinitionFactories
 {
     internal sealed class UnionDefinitionFactory
     {
@@ -13,10 +14,19 @@ namespace Bon.SourceGeneration
             _definitionFactory = definitionFactory;
         }
 
+        public IDefinition TryGetUnionDefinition(INamedTypeSymbol symbol)
+        {
+            if (symbol.TypeKind == TypeKind.Interface || symbol.TypeKind == TypeKind.Class && symbol.IsAbstract)
+            {
+                return GetUnionDefinition(symbol);
+            }
+
+            return null;
+        }
+
         public UnionDefinition GetUnionDefinition(INamedTypeSymbol symbol)
         {
             var id = symbol.GetTypeName();
-            var isNullable = symbol.NullableAnnotation == NullableAnnotation.Annotated;
             var members = new List<UnionMember>();
 
             foreach (var attribute in GetBonIncludeAttributes(symbol).OrderBy(attribute => attribute.MemberId))
@@ -36,7 +46,7 @@ namespace Bon.SourceGeneration
             RequireUniqueIds(members, symbol);
             RequireUniqueTypes(members, symbol);
 
-            return new UnionDefinition(id, SchemaType.Union, isNullable, members);
+            return new UnionDefinition(id, SchemaType.Union, members);
         }
 
         private static void RequireUniqueIds(IReadOnlyList<UnionMember> members, ITypeSymbol symbol)
@@ -86,7 +96,7 @@ namespace Bon.SourceGeneration
                             symbol);
                     }
 
-                    if ((type.TypeKind != TypeKind.Class && type.TypeKind != TypeKind.Struct) ||
+                    if (type.TypeKind != TypeKind.Class && type.TypeKind != TypeKind.Struct ||
                         type.IsAbstract ||
                         !IsAssignableTo(type, symbol))
                     {

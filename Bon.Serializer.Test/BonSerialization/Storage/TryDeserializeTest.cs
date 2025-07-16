@@ -14,9 +14,9 @@ public class TryDeserializeTest : BonSerializerTestBase
     {
         var stream = new MemoryStream([.. GetManualSerializer()
             .WriteFirstPartOfHeader(0)
-            .WriteWholeNumber((int)SchemaType.Int)
+            .WriteSchemaType(SchemaType.Int)
             .WriteBool(false)
-            .WriteInt(Int)]);
+            .WriteFullInt(Int)]);
 
         Assert.True(BonSerializer.TryDeserialize<int>(stream, out var actual));
         Assert.Equal(Int, actual);

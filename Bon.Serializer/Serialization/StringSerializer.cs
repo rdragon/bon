@@ -10,7 +10,7 @@ public static class StringSerializer
     {
         if (value is null)
         {
-            WholeNumberSerializer.WriteNull(writer);
+            IntSerializer.WriteNull(writer);
 
             return;
         }
@@ -31,7 +31,7 @@ public static class StringSerializer
         {
             var rented = ArrayPool<byte>.Shared.Rent(rentSize);
             var actualByteCount = Encoding.UTF8.GetBytes(value, rented);
-            WholeNumberSerializer.Write(writer, actualByteCount);
+            IntSerializer.Write(writer, actualByteCount);
             writer.Write(rented, 0, actualByteCount);
             ArrayPool<byte>.Shared.Return(rented);
 
@@ -43,7 +43,7 @@ public static class StringSerializer
 
     private static void WriteLargeString(BinaryWriter writer, ReadOnlySpan<char> chars, int actualByteCount)
     {
-        WholeNumberSerializer.Write(writer, actualByteCount);
+        IntSerializer.Write(writer, actualByteCount);
 
         var rented = ArrayPool<byte>.Shared.Rent(MaxArrayPoolRentalSize);
         var encoder = Encoding.UTF8.GetEncoder();

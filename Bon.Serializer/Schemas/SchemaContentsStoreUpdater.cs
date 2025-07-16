@@ -2,7 +2,14 @@
 
 internal class SchemaContentsStoreUpdater(SchemaContentsStore schemaContentsStore, SchemaDataResolver schemaDataResolver)
 {
-    private readonly Dictionary<(int, SchemaType), CustomSchema> NewCustomSchemas = [];
+    /// <summary>
+    /// //2at
+    /// </summary>
+    private readonly Dictionary<(int ContentsId, SchemaType SchemaType), CustomSchema> NewCustomSchemas = [];
+
+    /// <summary>
+    /// //2at
+    /// </summary>
     private readonly Dictionary<int, SchemaContents> NewSchemaContents = [];
 
     /// <summary>

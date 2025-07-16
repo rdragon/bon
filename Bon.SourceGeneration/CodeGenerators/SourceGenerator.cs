@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Bon.SourceGeneration.DefinitionFactories;
+using Bon.SourceGeneration.Definitions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
@@ -6,7 +8,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
     [Generator]
     internal sealed class SourceGenerator : IIncrementalGenerator
@@ -36,10 +38,11 @@ namespace Bon.SourceGeneration
             var diagnostics2 = maybeContextClasses.Where(maybe => !maybe.HasData).Select((maybe, _) => maybe.Diagnostic);
             var diagnostics3 = maybeOutputs.Where(maybe => !maybe.HasData).Select((maybe, _) => maybe.Diagnostic);
 
-            context.RegisterImplementationSourceOutput(outputs, WriteFile);
-            context.RegisterImplementationSourceOutput(diagnostics1, ReportDiagnostic);
-            context.RegisterImplementationSourceOutput(diagnostics2, ReportDiagnostic);
-            context.RegisterImplementationSourceOutput(diagnostics3, ReportDiagnostic);
+            //1at
+            //context.RegisterImplementationSourceOutput(outputs, WriteFile);
+            //context.RegisterImplementationSourceOutput(diagnostics1, ReportDiagnostic);
+            //context.RegisterImplementationSourceOutput(diagnostics2, ReportDiagnostic);
+            //context.RegisterImplementationSourceOutput(diagnostics3, ReportDiagnostic);
         }
 
         private Maybe<IDefinition> TransformBonObject(GeneratorAttributeSyntaxContext context, CancellationToken _)
@@ -74,7 +77,7 @@ namespace Bon.SourceGeneration
         {
             return TryExecute((data, _1) =>
             {
-                return CodeGeneratorHelper.GetCode(data.Definitions, data.ContextClass);
+                return CodeGeneration.GetCode(data.Definitions, data.ContextClass);
             }, tuple);
         }
 

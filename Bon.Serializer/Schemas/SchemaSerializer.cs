@@ -4,12 +4,12 @@ internal static class SchemaSerializer
 {
     public static void Write(BinaryWriter writer, SchemaContentsData schema)
     {
-        WholeNumberSerializer.Write(writer, schema.ContentsId);
-        WholeNumberSerializer.Write(writer, schema.Members.Count);
+        IntSerializer.Write(writer, schema.ContentsId);
+        IntSerializer.Write(writer, schema.Members.Count);
 
         foreach (var member in schema.Members)
         {
-            WholeNumberSerializer.Write(writer, member.Id);
+            IntSerializer.Write(writer, member.Id);
             Write(writer, member.Schema);
         }
     }
@@ -25,11 +25,11 @@ internal static class SchemaSerializer
 
     public static void Write(BinaryWriter writer, SchemaData schema)
     {
-        WholeNumberSerializer.Write(writer, (int)schema.SchemaType);
+        IntSerializer.Write(writer, (int)schema.SchemaType);
 
         if (schema is CustomSchemaData custom)
         {
-            WholeNumberSerializer.Write(writer, custom.ContentsId);
+            IntSerializer.Write(writer, custom.ContentsId);
 
             return;
         }
@@ -42,13 +42,13 @@ internal static class SchemaSerializer
 
     public static SchemaContentsData ReadSchema(BinaryReader reader)
     {
-        var contentsId = (int)WholeNumberSerializer.Read(reader);
-        var count = (int)WholeNumberSerializer.Read(reader);
+        var contentsId = IntSerializer.Read(reader) ?? 0;
+        var count = IntSerializer.Read(reader) ?? 0;
         var members = new List<SchemaMemberData>(count);
 
         for (var i = 0; i < count; i++)
         {
-            var id = (int)WholeNumberSerializer.Read(reader);
+            var id = IntSerializer.Read(reader) ?? 0;
             var schemaData = ReadSchemaData(reader);
             members.Add(new SchemaMemberData(id, schemaData));
         }
@@ -66,14 +66,14 @@ internal static class SchemaSerializer
 
     public static SchemaData ReadSchemaData(BinaryReader reader)
     {
-        var schemaType = (SchemaType)WholeNumberSerializer.Read(reader);
+        var schemaType = (SchemaType)(IntSerializer.Read(reader) ?? 0);
 
         return schemaType switch
         {
-            SchemaType.Record or SchemaType.Union => new CustomSchemaData(schemaType, (int)WholeNumberSerializer.Read(reader)),
+            SchemaType.Record or SchemaType.NullableRecord or SchemaType.Union => new CustomSchemaData(schemaType, IntSerializer.Read(reader) ?? 0),
             SchemaType.Array => new SchemaData(schemaType, [ReadSchemaData(reader)]),
-            SchemaType.Dictionary or SchemaType.Tuple2 => new SchemaData(schemaType, [ReadSchemaData(reader), ReadSchemaData(reader)]),
-            SchemaType.Tuple3 => new SchemaData(schemaType, [ReadSchemaData(reader), ReadSchemaData(reader), ReadSchemaData(reader)]),
+            SchemaType.Dictionary or SchemaType.Tuple2 or SchemaType.NullableTuple2 => new SchemaData(schemaType, [ReadSchemaData(reader), ReadSchemaData(reader)]),
+            SchemaType.Tuple3 or SchemaType.NullableTuple3 => new SchemaData(schemaType, [ReadSchemaData(reader), ReadSchemaData(reader), ReadSchemaData(reader)]),
             _ => new SchemaData(schemaType, []),
         };
     }

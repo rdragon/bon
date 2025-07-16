@@ -14,33 +14,28 @@ public sealed class ManualSerializer : IEnumerable<byte>
 
     private int GetContentsId<T>() => _bonSerializerTestBase.GetContentsId<T>();
 
-    public ManualSerializer WriteWholeNumber(int value) => WriteWholeNumber((ulong)value);
+    public ManualSerializer WriteSchemaType(SchemaType schemaType) => WriteCompactInt((int)schemaType);
+
+    /// <summary>
+    /// Writes an int using 1, 2, 3 or 5 bytes.
+    /// </summary>
+    public ManualSerializer WriteCompactInt(int? value) => WriteWholeNumber((uint?)value);
+
+    public ManualSerializer WriteNull()
+    {
+        _writer.Write(NativeWriter.NULL);
+        return this;
+    }
 
     public ManualSerializer WriteWholeNumber(ulong? value)
     {
-        if (value.HasValue)
-        {
-            WholeNumberSerializer.Write(_writer, value.Value);
-        }
-        else
-        {
-            WholeNumberSerializer.WriteNull(_writer);
-        }
-
+        WholeNumberSerializer.Write(_writer, value);
         return this;
     }
 
     public ManualSerializer WriteSignedWholeNumber(long? value)
     {
-        if (value.HasValue)
-        {
-            WholeNumberSerializer.WriteSigned(_writer, value.Value);
-        }
-        else
-        {
-            WholeNumberSerializer.WriteNull(_writer);
-        }
-
+        WholeNumberSerializer.WriteSigned(_writer, value);
         return this;
     }
 
@@ -79,7 +74,10 @@ public sealed class ManualSerializer : IEnumerable<byte>
         return this;
     }
 
-    public ManualSerializer WriteInt(int value)
+    /// <summary>
+    /// Writes an int using 4 bytes.
+    /// </summary>
+    public ManualSerializer WriteFullInt(int value)
     {
         _writer.Write(value);
 
@@ -107,32 +105,13 @@ public sealed class ManualSerializer : IEnumerable<byte>
         return this;
     }
 
-    public ManualSerializer WriteNullableInt(int? value)
-    {
-        if (value < TestHelper.NOT_NULL)
-        {
-            _writer.Write((byte)value);
-        }
-        else if (value.HasValue)
-        {
-            _writer.Write(TestHelper.NOT_NULL);
-            _writer.Write(value.Value);
-        }
-        else
-        {
-            _writer.Write(TestHelper.NULL);
-        }
-
-        return this;
-    }
-
-    public ManualSerializer WriteClassHeader<T>(bool isNullable = false) =>
+    public ManualSerializer WriteClassHeader<T>() =>
         WriteFirstPartOfHeader()
-        .WriteClassSchema<T>(isNullable);
+        .WriteClassSchema<T>();
 
-    public ManualSerializer WriteInterfaceHeader<T>(bool isNullable = false) =>
+    public ManualSerializer WriteInterfaceHeader<T>() =>
         WriteFirstPartOfHeader()
-        .WriteInterfaceSchema<T>(isNullable);
+        .WriteInterfaceSchema<T>();
 
     public ManualSerializer WriteFirstPartOfHeader(uint? blockId = null)
     {
@@ -148,26 +127,25 @@ public sealed class ManualSerializer : IEnumerable<byte>
 
     internal ManualSerializer WriteFormatType(FormatType formatType) => WriteByte((byte)formatType);
 
-    public ManualSerializer WriteClassSchema<T>(bool isNullable = false) => WriteCustomSchema<T>(SchemaType.Record, isNullable);
+    public ManualSerializer WriteClassSchema<T>() => WriteCustomSchema<T>(GetSchemaTypeOfRecord<T>());
 
-    public ManualSerializer WriteInterfaceSchema<T>(bool isNullable = false) => WriteCustomSchema<T>(SchemaType.Union, isNullable);
+    private static SchemaType GetSchemaTypeOfRecord<T>() => typeof(T).IsNullable() ? SchemaType.NullableRecord : SchemaType.Record;
 
-    private ManualSerializer WriteCustomSchema<T>(SchemaType schemaType, bool isNullable) =>
-        WriteWholeNumber((int)schemaType)
-        .WriteBool(isNullable)
-        .WriteWholeNumber(GetContentsId<T>());
+    public ManualSerializer WriteInterfaceSchema<T>() => WriteCustomSchema<T>(SchemaType.Union);
 
-    public ManualSerializer WriteNativeHeader(SchemaType schemaType, bool isNullable = false) =>
+    private ManualSerializer WriteCustomSchema<T>(SchemaType schemaType) =>
+        WriteSchemaType(schemaType)
+        .WriteCompactInt(GetContentsId<T>());
+
+    public ManualSerializer WriteNativeHeader(SchemaType schemaType) =>
         WriteFirstPartOfHeader(0)
-        .WriteNativeSchema(schemaType, isNullable);
+        .WriteNativeSchema(schemaType);
 
-    public ManualSerializer WriteNativeSchema(SchemaType schemaType, bool isNullable = false) =>
-        WriteWholeNumber((int)schemaType)
-        .WriteBool(isNullable);
+    public ManualSerializer WriteNativeSchema(SchemaType schemaType) =>
+        WriteSchemaType(schemaType);
 
-    public ManualSerializer WriteArraySchemaStart(bool isNullable = false) =>
-        WriteWholeNumber((int)SchemaType.Array)
-        .WriteBool(isNullable);
+    public ManualSerializer WriteArraySchemaStart() =>
+        WriteSchemaType(SchemaType.Array);
 
     public ManualSerializer WriteByteMessage(byte value) =>
         WriteFormatType(FormatType.Byte)
@@ -187,7 +165,7 @@ public sealed class ManualSerializer : IEnumerable<byte>
 
     public ManualSerializer WriteIntMessage(int value) =>
         WriteFormatType(FormatType.Int)
-        .WriteInt(value);
+        .WriteFullInt(value);
 
     public ManualSerializer WriteUIntMessage(uint value) =>
         WriteFormatType(FormatType.UInt)

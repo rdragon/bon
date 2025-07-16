@@ -52,7 +52,7 @@ internal static class SchemaFileInspector
             SchemaType.Array => $"{text}[]",
             SchemaType.Dictionary => $"Dictionary<{text}>",
             SchemaType.Tuple2 or SchemaType.Tuple3 => $"({text})",
-            SchemaType.Tuple2Maybe or SchemaType.Tuple3Maybe => $"({text})?",
+            SchemaType.NullableTuple2 or SchemaType.NullableTuple3 => $"({text})?",
             _ => schema.SchemaType.ToString(),
         };
     }

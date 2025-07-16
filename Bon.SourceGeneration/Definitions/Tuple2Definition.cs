@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
     internal sealed class Tuple2Definition : Definition, ITupleDefinition
     {
@@ -12,17 +11,14 @@ namespace Bon.SourceGeneration
         public Tuple2Definition(
             string type,
             SchemaType schemaType,
-            bool isNullable,
             IDefinition item1Definition,
-            IDefinition item2Definition) : base(type, schemaType, isNullable)
+            IDefinition item2Definition) : base(type, schemaType)
         {
             Item1Definition = item1Definition;
             Item2Definition = item2Definition;
         }
 
         // No need to override Equals and GetHashCode because the base implementation is sufficient.
-
-        public override IDefinition ToNullable() => throw new InvalidOperationException();
 
         public override bool IsValueType => true;
 

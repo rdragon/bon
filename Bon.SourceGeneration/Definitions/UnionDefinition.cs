@@ -1,20 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
     /// <summary>
     /// Represents either an interface or an abstract class.
     /// </summary>
-    internal sealed class UnionDefinition : Definition, ICustomDefinition, IMajorDefinition
+    internal sealed class UnionDefinition : Definition, ICustomDefinition, ICriticalDefinition
     {
         /// <summary>
         /// All the concrete implementation types of this interface or abstract class ordered by ID.
         /// </summary>
         public IReadOnlyList<UnionMember> Members { get; }
 
-        public UnionDefinition(string type, SchemaType schemaType, bool isNullable, IReadOnlyList<UnionMember> members) :
-            base(type, schemaType, isNullable)
+        public UnionDefinition(string type, SchemaType schemaType, IReadOnlyList<UnionMember> members) :
+            base(type, schemaType)
         {
             Members = members;
         }
@@ -23,17 +23,13 @@ namespace Bon.SourceGeneration
 
         IReadOnlyList<IMember> ICustomDefinition.Members => Members;
 
-        public override IDefinition ToNullable() =>
-            IsNullable ? this : new UnionDefinition(Type + "?", SchemaType, true, Members);
-
-        public IMajorDefinition ToNonNullable() =>
-            IsNullable ? new UnionDefinition(TypeNonNullable, SchemaType, false, Members) : this;
-
         public override IEnumerable<IDefinition> GetInnerDefinitions() => Members.Select(member => member.Definition);
 
         protected override IEnumerable<IRecursiveEquatable> GetInnerObjects() => Members;
 
         public override string SchemaBaseClass => "CustomSchema";
+
+        public ICriticalDefinition SwapNullability() => this;
     }
 
     internal sealed class UnionMember : IMember

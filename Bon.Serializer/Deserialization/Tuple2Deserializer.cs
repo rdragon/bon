@@ -2,32 +2,32 @@
 
 internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate CreateDeserializer<T>(Tuple2Schema sourceSchema, Tuple2Schema targetSchema)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        if (typeof(T).TryGetInnerTypesOfTuple2() is not (Type item1Type, Type item2Type))
+        if (sourceSchema is not Tuple2Schema tuple2Schema ||
+            targetType.TryGetTuple2Type() is not { } tuple2Type)
         {
-            throw new InvalidOperationException();
+            return null;
         }
 
-        return (Delegate)this.GetPrivateMethod(nameof(CreateTuple2ReaderFor))
-            .MakeGenericMethod(item1Type, item2Type)
-            .Invoke(this, [sourceSchema, targetSchema])!;
+        return (Delegate?)this.GetPrivateMethod(nameof(CreateTuple2ReaderFor))
+            .MakeGenericMethod(tuple2Type.Item1Type, tuple2Type.Item2Type)
+            .Invoke(this, [tuple2Schema, tuple2Type.IsNullable])!;
     }
 
-    private Delegate CreateTuple2ReaderFor<T1, T2>(Tuple2Schema sourceSchema, Tuple2Schema targetSchema)
+    private Delegate CreateTuple2ReaderFor<T1, T2>(Tuple2Schema sourceSchema, bool targetIsNullable)
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1, targetSchema.InnerSchema1.IsNullable);
-        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2, targetSchema.InnerSchema2.IsNullable);
+        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1);
+        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2);
         var sourceIsNullable = sourceSchema.IsNullable;
-        var targetIsNullable = targetSchema.IsNullable;
 
         if (sourceIsNullable && targetIsNullable)
         {
-            return (Read<(T1, T2)?>)((BonInput input) =>
+            return (Read<(T1, T2)?>)(input =>
             {
-                if (input.Reader.ReadByte() == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeWriter.NULL)
                 {
                     return null;
                 }
@@ -41,9 +41,9 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : 
 
         if (sourceIsNullable)
         {
-            return (Read<(T1, T2)>)((BonInput input) =>
+            return (Read<(T1, T2)>)(input =>
             {
-                if (input.Reader.ReadByte() == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeWriter.NULL)
                 {
                     return default;
                 }
@@ -57,7 +57,7 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : 
 
         if (targetIsNullable)
         {
-            return (Read<(T1, T2)?>)((BonInput input) =>
+            return (Read<(T1, T2)?>)(input =>
             {
                 var item1 = readItem1(input);
                 var item2 = readItem2(input);
@@ -66,7 +66,7 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : 
             });
         }
 
-        return (Read<(T1, T2)>)((BonInput input) =>
+        return (Read<(T1, T2)>)(input =>
         {
             var item1 = readItem1(input);
             var item2 = readItem2(input);

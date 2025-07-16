@@ -2,8 +2,8 @@
 
 public class BonSerializerTestBase
 {
-    public const byte NOT_NULL = TestHelper.NOT_NULL;
-    public const byte NULL = TestHelper.NULL;
+    public const byte NOT_NULL = NativeWriter.NOT_NULL;
+    public const byte NULL = NativeWriter.NULL;
 
     public const int Age = 70;
     public const int OtherAge = 80;
@@ -348,7 +348,6 @@ public class BonSerializerTestBase
     public static WithNullableTimeSpan WithNullableTimeSpan => new(TestHelper.TimeSpan);
     public static WithNullableTimeSpan DefaultWithNullableTimeSpan => new(null);
 
-    // Bookmark 659516266 (char serialization)
     public static char Char => 'a';
     public static char DefaultChar => '\0';
     public static char? NullableChar => Char;

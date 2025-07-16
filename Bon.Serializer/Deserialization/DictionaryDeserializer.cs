@@ -2,30 +2,46 @@
 
 internal sealed class DictionaryDeserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate CreateDeserializer<T>(DictionarySchema sourceSchema, DictionarySchema targetSchema)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        var arguments = typeof(T).GetGenericArguments();
+        if (sourceSchema is not DictionarySchema dictionarySchema || !targetType.IsGenericType)
+        {
+            return null;
+        }
+
+        var arguments = targetType.GetGenericArguments();
+
+        if (arguments.Length != 2)
+        {
+            return null;
+        }
+
         var keyType = arguments[0];
         var valueType = arguments[1];
 
-        return (Delegate)this.GetPrivateMethod(nameof(CreateDictionaryReaderFor))
+        return (Delegate?)this.GetPrivateMethod(nameof(TryCreateDictionaryReaderFor))
             .MakeGenericMethod(keyType, valueType)
-            .Invoke(this, [sourceSchema, targetSchema])!;
+            .Invoke(this, [dictionarySchema, targetType])!;
     }
 
-    private Read<Dictionary<TKey, TValue>?> CreateDictionaryReaderFor<TKey, TValue>(DictionarySchema sourceSchema, DictionarySchema targetSchema) where TKey : notnull
+    private Read<Dictionary<TKey, TValue>?>? TryCreateDictionaryReaderFor<TKey, TValue>(DictionarySchema sourceSchema, Type targetType)
+        where TKey : notnull
     {
         // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
 
-        var readKey = deserializerStore.GetDeserializer<TKey>(sourceSchema.InnerSchema1, targetSchema.InnerSchema1.IsNullable);
-        var readValue = deserializerStore.GetDeserializer<TValue>(sourceSchema.InnerSchema2, targetSchema.InnerSchema2.IsNullable);
-        var targetIsNullable = targetSchema.IsNullable;
-
-        return (BonInput input) =>
+        if (!typeof(Dictionary<TKey, TValue>).IsAssignableTo(targetType))
         {
-            if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count)
+            return null;
+        }
+
+        var readKey = deserializerStore.GetDeserializer<TKey>(sourceSchema.InnerSchema1);
+        var readValue = deserializerStore.GetDeserializer<TValue>(sourceSchema.InnerSchema2);
+
+        return input =>
+        {
+            if (IntSerializer.Read(input.Reader) is not int count)
             {
-                return targetIsNullable ? null : [];
+                return null;
             }
 
             var dictionary = new Dictionary<TKey, TValue>(count);

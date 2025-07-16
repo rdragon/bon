@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Bon.SourceGeneration.Definitions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
     /// <summary>
     /// Generates source code that can deserialize every type that has a BonObject attribute.
@@ -30,7 +31,6 @@ namespace Bon.SourceGeneration
                 _codeGenerator.AddStatement(
                     $"bonFacade.AddDeserializer(" +
                     $"{definition.TypeOf}, " +
-                    $"{definition.IsNullable.ToStringLower()}, " +
                     $"(Bon.Serializer.Deserialization.Read<{definition.Type}>){GetMethodName(definition.IsNullable, id)});");
             }
         }
@@ -112,12 +112,14 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            method.Add($"if ({Read(NativeDefinition.Byte)} == NULL) return null;");
+            method.Add($"if ({ReadByte()} == NULL) return null;");
 
             ReadMembers(method, definition);
 
             AddMethod(method);
         }
+
+        private static string ReadByte() => "NativeSerializer.ReadByte()";
 
         private void ReadMembers(List<string> method, RecordDefinition definition)
         {
@@ -136,7 +138,7 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            method.Add($"return {Read(NativeDefinition.Byte)} == NULL ? null : {Read(id, false)};");
+            method.Add($"return {ReadByte()} == NULL ? null : {Read(id, false)};");
 
             AddMethod(method);
         }
@@ -154,7 +156,7 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            method.Add($"if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count) return null;");
+            method.Add($"if (IntSerializer.Read(input.Reader) is not int count) return null;");
 
             if (definition.ReadCollectionType == ReadCollectionType.Array && definition.ElementDefinition.Type == "byte")
             {
@@ -192,7 +194,7 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            method.Add($"if ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is not int count) return null;");
+            method.Add($"if (IntSerializer.Read(input.Reader) is not int count) return null;");
 
             method.Add($"var dictionary = {definition.GetConstructor("count")};");
             method.Add("for (var i = 0; i < count; i++)");
@@ -215,7 +217,7 @@ namespace Bon.SourceGeneration
 
             if (definition.IsNullable)
             {
-                method.Add($"if ({Read(NativeDefinition.Byte)} == NULL) return null;");
+                method.Add($"if ({ReadByte()} == NULL) return null;");
             }
 
             var counter = 0;
@@ -237,7 +239,7 @@ namespace Bon.SourceGeneration
         {
             var method = StartReadMethod(id, definition);
 
-            method.Add($"return ((int?)WholeNumberSerializer.ReadNullable(input.Reader) is int id) ? ReadNow{id}(input, id) : null;");
+            method.Add($"return (IntSerializer.Read(input.Reader) is int id) ? ReadNow{id}(input, id) : null;");
 
             AddMethod(method);
             AddReadNowMethod(definition, id);
@@ -277,10 +279,7 @@ namespace Bon.SourceGeneration
             switch (definition)
             {
                 case NativeDefinition native:
-                    return $"NativeSerializer.Read{native.SimpleType}(input.Reader)";
-
-                case WeakDefinition weak:
-                    return $"NativeSerializer.Read{weak.SimpleType}(input.Reader)";
+                    return $"NativeSerializer.Read{native.TypeAlphanumeric}(input.Reader)";
 
                 default:
                     return Read(GetId(definition), definition.IsNullable);

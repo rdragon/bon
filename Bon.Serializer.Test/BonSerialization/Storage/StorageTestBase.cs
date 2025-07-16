@@ -30,10 +30,10 @@ public class StorageTestBase(FakeBlob? blob = null) : BonSerializerTestBase(blob
 
     protected byte[] GetInstanceBytes() => [.. GetManualSerializer()
         .WriteFirstPartOfHeader(BlockId)
-        .WriteWholeNumber((int)SchemaType.Record)
+        .WriteSchemaType(SchemaType.NullableRecord)
         .WriteBool(false)
-        .WriteWholeNumber(SchemaContentsId)
-        .WriteInt(Value)];
+        .WriteCompactInt(SchemaContentsId)
+        .WriteFullInt(Value)];
 
     protected static Class Instance => new(0, Value);
 

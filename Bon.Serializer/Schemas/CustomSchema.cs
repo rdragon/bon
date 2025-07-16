@@ -83,14 +83,14 @@ public abstract class CustomSchema(SchemaType schemaType) : Schema(schemaType)
 
     /// <summary>
     /// Creates a custom schema that does not yet have any members nor a contents ID.
+    /// Used by source generated code.
     /// </summary>
     public static CustomSchema Create(SchemaType schemaType)
     {
         CustomSchema schema = schemaType switch
         {
-            SchemaType.Record => new RecordSchema(schemaType),
+            SchemaType.Record or SchemaType.NullableRecord => new RecordSchema(schemaType),
             SchemaType.Union => new UnionSchema(schemaType),
-            _ => throw new ArgumentOutOfRangeException(nameof(schemaType), schemaType, null),
         };
 
         return schema;

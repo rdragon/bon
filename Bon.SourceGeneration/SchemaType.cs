@@ -1,30 +1,14 @@
-﻿// Bookmark 413211217
-namespace Bon.SourceGeneration
+﻿namespace Bon.SourceGeneration
 {
+    // Keeps this enum identical to the enum at bookmark 954139432.
     public enum SchemaType
     {
-        /// <summary>
-        /// A class or struct.
-        /// </summary>
         Record = 1,
-
-        /// <summary>
-        /// An interface or abstract class.
-        /// </summary>
+        NullableRecord = 24,
         Union = 2,
-
-        /// <summary>
-        /// An array, list or enumerable.
-        /// </summary>
         Array = 3,
-
-        /// <summary>
-        /// A dictionary.
-        /// </summary>
         Dictionary = 4,
-
         String = 5,
-        Bool = 6,
         Byte = 7,
         SByte = 8,
         Short = 9,
@@ -35,20 +19,13 @@ namespace Bon.SourceGeneration
         ULong = 14,
         Float = 15,
         Double = 16,
-        Decimal = 17,
-        Guid = 18,
-
-        /// <summary>
-        /// A value tuple with two elements.
-        /// </summary>
+        NullableDecimal = 17,
         Tuple2 = 19,
-
-        /// <summary>
-        /// A value tuple with three elements.
-        /// </summary>
+        NullableTuple2 = 25,
         Tuple3 = 20,
-
+        NullableTuple3 = 26,
         WholeNumber = 21,
         SignedWholeNumber = 22,
+        FractionalNumber = 23,
     }
 }

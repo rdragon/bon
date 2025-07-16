@@ -12,19 +12,19 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void DogBytes() => GetManualSerializer()
         .WriteClassHeader<Dog>()
-        .WriteInt(Dog.Age)
+        .WriteFullInt(Dog.Age)
         .ShouldEqual(Dog);
 
     [Fact]
     public void WithDogBytes() => GetManualSerializer()
         .WriteClassHeader<WithDog>()
-        .WriteInt(Dog.Age)
+        .WriteFullInt(Dog.Age)
         .ShouldEqual(WithDog);
 
     [Fact]
     public void WithWithDogBytes() => GetManualSerializer()
         .WriteClassHeader<WithWithDog>()
-        .WriteInt(Dog.Age)
+        .WriteFullInt(Dog.Age)
         .ShouldEqual(WithWithDog);
 
     // A nullable class takes up one more byte. However, if the class is null it takes up only one byte.
@@ -33,7 +33,7 @@ public sealed class BytesTest : BonSerializerTestBase
     public void WithNullableDogBytes() => GetManualSerializer()
         .WriteClassHeader<WithNullableDog>()
         .WriteByte(NOT_NULL)
-        .WriteInt(WithDog.Dog.Age)
+        .WriteFullInt(WithDog.Dog.Age)
         .ShouldEqual(WithNullableDog);
 
     [Fact]
@@ -47,9 +47,9 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void ThreeIntsScrambledBytes() => GetManualSerializer()
         .WriteClassHeader<ThreeIntsScrambled>()
-        .WriteInt(ThreeIntsScrambled.Int1)
-        .WriteInt(ThreeIntsScrambled.Int3)
-        .WriteInt(ThreeIntsScrambled.Int2)
+        .WriteFullInt(ThreeIntsScrambled.Int1)
+        .WriteFullInt(ThreeIntsScrambled.Int3)
+        .WriteFullInt(ThreeIntsScrambled.Int2)
         .ShouldEqual(ThreeIntsScrambled);
 
     // Gaps between the member IDs do not affect the serialization.
@@ -57,8 +57,8 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void TwoIntsWithGapBytes() => GetManualSerializer()
         .WriteClassHeader<TwoIntsWithGap>()
-        .WriteInt(TwoIntsWithGap.Int1)
-        .WriteInt(TwoIntsWithGap.Int2)
+        .WriteFullInt(TwoIntsWithGap.Int1)
+        .WriteFullInt(TwoIntsWithGap.Int2)
         .ShouldEqual(TwoIntsWithGap);
 
     // A struct is serialized exactly like a class.
@@ -74,15 +74,15 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void IDogBytes() => GetManualSerializer()
         .WriteInterfaceHeader<IDog>()
-        .WriteWholeNumber(DogId)
-        .WriteInt(Dog.Age)
+        .WriteCompactInt(DogId)
+        .WriteFullInt(Dog.Age)
         .ShouldEqual(IDog);
 
     [Fact]
     public void WithIDogBytes() => GetManualSerializer()
         .WriteClassHeader<WithIDog>()
-        .WriteWholeNumber(DogId)
-        .WriteInt(Dog.Age)
+        .WriteCompactInt(DogId)
+        .WriteFullInt(Dog.Age)
         .ShouldEqual(WithIDog);
 
     // An enum is serialized as its underlying type.
@@ -97,24 +97,24 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void WithArrayBytes() => GetManualSerializer()
         .WriteClassHeader<WithArray>()
-        .WriteWholeNumber(2)
-        .WriteInt(WithArray[0].Age)
-        .WriteInt(WithArray[1].Age)
+        .WriteCompactInt(2)
+        .WriteFullInt(WithArray[0].Age)
+        .WriteFullInt(WithArray[1].Age)
         .ShouldEqual(WithArray);
 
     [Fact]
     public void WithArrayOfNullableBytes() => GetManualSerializer()
         .WriteClassHeader<WithArrayOfNullable>()
-        .WriteWholeNumber(2)
+        .WriteCompactInt(2)
         .WriteByte(NOT_NULL)
-        .WriteInt(WithArray[0].Age)
+        .WriteFullInt(WithArray[0].Age)
         .WriteByte(NULL)
         .ShouldEqual(WithArrayOfNullable);
 
     [Fact]
     public void WithArrayOfEmptyClassBytes() => GetManualSerializer()
         .WriteClassHeader<WithArrayOfEmptyClass>()
-        .WriteWholeNumber(2)
+        .WriteCompactInt(2)
         .ShouldEqual(WithArrayOfEmptyClass);
 
     // A nullable array that is null takes up one byte.
@@ -122,7 +122,7 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void DefaultWithNullableArrayOfDogsBytes() => GetManualSerializer()
         .WriteClassHeader<WithNullableArray>()
-        .WriteWholeNumber(null)
+        .WriteNull()
         .ShouldEqual(DefaultWithNullableArray);
 
     // All collection types are serialized exactly the same way.
@@ -146,9 +146,9 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void WithDictionaryBytes() => GetManualSerializer()
         .WriteClassHeader<WithDictionary>()
-        .WriteWholeNumber(1)
-        .WriteInt(Int)
-        .WriteInt(Dog.Age)
+        .WriteCompactInt(1)
+        .WriteFullInt(Int)
+        .WriteFullInt(Dog.Age)
         .ShouldEqual(WithDictionary);
 
     // A 2-tuple is serialized by writing the two elements.
@@ -156,16 +156,16 @@ public sealed class BytesTest : BonSerializerTestBase
     [Fact]
     public void WithTuple2Bytes() => GetManualSerializer()
         .WriteClassHeader<WithTuple2>()
-        .WriteInt(Dog.Age)
-        .WriteInt(Int)
+        .WriteFullInt(Dog.Age)
+        .WriteFullInt(Int)
         .ShouldEqual(WithTuple2);
 
     [Fact]
     public void WithNullableTuple2Bytes() => GetManualSerializer()
         .WriteClassHeader<WithNullableTuple2>()
         .WriteByte(NOT_NULL)
-        .WriteInt(Dog.Age)
-        .WriteInt(Int)
+        .WriteFullInt(Dog.Age)
+        .WriteFullInt(Int)
         .ShouldEqual(WithNullableTuple2);
 
     // byte?, ushort?, uint?, ulong?, char? are serialized in the same way.

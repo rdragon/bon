@@ -30,5 +30,9 @@ namespace Bon.SourceGeneration
 
             return builder.ToString();
         }
+
+        public static string SwapNullability(string type) => type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type + "?";
+
+        public static bool IsNullableType(string type) => type.EndsWith("?");
     }
 }

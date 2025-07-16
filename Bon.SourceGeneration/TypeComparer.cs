@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Bon.SourceGeneration.Definitions;
+using System.Collections.Generic;
 
 namespace Bon.SourceGeneration
 {

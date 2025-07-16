@@ -2,79 +2,35 @@
 
 partial class NativeDeserializer
 {
-    internal enum OutputType
+    // Bookmark 212882721
+    private enum NativeType
     {
-        String,
-        Bool,
-        Byte,
-        SByte,
-        Short,
-        UShort,
-        Int,
-        UInt,
-        Long,
-        ULong,
-        Float,
-        Double,
+        // For the values that exist in this enum and the enum below, keep their assigned integers the same.
 
-        ULongMaybe,
-        LongMaybe,
-        DoubleMaybe,
-        DecimalMaybe,
-        GuidMaybe,
+        String = 1,
+        NullableLong = 2,
+        NullableULong = 3,
+        NullableDouble = 4,
+        NullableDecimal = 5,
+
+        Byte = 6,
+        SByte = 7,
+        Short = 8,
+        UShort = 9,
+        Int = 10,
+        UInt = 11,
+        Long = 12,
+        ULong = 13,
+        Float = 14,
+        Double = 15,
     }
 
-    internal enum BridgeType
+    private enum BridgeType
     {
-        String,
-        LongMaybe,
-        ULongMaybe,
-        DoubleMaybe,
-        DecimalMaybe,
-    }
-
-    internal enum TargetType
-    {
-        String,
-        Bool,
-        Byte,
-        SByte,
-        Short,
-        UShort,
-        Int,
-        UInt,
-        Long,
-        ULong,
-        Float,
-        Double,
-        Guid,
-
-        StringMaybe,
-        BoolMaybe,
-        ByteMaybe,
-        SByteMaybe,
-        ShortMaybe,
-        UShortMaybe,
-        IntMaybe,
-        UIntMaybe,
-        LongMaybe,
-        ULongMaybe,
-        FloatMaybe,
-        DoubleMaybe,
-        GuidMaybe,
-
-        Char,
-        DateTime,
-        DateTimeOffset,
-        TimeSpan,
-        DateOnly,
-        TimeOnly,
-
-        CharMaybe,
-        DateTimeMaybe,
-        DateTimeOffsetMaybe,
-        TimeSpanMaybe,
-        DateOnlyMaybe,
-        TimeOnlyMaybe,
+        String = 1,
+        NullableLong = 2,
+        NullableULong = 3,
+        NullableDouble = 4,
+        NullableDecimal = 5,
     }
 }

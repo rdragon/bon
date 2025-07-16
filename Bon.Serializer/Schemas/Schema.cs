@@ -12,7 +12,7 @@ public abstract class Schema(SchemaType schemaType)
 {
     public SchemaType SchemaType { get; } = schemaType;
 
-    public bool IsNullable { get; } = false;//1at
+    public bool IsNullable => SchemaType.IsNullable();
 
     public abstract IEnumerable<Schema> GetInnerSchemas();
 
@@ -80,20 +80,20 @@ public abstract class Schema(SchemaType schemaType)
                 InnerSchema2 = innerSchemas[1],
             },
 
-            SchemaType.Tuple2 => new Tuple2Schema(schemaType)
+            SchemaType.Tuple2 or SchemaType.NullableTuple2 => new Tuple2Schema(schemaType)
             {
                 InnerSchema1 = innerSchemas[0],
                 InnerSchema2 = innerSchemas[1],
             },
 
-            SchemaType.Tuple3 => new Tuple3Schema(schemaType)
+            SchemaType.Tuple3 or SchemaType.NullableTuple3 => new Tuple3Schema(schemaType)
             {
                 InnerSchema1 = innerSchemas[0],
                 InnerSchema2 = innerSchemas[1],
                 InnerSchema3 = innerSchemas[2],
             },
 
-            _ => NativeSchema.FromSchemaType(schemaType),
+            _ => NativeSchema.Create(schemaType),
         };
     }
 }

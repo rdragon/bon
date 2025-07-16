@@ -2,33 +2,33 @@
 
 internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate CreateDeserializer<T>(Tuple3Schema sourceSchema, Tuple3Schema targetSchema)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        if (typeof(T).TryGetInnerTypesOfTuple3() is not (Type item1Type, Type item2Type, Type item3Type))
+        if (sourceSchema is not Tuple3Schema tuple3Schema ||
+            targetType.TryGetTuple3Type() is not { } tuple3Type)
         {
-            throw new InvalidOperationException();
+            return null;
         }
 
-        return (Delegate)this.GetPrivateMethod(nameof(CreateTuple3ReaderFor))
-            .MakeGenericMethod(item1Type, item2Type, item3Type)
-            .Invoke(this, [sourceSchema, targetSchema])!;
+        return (Delegate?)this.GetPrivateMethod(nameof(CreateTuple3ReaderFor))
+            .MakeGenericMethod(tuple3Type.Item1Type, tuple3Type.Item2Type, tuple3Type.Item3Type)
+            .Invoke(this, [tuple3Schema, tuple3Type.IsNullable])!;
     }
 
-    private Delegate CreateTuple3ReaderFor<T1, T2, T3>(Tuple3Schema sourceSchema, Tuple3Schema targetSchema)
+    private Delegate CreateTuple3ReaderFor<T1, T2, T3>(Tuple3Schema sourceSchema, bool targetIsNullable)
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1, targetSchema.InnerSchema1.IsNullable);
-        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2, targetSchema.InnerSchema2.IsNullable);
-        var readItem3 = deserializerStore.GetDeserializer<T3>(sourceSchema.InnerSchema3, targetSchema.InnerSchema3.IsNullable);
+        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1);
+        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2);
+        var readItem3 = deserializerStore.GetDeserializer<T3>(sourceSchema.InnerSchema3);
         var sourceIsNullable = sourceSchema.IsNullable;
-        var targetIsNullable = targetSchema.IsNullable;
 
         if (sourceIsNullable && targetIsNullable)
         {
-            return (Read<(T1, T2, T3)?>)((BonInput input) =>
+            return (Read<(T1, T2, T3)?>)(input =>
             {
-                if (input.Reader.ReadByte() == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeWriter.NULL)
                 {
                     return null;
                 }
@@ -43,9 +43,9 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : 
 
         if (sourceIsNullable)
         {
-            return (Read<(T1, T2, T3)>)((BonInput input) =>
+            return (Read<(T1, T2, T3)>)(input =>
             {
-                if (input.Reader.ReadByte() == NativeSerializer.NULL)
+                if (input.Reader.ReadByte() == NativeWriter.NULL)
                 {
                     return default;
                 }
@@ -60,7 +60,7 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : 
 
         if (targetIsNullable)
         {
-            return (Read<(T1, T2, T3)?>)((BonInput input) =>
+            return (Read<(T1, T2, T3)?>)(input =>
             {
                 var item1 = readItem1(input);
                 var item2 = readItem2(input);
@@ -70,7 +70,7 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : 
             });
         }
 
-        return (Read<(T1, T2, T3)>)((BonInput input) =>
+        return (Read<(T1, T2, T3)>)(input =>
         {
             var item1 = readItem1(input);
             var item2 = readItem2(input);

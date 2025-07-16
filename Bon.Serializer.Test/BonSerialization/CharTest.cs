@@ -1,6 +1,6 @@
 ﻿namespace Bon.Serializer.Test.BonSerialization;
 
-// Bookmark 659516266 (char serialization)
+// Bookmark 659516266 (native serialization)
 public sealed class CharTest : BonSerializerTestBase
 {
     [Fact] public void SkipChar() => DeserializeSlow(WithChar, 0);

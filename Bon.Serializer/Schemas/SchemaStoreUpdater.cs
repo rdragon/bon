@@ -34,7 +34,7 @@ internal sealed class SchemaStoreUpdater(
 
     private async Task<bool> InitializeSchemaStoreNow()
     {
-        schemaByTypeStore.AddBuiltInSchemas();
+        schemaByTypeStore.AddNativeSchemas();
         await AddSchemasFromStorage().ConfigureAwait(false);
         var count = AddSchemasFromSourceGenerationContext();
 
@@ -73,13 +73,13 @@ internal sealed class SchemaStoreUpdater(
 
     private async Task AddSchemasFromStorage()
     {
-        var schemaContentsResolver = new SchemaContentsStoreUpdater(schemaContentsStore, schemaDataResolver);
+        var schemaContentsStoreUpdater = new SchemaContentsStoreUpdater(schemaContentsStore, schemaDataResolver);
 
         var (blocks, entityTag) = await schemaStorage.Load().ConfigureAwait(false);
 
         foreach (var block in blocks)
         {
-            schemaContentsResolver.Add(block);
+            schemaContentsStoreUpdater.Add(block);
         }
 
         foreach (var block in blocks)

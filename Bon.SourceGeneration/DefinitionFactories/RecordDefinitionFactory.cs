@@ -1,9 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Bon.SourceGeneration.Definitions;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.DefinitionFactories
 {
     internal sealed class RecordDefinitionFactory
     {
@@ -18,10 +19,9 @@ namespace Bon.SourceGeneration
         {
             var type = symbol.GetTypeName();
             var isConcreteType = symbol.TypeArguments.All(arg => !(arg is ITypeParameterSymbol));
-            var isNullable = symbol.NullableAnnotation == NullableAnnotation.Annotated;
             var isValueType = symbol.IsValueType;
 
-            return new RecordDefinition(type, SchemaType.Record, isNullable, Array.Empty<Member>(), isValueType, false, isConcreteType);
+            return new RecordDefinition(type, Array.Empty<Member>(), isValueType, false, isConcreteType);
         }
 
         public void AddMembers(RecordDefinition definition, INamedTypeSymbol symbol)
@@ -43,7 +43,7 @@ namespace Bon.SourceGeneration
         /// </summary>
         private IReadOnlyList<Member> GetMembers(INamedTypeSymbol symbol)
         {
-            symbol = symbol.TryGetUnderlyingTypeFromNullableType() ?? symbol;
+            symbol = symbol.UnwrapNullable() ?? symbol;
 
             RequireBonObjectAttribute(symbol);
 
@@ -203,7 +203,7 @@ namespace Bon.SourceGeneration
         {
             var hasEmptyConstructor = false;
             var dictionary = members.ToDictionary(member => member.Name, StringComparer.OrdinalIgnoreCase);
-            symbol = symbol.TryGetUnderlyingTypeFromNullableType() ?? symbol;
+            symbol = symbol.UnwrapNullable() ?? symbol;
 
             foreach (var parameters in symbol.InstanceConstructors
                 .Where(constructor =>

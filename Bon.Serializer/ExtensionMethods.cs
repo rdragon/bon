@@ -26,17 +26,22 @@ internal static class ExtensionMethods
         return innerTypes[0];
     }
 
-    public static Type UnwrapNullable(this Type type) => type.TryGetInnerTypeOfNullable() ?? type;
-
-    public static Type? TryGetInnerTypeOfNullable(this Type type)
+    /// <summary>
+    /// //2at
+    /// </summary>
+    public static Type UnwrapNullable(this Type type, out bool wasNullable)
     {
-        if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(Nullable<>))
-        {
-            return null;
-        }
-
-        return type.GetGenericArguments()[0];
+        wasNullable = type.IsNullableValueType();
+        return wasNullable ? type.GetGenericArguments()[0] : type;
     }
+
+    public static bool IsNullableValueType(this Type type) =>
+        type.TryGetGenericTypeDefinition() == typeof(Nullable<>);
+
+    public static bool IsNullable(this Type type) => !type.IsValueType || IsNullable(type);
+
+    public static Type? TryGetGenericTypeDefinition(this Type type) =>
+        type.IsGenericType ? type.GetGenericTypeDefinition() : null;
 
     public static (Type KeyType, Type ValueType)? TryGetInnerTypesOfDictionary(this Type type)
     {
@@ -64,46 +69,42 @@ internal static class ExtensionMethods
         return (innerTypes[0], innerTypes[1]);
     }
 
-    public static (Type Item1Type, Type Item2Type)? TryGetInnerTypesOfTuple2(this Type type)
+    public static Tuple2Type? TryGetTuple2Type(this Type type)
     {
-        type = type.UnwrapNullable();
+        type = type.UnwrapNullable(out var isNullable);
 
         if (!type.IsGenericType)
         {
             return null;
         }
 
-        var genericTypeDefinition = type.GetGenericTypeDefinition();
-
-        if (genericTypeDefinition != typeof(ValueTuple<,>))
+        if (type.TryGetGenericTypeDefinition() != typeof(ValueTuple<,>))
         {
             return null;
         }
 
         var innerTypes = type.GetGenericArguments();
 
-        return (innerTypes[0], innerTypes[1]);
+        return new(innerTypes[0], innerTypes[1], isNullable);
     }
 
-    public static (Type Item1Type, Type Item2Type, Type Item3Type)? TryGetInnerTypesOfTuple3(this Type type)
+    public static Tuple3Type? TryGetTuple3Type(this Type type)
     {
-        type = type.UnwrapNullable();
+        type = type.UnwrapNullable(out var isNullable);
 
         if (!type.IsGenericType)
         {
             return null;
         }
 
-        var genericTypeDefinition = type.GetGenericTypeDefinition();
-
-        if (genericTypeDefinition != typeof(ValueTuple<,,>))
+        if (type.TryGetGenericTypeDefinition() != typeof(ValueTuple<,,>))
         {
             return null;
         }
 
         var innerTypes = type.GetGenericArguments();
 
-        return (innerTypes[0], innerTypes[1], innerTypes[2]);
+        return new(innerTypes[0], innerTypes[1], innerTypes[2], isNullable);
     }
 
     public static MethodInfo GetPrivateMethod(this IUseReflection instance, string methodName)
@@ -120,11 +121,6 @@ internal static class ExtensionMethods
             throw new ArgumentException($"Method not found.", methodName);
     }
 
-    public static bool IsNullable(this Type type, bool seeReferenceTypeAsNullable)//1at
-    {
-        return type.IsValueType ? Nullable.GetUnderlyingType(type) is { } : seeReferenceTypeAsNullable;
-    }
-
     public static JsonNode GetPropertyValue(this JsonObject jsonObject, string propertyName)
     {
         if (jsonObject.TryGetPropertyValue(propertyName, out var jsonNode) && jsonNode is { })
@@ -133,16 +129,6 @@ internal static class ExtensionMethods
         }
 
         throw new ArgumentException($"Property '{propertyName}' not found or null.", nameof(propertyName));
-    }
-
-    public static Type ToNullable(this Type type)
-    {
-        if (type.IsNullable(true))
-        {
-            return type;
-        }
-
-        return typeof(Nullable<>).MakeGenericType(type);
     }
 
     public static void AddMultiple<T>(this ref HashCode hashCode, IEnumerable<T> values)
@@ -162,20 +148,32 @@ internal static class ExtensionMethods
     }
 
     // The reason for using extension methods is that you can then use the null-conditional operator "?.".
-    // Bookmark 659516266 (char serialization)
 
-    public static ulong ToSchemaType(this char value) => value;
-    public static long ToSchemaType(this DateTime value) => value.ToUniversalTime().Ticks;
-    public static long ToSchemaType(this DateTimeOffset value) => value.UtcTicks;
-    public static long ToSchemaType(this TimeSpan value) => value.Ticks;
-    public static int ToSchemaType(this DateOnly value) => value.DayNumber;
-    public static long ToSchemaType(this TimeOnly value) => value.Ticks;
+    public static ulong? ToNullableULong(this char value) => value;
+    public static long ToLong(this DateTime value) => value.ToUniversalTime().Ticks;
+    public static long ToLong(this DateTimeOffset value) => value.UtcTicks;
+    public static long ToLong(this TimeSpan value) => value.Ticks;
+    public static int ToInt(this DateOnly value) => value.DayNumber;
+    public static long ToLong(this TimeOnly value) => value.Ticks;
+    public static byte[] ToByteArray(this Guid guid) => guid.ToByteArray();
 
-    public static char ToChar(this ulong value) => (char)value;
     public static DateTime ToDateTime(this long value) => new(value, DateTimeKind.Utc);
     public static DateTimeOffset ToDateTimeOffset(this long value) => new(value, TimeSpan.Zero);
     public static TimeSpan ToTimeSpan(this long value) => new(value);
     public static DateOnly ToDateOnly(this int value) => DateOnly.FromDayNumber(value);
     public static DateOnly ToDateOnly(this long value) => DateOnly.FromDayNumber((int)value);
     public static TimeOnly ToTimeOnly(this long value) => new(value);
+    public static Guid? ToGuid(this byte[]? value) => value?.Length == 16 ? new(value) : null;
+
+    public static bool IsNullable(this SchemaType schemaType) => schemaType is
+        SchemaType.WholeNumber or
+        SchemaType.SignedWholeNumber or
+        SchemaType.FractionalNumber or
+        SchemaType.NullableRecord or
+        SchemaType.NullableTuple2 or
+        SchemaType.NullableTuple3 or
+        SchemaType.Union or
+        SchemaType.Array or
+        SchemaType.Dictionary or
+        SchemaType.String;
 }

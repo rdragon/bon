@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using Bon.SourceGeneration.CodeGenerators;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.Definitions
 {
     /// <summary>
     /// Represents a class or struct.
     /// </summary>
-    internal sealed class RecordDefinition : Definition, ICustomDefinition, IMajorDefinition
+    internal sealed class RecordDefinition : Definition, ICustomDefinition, ICriticalDefinition
     {
         public override bool IsValueType { get; }
 
@@ -29,12 +30,10 @@ namespace Bon.SourceGeneration
 
         public RecordDefinition(
             string type,
-            SchemaType schemaType,
-            bool isNullable,
             IReadOnlyList<Member> members,
             bool isValueType,
             bool hasValidConstructor,
-            bool isConcreteType) : base(type, schemaType, isNullable)
+            bool isConcreteType) : base(type, Helper.IsNullableType(type) ? SchemaType.NullableRecord : SchemaType.Record)
         {
             Members = members;
             IsValueType = isValueType;
@@ -66,20 +65,17 @@ namespace Bon.SourceGeneration
 
         IReadOnlyList<IMember> ICustomDefinition.Members => Members;
 
-        public IMajorDefinition ToNonNullable() => IsNullable ?
-            new RecordDefinition(TypeNonNullable, SchemaType, false, Members, IsValueType, HasValidConstructor, IsConcreteType) : this;
+        public string GetShortConstructorName(CodeGenerator generator) => generator.TryGetFactoryMethod(this) ?? "new";
 
-        public override IDefinition ToNullable() => IsNullable ? this :
-            new RecordDefinition(Type + "?", SchemaType, true, Members, IsValueType, HasValidConstructor, IsConcreteType);
-
-        public string GetShortConstructorName(CodeGenerator generator) => generator.TryGetFactoryMethod(Type) ?? "new";
-
-        public string GetLongConstructorName(CodeGenerator generator) => generator.TryGetFactoryMethod(Type) ?? $"new {TypeNonNullable}";
+        public string GetLongConstructorName(CodeGenerator generator) => generator.TryGetFactoryMethod(this) ?? $"new {TypeNonNullable}";
 
         public override IEnumerable<IDefinition> GetInnerDefinitions() => Members.Select(member => member.Definition);
 
         protected override IEnumerable<IRecursiveEquatable> GetInnerObjects() => Members;
 
         public override string SchemaBaseClass => "CustomSchema";
+
+        public ICriticalDefinition SwapNullability() =>
+            new RecordDefinition(Helper.SwapNullability(Type), Members, IsValueType, HasValidConstructor, IsConcreteType);
     }
 }

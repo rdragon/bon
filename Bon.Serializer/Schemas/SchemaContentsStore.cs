@@ -9,7 +9,14 @@ namespace Bon.Serializer.Schemas;
 /// </summary>
 internal sealed class SchemaContentsStore
 {
+    /// <summary>
+    /// //2at
+    /// </summary>
     private readonly ConcurrentDictionary<int, SchemaContents> _schemaContentsById = [];
+
+    /// <summary>
+    /// //2at
+    /// </summary>
     private readonly ConcurrentDictionary<SchemaContents, int> _idBySchemaContents = new(SchemaContentsEqualityComparer.Instance);
 
     /// <summary>

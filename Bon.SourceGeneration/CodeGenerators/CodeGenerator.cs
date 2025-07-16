@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Bon.SourceGeneration.Definitions;
+using System.Collections.Generic;
 
-namespace Bon.SourceGeneration
+namespace Bon.SourceGeneration.CodeGenerators
 {
     internal class CodeGenerator
     {
@@ -84,9 +85,9 @@ namespace Bon.SourceGeneration
             return _class;
         }
 
-        public string TryGetFactoryMethod(string type)
+        public string TryGetFactoryMethod(IDefinition definition)
         {
-            return FactoryMethods.TryGetValue(type, out var factoryMethod) ? factoryMethod : null;
+            return FactoryMethods.TryGetValue(definition.TypeNonNullable, out var factoryMethod) ? factoryMethod : null;
         }
 
         public int GetId(IDefinition definition) => GetId(definition.Type);

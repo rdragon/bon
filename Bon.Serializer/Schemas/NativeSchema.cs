@@ -1,12 +1,11 @@
-﻿// Bookmark 413211217
-namespace Bon.Serializer.Schemas;
+﻿namespace Bon.Serializer.Schemas;
 
 /// <summary>
 /// Represents a string, bool, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, decimal, or Guid.
 /// </summary>
 public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
 {
-    public bool IsReferenceType => SchemaType == SchemaType.String; // Bookmark 413211217
+    public bool IsReferenceType => SchemaType == SchemaType.String;
 
     public override IEnumerable<Schema> GetInnerSchemas() => [];
 
@@ -20,8 +19,9 @@ public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
         return obj is NativeSchema other && SchemaType == other.SchemaType;
     }
 
+    // These properties are used by the source generated code.
+    // For every native schema type there should be a property with the correct name.
     public static NativeSchema String { get; } = new(SchemaType.String);
-    public static NativeSchema Bool { get; } = new(SchemaType.Bool);
     public static NativeSchema Byte { get; } = new(SchemaType.Byte);
     public static NativeSchema SByte { get; } = new(SchemaType.SByte);
     public static NativeSchema Short { get; } = new(SchemaType.Short);
@@ -34,11 +34,13 @@ public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
     public static NativeSchema SignedWholeNumber { get; } = new(SchemaType.SignedWholeNumber);
     public static NativeSchema Float { get; } = new(SchemaType.Float);
     public static NativeSchema Double { get; } = new(SchemaType.Double);
-    public static NativeSchema DoubleMaybe { get; } = new(SchemaType.DoubleMaybe);
-    public static NativeSchema Decimal { get; } = new(SchemaType.Decimal);
-    public static NativeSchema Guid { get; } = new(SchemaType.Guid);
+    public static NativeSchema FractionalNumber { get; } = new(SchemaType.FractionalNumber);
+    public static NativeSchema NullableDecimal { get; } = new(SchemaType.NullableDecimal);
 
-    public static NativeSchema FromSchemaType(SchemaType schemaType)
+    /// <summary>
+    /// Used by source generated code.//2at: klopt dat wel bij native schema?
+    /// </summary>
+    public static NativeSchema Create(SchemaType schemaType)
     {
         return schemaType switch
         {
