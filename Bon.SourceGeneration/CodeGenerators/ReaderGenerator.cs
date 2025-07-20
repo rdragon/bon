@@ -119,7 +119,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             AddMethod(method);
         }
 
-        private static string ReadByte() => "NativeSerializer.ReadByte()";
+        private static string ReadByte() => "NativeSerializer.ReadByte(input.Reader)";
 
         private void ReadMembers(List<string> method, RecordDefinition definition)
         {

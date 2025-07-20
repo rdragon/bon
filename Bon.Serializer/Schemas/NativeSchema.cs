@@ -1,12 +1,10 @@
 ﻿namespace Bon.Serializer.Schemas;
 
 /// <summary>
-/// Represents a string, bool, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, decimal, or Guid.
+/// Represents a string, bool, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, or decimal.
 /// </summary>
 public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
 {
-    public bool IsReferenceType => SchemaType == SchemaType.String;
-
     public override IEnumerable<Schema> GetInnerSchemas() => [];
 
     public override void AppendHashCode(Dictionary<Schema, int> ancestors, ref HashCode hashCode)
@@ -30,22 +28,35 @@ public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
     public static NativeSchema UInt { get; } = new(SchemaType.UInt);
     public static NativeSchema Long { get; } = new(SchemaType.Long);
     public static NativeSchema ULong { get; } = new(SchemaType.ULong);
-    public static NativeSchema WholeNumber { get; } = new(SchemaType.WholeNumber);
-    public static NativeSchema SignedWholeNumber { get; } = new(SchemaType.SignedWholeNumber);
     public static NativeSchema Float { get; } = new(SchemaType.Float);
     public static NativeSchema Double { get; } = new(SchemaType.Double);
-    public static NativeSchema FractionalNumber { get; } = new(SchemaType.FractionalNumber);
     public static NativeSchema NullableDecimal { get; } = new(SchemaType.NullableDecimal);
+    public static NativeSchema WholeNumber { get; } = new(SchemaType.WholeNumber);
+    public static NativeSchema SignedWholeNumber { get; } = new(SchemaType.SignedWholeNumber);
+    public static NativeSchema FractionalNumber { get; } = new(SchemaType.FractionalNumber);
 
     /// <summary>
-    /// Used by source generated code.//2at: klopt dat wel bij native schema?
+    /// Used by source generated code.
     /// </summary>
     public static NativeSchema Create(SchemaType schemaType)
     {
         return schemaType switch
         {
             SchemaType.String => String,
-            //1at
+            SchemaType.Byte => Byte,
+            SchemaType.SByte => SByte,
+            SchemaType.Short => Short,
+            SchemaType.UShort => UShort,
+            SchemaType.Int => Int,
+            SchemaType.UInt => UInt,
+            SchemaType.Long => Long,
+            SchemaType.ULong => ULong,
+            SchemaType.Float => Float,
+            SchemaType.Double => Double,
+            SchemaType.NullableDecimal => NullableDecimal,
+            SchemaType.WholeNumber => WholeNumber,
+            SchemaType.SignedWholeNumber => SignedWholeNumber,
+            SchemaType.FractionalNumber => FractionalNumber,
         };
     }
 }

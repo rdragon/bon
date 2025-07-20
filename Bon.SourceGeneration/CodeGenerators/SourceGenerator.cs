@@ -1,5 +1,5 @@
-﻿using Bon.SourceGeneration.DefinitionFactories;
-using Bon.SourceGeneration.Definitions;
+﻿using Bon.SourceGeneration.Definitions;
+using Bon.SourceGeneration.Definitions.Factories;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -38,11 +38,10 @@ namespace Bon.SourceGeneration.CodeGenerators
             var diagnostics2 = maybeContextClasses.Where(maybe => !maybe.HasData).Select((maybe, _) => maybe.Diagnostic);
             var diagnostics3 = maybeOutputs.Where(maybe => !maybe.HasData).Select((maybe, _) => maybe.Diagnostic);
 
-            //1at
-            //context.RegisterImplementationSourceOutput(outputs, WriteFile);
-            //context.RegisterImplementationSourceOutput(diagnostics1, ReportDiagnostic);
-            //context.RegisterImplementationSourceOutput(diagnostics2, ReportDiagnostic);
-            //context.RegisterImplementationSourceOutput(diagnostics3, ReportDiagnostic);
+            context.RegisterImplementationSourceOutput(outputs, WriteFile);
+            context.RegisterImplementationSourceOutput(diagnostics1, ReportDiagnostic);
+            context.RegisterImplementationSourceOutput(diagnostics2, ReportDiagnostic);
+            context.RegisterImplementationSourceOutput(diagnostics3, ReportDiagnostic);
         }
 
         private Maybe<IDefinition> TransformBonObject(GeneratorAttributeSyntaxContext context, CancellationToken _)

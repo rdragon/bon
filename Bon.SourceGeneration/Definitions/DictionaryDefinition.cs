@@ -12,10 +12,9 @@ namespace Bon.SourceGeneration.Definitions
 
         public DictionaryDefinition(
             string type,
-            SchemaType schemaType,
             IDefinition keyDefinition,
             IDefinition valueDefinition,
-            DictionaryType dictionaryType) : base(type, schemaType)
+            DictionaryType dictionaryType) : base(type, SchemaType.Dictionary, false)
         {
             KeyDefinition = keyDefinition;
             ValueDefinition = valueDefinition;

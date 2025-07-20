@@ -69,7 +69,7 @@ public abstract class Schema(SchemaType schemaType)
     {
         return schemaType switch
         {
-            SchemaType.Array => new ArraySchema(schemaType)
+            SchemaType.Array => new ArraySchema()
             {
                 InnerSchema = innerSchemas[0],
             },

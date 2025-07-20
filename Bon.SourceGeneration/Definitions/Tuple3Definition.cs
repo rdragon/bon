@@ -12,10 +12,9 @@ namespace Bon.SourceGeneration.Definitions
 
         public Tuple3Definition(
             string type,
-            SchemaType schemaType,
             IDefinition item1Definition,
             IDefinition item2Definition,
-            IDefinition item3Definition) : base(type, schemaType)
+            IDefinition item3Definition) : base(type, SchemaType.Tuple3, true)
         {
             Item1Definition = item1Definition;
             Item2Definition = item2Definition;
@@ -23,8 +22,6 @@ namespace Bon.SourceGeneration.Definitions
         }
 
         // No need to override Equals and GetHashCode because the base implementation is sufficient.
-
-        public override bool IsValueType => true;
 
         public override IEnumerable<IDefinition> GetInnerDefinitions()
         {

@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace Bon.SourceGeneration
@@ -30,197 +31,74 @@ namespace Bon.SourceGeneration
         /// </summary>
         public static string ToStringLower(this bool b) => b ? "true" : "false";
 
-        /// <summary>
-        /// Returns the read collection type of the given collection type symbol.
-        /// </summary>
-        public static ReadCollectionType GetReadCollectionType(this ITypeSymbol collectionSymbol)
+        public static SymbolInfo GetSymbolInfo(this ITypeSymbol symbol)
         {
-            if (collectionSymbol is IArrayTypeSymbol)
+            var type = GetTypeName(symbol);
+            var isNullable = symbol.IsReferenceType || symbol.NullableAnnotation == NullableAnnotation.Annotated;
+
+            if (isNullable && symbol.IsValueType && symbol is INamedTypeSymbol named)
             {
-                return ReadCollectionType.Array;
+                symbol = named.TypeArguments[0];
             }
 
-            var name = collectionSymbol.Name;
+            var fullName = symbol is IArrayTypeSymbol ? "System.Array" : $"{symbol.ContainingNamespace}.{symbol.MetadataName}";
+            var typeArguments = GetTypeArguments(symbol);
 
-            switch (name)
+            return new SymbolInfo
             {
-                case "List":
-                case "IList":
-                case "ICollection":
-                    return ReadCollectionType.List;
-
-                case "IReadOnlyList":
-                case "IReadOnlyCollection":
-                case "IEnumerable":
-                    return ReadCollectionType.Array;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(collectionSymbol), collectionSymbol, null);
-            }
+                Symbol = symbol,
+                IsNullable = isNullable,
+                Type = type,
+                FullName = fullName,
+                TypeArguments = typeArguments,
+            };
         }
 
-        /// <summary>
-        /// Returns the simplified collection type of the given collection type symbol.
-        /// </summary>
-        public static CollectionType GetCollectionType(this ITypeSymbol collectionSymbol)
-        {
-            if (collectionSymbol is IArrayTypeSymbol)
-            {
-                return CollectionType.Array;
-            }
-
-            var name = collectionSymbol.Name;
-
-            switch (name)
-            {
-                case "List":
-                case "IList":
-                case "IReadOnlyList":
-                    return CollectionType.List;
-
-                case "ICollection":
-                case "IReadOnlyCollection":
-                case "IEnumerable":
-                    return CollectionType.IEnumerable;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(collectionSymbol), collectionSymbol, null);
-            }
-        }
-
-        /// <summary>
-        /// Returns the element type symbol of a collection type symbol, or null if the collection type symbol is not a
-        /// collection after all.
-        /// </summary>
-        public static ITypeSymbol TryGetArrayElementSymbol(this ITypeSymbol symbol)
+        private static ImmutableArray<ITypeSymbol> GetTypeArguments(ITypeSymbol symbol)
         {
             if (symbol is IArrayTypeSymbol array)
             {
-                return array.ElementType;
+                return ImmutableArray.Create(array.ElementType);
             }
 
-            if (symbol is INamedTypeSymbol named && named.IsGenericType)
-            {
-                var name = symbol.Name;
-
-                if (name == "IReadOnlyList" ||
-                    name == "List" ||
-                    name == "IList" ||
-                    name == "IEnumerable" ||
-                    name == "ICollection" ||
-                    name == "IReadOnlyCollection")
-                {
-                    return named.TypeArguments[0];
-                }
-            }
-
-            return null;
-        }
-
-        public static bool TryGetDictionarySymbols(this ITypeSymbol symbol, out ITypeSymbol keySymbol, out ITypeSymbol valueSymbol)
-        {
-            if (symbol is INamedTypeSymbol named && named.IsGenericType)
-            {
-                var name = symbol.Name;
-
-                if (name == "Dictionary" ||
-                    name == "IDictionary" ||
-                    name == "IReadOnlyDictionary")
-                {
-                    keySymbol = named.TypeArguments[0];
-                    valueSymbol = named.TypeArguments[1];
-                    return true;
-                }
-            }
-
-            keySymbol = null;
-            valueSymbol = null;
-            return false;
-        }
-
-        public static bool TryGetTuple2Symbols(this ITypeSymbol symbol, out ITypeSymbol item1Symbol, out ITypeSymbol item2Symbol)
-        {
             if (symbol is INamedTypeSymbol named)
             {
-                named = named.UnwrapNullable() ?? named;
-
-                if (named.IsGenericType)
-                {
-                    var name = named.Name;
-
-                    if (name == "ValueTuple" && named.TypeArguments.Length == 2)
-                    {
-                        item1Symbol = named.TypeArguments[0];
-                        item2Symbol = named.TypeArguments[1];
-                        return true;
-                    }
-                }
+                return named.TypeArguments;
             }
 
-            item1Symbol = null;
-            item2Symbol = null;
-            return false;
+            return ImmutableArray<ITypeSymbol>.Empty;
         }
-
-        public static bool TryGetTuple3Symbols(this ITypeSymbol symbol, out ITypeSymbol item1Symbol, out ITypeSymbol item2Symbol, out ITypeSymbol item3Symbol)
-        {
-            if (symbol is INamedTypeSymbol named)
-            {
-                named = named.UnwrapNullable() ?? named;
-
-                if (named.IsGenericType)
-                {
-                    var name = named.Name;
-
-                    if (name == "ValueTuple" && named.TypeArguments.Length == 3)
-                    {
-                        item1Symbol = named.TypeArguments[0];
-                        item2Symbol = named.TypeArguments[1];
-                        item3Symbol = named.TypeArguments[2];
-                        return true;
-                    }
-                }
-            }
-
-            item1Symbol = null;
-            item2Symbol = null;
-            item3Symbol = null;
-            return false;
-        }
-
-        /// <summary>
-        /// Returns a value like "ExampleNamespace.ExampleClass?" or "int".
-        /// </summary>
-        public static string GetTypeName(this ITypeSymbol symbol) => symbol.ToString();
-
-        //1at: maak dat ie altijd iets teruggeeft? dat ie dus zelfde werkt als functie in serializer.
-        public static INamedTypeSymbol UnwrapNullable(this INamedTypeSymbol symbol)
-        {
-            return symbol.UnwrapNullable(out var type) ? type : null;
-        }
-
-        public static bool IsNullable(this ITypeSymbol symbol) => symbol.NullableAnnotation == NullableAnnotation.Annotated;
 
         /// <summary>
         /// //2at
         /// </summary>
-        public static ITypeSymbol UpdateNullability(this ITypeSymbol symbol) =>
-            symbol.IsValueType ? symbol : symbol.WithNullableAnnotation(NullableAnnotation.Annotated);
-
-        public static INamedTypeSymbol ToNamedTypeSymbol(this ITypeSymbol symbol) =>
-            symbol as INamedTypeSymbol ?? throw new SourceGenerationException($"Cannot handle '{symbol}'.", 8468, symbol);
-
-        public static bool UnwrapNullable(this INamedTypeSymbol symbol, out INamedTypeSymbol result)
+        public static string GetTypeName(this ITypeSymbol symbol)
         {
-            if (symbol.IsValueType && symbol.NullableAnnotation == NullableAnnotation.Annotated)
+            if (symbol is IArrayTypeSymbol arraySymbol)
             {
-                result = (INamedTypeSymbol)symbol.TypeArguments[0];
-                return true;
+                return $"{GetTypeName(arraySymbol.ElementType)}[]";
             }
 
-            result = null;
-            return false;
+            if (symbol is INamedTypeSymbol named)
+            {
+                if (symbol.IsValueType && symbol.NullableAnnotation == NullableAnnotation.Annotated)
+                {
+                    return GetTypeName(named.TypeArguments[0]) + "?";
+                }
+
+                if (named.IsGenericType)
+                {
+                    var arguments = string.Join(", ", named.TypeArguments.Select(GetTypeName));
+
+                    return symbol.IsTupleType ?
+                        $"({arguments})" :
+                        $"{symbol.ContainingNamespace}.{symbol.Name}<{arguments}>";
+                }
+            }
+
+            return symbol.WithNullableAnnotation(NullableAnnotation.None).ToString();
         }
+
 
         public static void RequireAll<T>(this IEnumerable<T> enumerable, Func<T, bool> condition)
         {

@@ -17,13 +17,16 @@ namespace Bon.SourceGeneration.Definitions
 
         public string TypeNonNullable { get; }
 
-        protected Definition(string type, SchemaType schemaType)
+        public bool IsValueType { get; }
+
+        protected Definition(string type, SchemaType schemaType, bool isValueType)
         {
-            var isNullable = Helper.IsNullableType(type);
+            var isNullable = Helper.IsNullableType(type, isValueType);
             Type = type;
             SchemaType = schemaType;
             IsNullable = isNullable;
-            TypeNonNullable = isNullable ? Helper.SwapNullability(type) : type;
+            IsValueType = isValueType;
+            TypeNonNullable = isNullable && isValueType ? Helper.SwapNullability(type, isValueType) : type;
         }
 
         public bool IsNullableValueType => IsNullable && IsValueType;
@@ -114,9 +117,7 @@ namespace Bon.SourceGeneration.Definitions
 
         public override string ToString() => Type;
 
-        public string TypeOf => $"typeof({(IsValueType ? Type : TypeNonNullable)})";
-
-        public virtual bool IsValueType => false;
+        public string TypeOf => $"typeof({Type})";
 
         public virtual IEnumerable<IDefinition> GetInnerDefinitions() => Array.Empty<IDefinition>();
 

@@ -99,7 +99,7 @@ internal static class BonToJsonDeserializer
             InnerSchema2 = schema.InnerSchema2,
         };
 
-        var arraySchema = new ArraySchema(SchemaType.Array)
+        var arraySchema = new ArraySchema()
         {
             InnerSchema = tupleSchema,
         };

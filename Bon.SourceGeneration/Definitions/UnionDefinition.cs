@@ -13,8 +13,8 @@ namespace Bon.SourceGeneration.Definitions
         /// </summary>
         public IReadOnlyList<UnionMember> Members { get; }
 
-        public UnionDefinition(string type, SchemaType schemaType, IReadOnlyList<UnionMember> members) :
-            base(type, schemaType)
+        public UnionDefinition(string type, IReadOnlyList<UnionMember> members) :
+            base(type, SchemaType.Union, false)
         {
             Members = members;
         }

@@ -9,8 +9,6 @@ namespace Bon.SourceGeneration.Definitions
     /// </summary>
     internal sealed class RecordDefinition : Definition, ICustomDefinition, ICriticalDefinition
     {
-        public override bool IsValueType { get; }
-
         /// <summary>
         /// All serializable members of the type ordered by ID.
         /// </summary>
@@ -33,13 +31,15 @@ namespace Bon.SourceGeneration.Definitions
             IReadOnlyList<Member> members,
             bool isValueType,
             bool hasValidConstructor,
-            bool isConcreteType) : base(type, Helper.IsNullableType(type) ? SchemaType.NullableRecord : SchemaType.Record)
+            bool isConcreteType) : base(type, GetSchemaType(type, isValueType), isValueType)
         {
             Members = members;
-            IsValueType = isValueType;
             HasValidConstructor = hasValidConstructor;
             IsConcreteType = isConcreteType;
         }
+
+        private static SchemaType GetSchemaType(string type, bool isValueType) =>
+            Helper.IsNullableType(type, isValueType) ? SchemaType.NullableRecord : SchemaType.Record;
 
         public override bool Equals(object obj, AncestorCollection ancestors)
         {
@@ -76,6 +76,6 @@ namespace Bon.SourceGeneration.Definitions
         public override string SchemaBaseClass => "CustomSchema";
 
         public ICriticalDefinition SwapNullability() =>
-            new RecordDefinition(Helper.SwapNullability(Type), Members, IsValueType, HasValidConstructor, IsConcreteType);
+            new RecordDefinition(Helper.SwapNullability(Type, IsValueType), Members, IsValueType, HasValidConstructor, IsConcreteType);
     }
 }

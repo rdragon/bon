@@ -64,9 +64,7 @@ namespace Bon.SourceGeneration.Definitions
             TryGetNativeDefinition(type) ??
             throw new ArgumentOutOfRangeException($"Cannot handle '{type}'.", nameof(type), null);
 
-        public static NativeDefinition TryGetNativeDefinition(string type)
-        {
-            return _definitions.TryGetValue(type, out var definition) ? definition : null;
-        }
+        public static NativeDefinition TryGetNativeDefinition(string type) =>
+            _definitions.TryGetValue(type, out var definition) ? definition : null;
     }
 }

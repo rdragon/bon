@@ -50,7 +50,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             var argument = usesCustomSchemas ? "true" : "false";
 
             _codeGenerator.AddStatement(
-                $"bonFacade.AddWriter<{definition.SafeType}>({methodName}, {argument});");
+                $"bonFacade.AddWriter<{definition.Type}>({methodName}, {argument});");
         }
 
         private void AddWriteMethod(IDefinition definition, int id)
@@ -191,7 +191,7 @@ namespace Bon.SourceGeneration.CodeGenerators
 
             foreach (var member in definition.Members)
             {
-                method.Add($"case {member.Definition.Type} obj:");
+                method.Add($"case {member.Definition.TypeNonNullable} obj:");
                 method.Add($"IntSerializer.Write(writer, {member.Id});");
                 Write(method, member.Definition, "obj");
                 method.Add("break;");
@@ -321,7 +321,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         }
 
         private static List<string> StartWriteMethod(int id, IDefinition definition, string parameterName) =>
-            new List<string> { $"public static void {GetMethodName(definition, id)}(BinaryWriter writer, {definition.SafeType} {parameterName})", "{" };
+            new List<string> { $"public static void {GetMethodName(definition, id)}(BinaryWriter writer, {definition.Type} {parameterName})", "{" };
 
         /// <param name="lines">The lines of a method, but without the closing brace.</param>
         private void AddMethod(IReadOnlyList<string> lines)

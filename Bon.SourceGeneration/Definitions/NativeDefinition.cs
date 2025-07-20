@@ -9,17 +9,15 @@ namespace Bon.SourceGeneration.Definitions
     {
         public string TypeAlphanumeric { get; }
 
-        public override bool IsValueType { get; }//0at, waarvoor wordt deze gebruikt? guid is beide namelijk nu. of wss gwon value type.
-
         /// <summary>
         /// //2at
         /// </summary>
         public string SchemaIdentifier { get; }
 
-        private NativeDefinition(string type, SchemaType schemaType, bool isValueType, string schemaIdentifier) : base(type, schemaType)
+        private NativeDefinition(string type, SchemaType schemaType, bool isValueType, string schemaIdentifier) :
+            base(type, schemaType, isValueType)
         {
             TypeAlphanumeric = GetTypeAlphanumeric(type);
-            IsValueType = isValueType;
             SchemaIdentifier = schemaIdentifier;
         }
 
@@ -27,7 +25,7 @@ namespace Bon.SourceGeneration.Definitions
 
         public string GetWriteMethodName() => "NativeSerializer.Write" + TypeAlphanumeric;
 
-        public NativeDefinition SwapNullability() => IsReferenceType ? this : GetNativeDefinition(Helper.SwapNullability(Type));
+        public NativeDefinition SwapNullability() => IsReferenceType ? this : GetNativeDefinition(Helper.SwapNullability(Type, IsValueType));
 
         private static string GetTypeAlphanumeric(string type)
         {

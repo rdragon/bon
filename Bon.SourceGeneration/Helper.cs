@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Bon.SourceGeneration
@@ -7,8 +8,6 @@ namespace Bon.SourceGeneration
     {
         public static string Indent(IEnumerable<string> lines)
         {
-            if ("".Length == 0) return "";//1at
-
             var builder = new StringBuilder();
             var indentation = 0;
 
@@ -31,8 +30,16 @@ namespace Bon.SourceGeneration
             return builder.ToString();
         }
 
-        public static string SwapNullability(string type) => type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type + "?";
+        public static string SwapNullability(string type, bool isValueType)
+        {
+            if (isValueType)
+            {
+                return type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type + "?";
+            }
 
-        public static bool IsNullableType(string type) => type.EndsWith("?");
+            return type;
+        }
+
+        public static bool IsNullableType(string type, bool isValueType) => !isValueType || type.EndsWith("?");
     }
 }

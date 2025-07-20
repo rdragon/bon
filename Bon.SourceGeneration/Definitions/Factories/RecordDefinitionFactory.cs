@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration.DefinitionFactories
+namespace Bon.SourceGeneration.Definitions.Factories
 {
     internal sealed class RecordDefinitionFactory
     {
@@ -15,13 +15,12 @@ namespace Bon.SourceGeneration.DefinitionFactories
             _definitionFactory = definitionFactory;
         }
 
-        public RecordDefinition GetRecordDefinitionWithoutMembers(INamedTypeSymbol symbol)
+        public RecordDefinition GetRecordDefinitionWithoutMembers(SymbolInfo symbolInfo)
         {
-            var type = symbol.GetTypeName();
-            var isConcreteType = symbol.TypeArguments.All(arg => !(arg is ITypeParameterSymbol));
-            var isValueType = symbol.IsValueType;
+            var isConcreteType = symbolInfo.TypeArguments.All(arg => !(arg is ITypeParameterSymbol));
+            var isValueType = symbolInfo.Symbol.IsValueType;
 
-            return new RecordDefinition(type, Array.Empty<Member>(), isValueType, false, isConcreteType);
+            return new RecordDefinition(symbolInfo.Type, Array.Empty<Member>(), isValueType, false, isConcreteType);
         }
 
         public void AddMembers(RecordDefinition definition, INamedTypeSymbol symbol)
@@ -43,8 +42,6 @@ namespace Bon.SourceGeneration.DefinitionFactories
         /// </summary>
         private IReadOnlyList<Member> GetMembers(INamedTypeSymbol symbol)
         {
-            symbol = symbol.UnwrapNullable() ?? symbol;
-
             RequireBonObjectAttribute(symbol);
 
             var members = symbol.GetMembers()
@@ -203,7 +200,6 @@ namespace Bon.SourceGeneration.DefinitionFactories
         {
             var hasEmptyConstructor = false;
             var dictionary = members.ToDictionary(member => member.Name, StringComparer.OrdinalIgnoreCase);
-            symbol = symbol.UnwrapNullable() ?? symbol;
 
             foreach (var parameters in symbol.InstanceConstructors
                 .Where(constructor =>

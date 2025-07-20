@@ -36,13 +36,13 @@ public class InspectorTest
 
                 schema 2
                     1: Int
-                    2: Record_2?
+                    2: NullableRecord_2
 
                 schema 3
-                    1: Record_1[]
+                    1: NullableRecord_1[]
 
                 schema 4
-                    2: Dictionary<String, SignedWholeNumber?>
+                    2: Dictionary<String, SignedWholeNumber>
 
                 schema 5
                     3: (WholeNumber, Long)

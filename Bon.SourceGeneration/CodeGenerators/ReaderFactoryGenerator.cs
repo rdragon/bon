@@ -35,9 +35,9 @@ namespace Bon.SourceGeneration.CodeGenerators
 
             var parameters = Enumerable.Range(0, members.Count)
                 .SelectMany(i => new[] {
-                    $"Action<BonInput>? skip{i}",
+                    $"Action<BonInput> skip{i}",
                     $"Func<Delegate> createReader{i}" })
-                .Concat(new[] { "Action<BonInput>? skipRest" });
+                .Concat(new[] { "Action<BonInput> skipRest" });
 
             var parameterText = string.Join(", ", parameters);
             var methodName = $"CreateReader{index}";

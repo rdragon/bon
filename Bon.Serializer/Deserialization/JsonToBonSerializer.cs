@@ -110,7 +110,7 @@ internal static class JsonToBonSerializer
             InnerSchema2 = dictionarySchema.InnerSchema2,
         };
 
-        var arraySchema = new ArraySchema(SchemaType.Array)
+        var arraySchema = new ArraySchema()
         {
             InnerSchema = tupleSchema,
         };

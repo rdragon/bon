@@ -26,10 +26,9 @@ namespace Bon.SourceGeneration.Definitions
 
         public ArrayDefinition(
             string type,
-            SchemaType schemaType,
             IDefinition elementDefinition,
             ReadCollectionType readCollectionType,
-            CollectionType collectionType) : base(type, schemaType)
+            CollectionType collectionType) : base(type, SchemaType.Array, false)
         {
             ElementDefinition = elementDefinition;
             ReadCollectionType = readCollectionType;

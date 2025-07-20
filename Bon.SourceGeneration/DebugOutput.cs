@@ -33,7 +33,7 @@ namespace Bon.SourceGeneration
 
             try
             {
-                File.WriteAllText($"{OutputDirectory}/bon-{name}-{Version}.txt", $"{DateTimeOffset.Now:HH:mm:ss}\n{text}\n");
+                File.WriteAllText($"{OutputDirectory}/bon-{name}-{Version}.cs", $"{text}\n");
             }
             finally
             {

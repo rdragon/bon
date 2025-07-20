@@ -43,7 +43,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         private void StartClass(ContextClass contextClass)
         {
             AppendClassBody(
-                "#nullable enable",
+                "#nullable disable",
                 "",
                 "// v3",
                 "using System;",

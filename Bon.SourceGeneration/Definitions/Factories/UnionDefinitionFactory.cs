@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bon.SourceGeneration.DefinitionFactories
+namespace Bon.SourceGeneration.Definitions.Factories
 {
     internal sealed class UnionDefinitionFactory
     {
@@ -14,19 +14,15 @@ namespace Bon.SourceGeneration.DefinitionFactories
             _definitionFactory = definitionFactory;
         }
 
-        public IDefinition TryGetUnionDefinition(INamedTypeSymbol symbol)
+        public IDefinition TryGetUnionDefinition(SymbolInfo symbolInfo)
         {
-            if (symbol.TypeKind == TypeKind.Interface || symbol.TypeKind == TypeKind.Class && symbol.IsAbstract)
+            var symbol = symbolInfo.GetNamedTypeSymbol();
+
+            if (!(symbol.TypeKind == TypeKind.Interface || symbol.TypeKind == TypeKind.Class && symbol.IsAbstract))
             {
-                return GetUnionDefinition(symbol);
+                return null;
             }
 
-            return null;
-        }
-
-        public UnionDefinition GetUnionDefinition(INamedTypeSymbol symbol)
-        {
-            var id = symbol.GetTypeName();
             var members = new List<UnionMember>();
 
             foreach (var attribute in GetBonIncludeAttributes(symbol).OrderBy(attribute => attribute.MemberId))
@@ -46,7 +42,7 @@ namespace Bon.SourceGeneration.DefinitionFactories
             RequireUniqueIds(members, symbol);
             RequireUniqueTypes(members, symbol);
 
-            return new UnionDefinition(id, SchemaType.Union, members);
+            return new UnionDefinition(symbolInfo.Type, members);
         }
 
         private static void RequireUniqueIds(IReadOnlyList<UnionMember> members, ITypeSymbol symbol)

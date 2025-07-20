@@ -35,7 +35,7 @@ public abstract class GenericSchema1(SchemaType schemaType) : Schema(schemaType)
     {
         GenericSchema1 schema = schemaType switch
         {
-            SchemaType.Array => new ArraySchema(schemaType),
+            SchemaType.Array => new ArraySchema(),
         };
 
         return schema;
@@ -45,8 +45,8 @@ public abstract class GenericSchema1(SchemaType schemaType) : Schema(schemaType)
 /// <summary>
 /// Represents an array, list or enumerable.
 /// </summary>
-public sealed class ArraySchema(SchemaType schemaType) : GenericSchema1(schemaType)
+public sealed class ArraySchema() : GenericSchema1(SchemaType.Array)
 {
     // Used by source generated code.
-    public static ArraySchema ByteArray => new(SchemaType.Byte);
+    public static ArraySchema ByteArray => new() { InnerSchema = NativeSchema.Byte };
 }

@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-//1at
+
 namespace Bon.Serializer.Deserialization;
 
 internal partial class NativeDeserializer(DeserializerStore deserializerStore)

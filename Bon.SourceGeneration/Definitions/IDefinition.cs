@@ -22,11 +22,6 @@ namespace Bon.SourceGeneration.Definitions
         string TypeNonNullable { get; }
 
         /// <summary>
-        /// //2at
-        /// </summary>
-        string SafeType { get; }
-
-        /// <summary>
         /// The schema type that will be used when serializing this type.
         /// This property is only used when obtaining the schema corresponding to this definition.
         /// (And it is used when comparing two definitions.)
