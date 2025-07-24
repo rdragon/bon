@@ -4,7 +4,7 @@ internal static class SchemaSerializer
 {
     public static void Write(BinaryWriter writer, SchemaContentsData schema)
     {
-        IntSerializer.Write(writer, schema.ContentsId);
+        IntSerializer.Write(writer, schema.LayoutId);
         IntSerializer.Write(writer, schema.Members.Count);
 
         foreach (var member in schema.Members)
@@ -29,7 +29,7 @@ internal static class SchemaSerializer
 
         if (schema is CustomSchemaData custom)
         {
-            IntSerializer.Write(writer, custom.ContentsId);
+            IntSerializer.Write(writer, custom.LayoutId);
 
             return;
         }
@@ -42,7 +42,7 @@ internal static class SchemaSerializer
 
     public static SchemaContentsData ReadSchema(BinaryReader reader)
     {
-        var contentsId = IntSerializer.Read(reader) ?? 0;
+        var layoutId = IntSerializer.Read(reader) ?? 0;
         var count = IntSerializer.Read(reader) ?? 0;
         var members = new List<SchemaMemberData>(count);
 
@@ -53,7 +53,7 @@ internal static class SchemaSerializer
             members.Add(new SchemaMemberData(id, schemaData));
         }
 
-        return new SchemaContentsData(contentsId, members);
+        return new SchemaContentsData(layoutId, members);
     }
 
     public static SchemaData ReadSchemaData(byte[] bytes)

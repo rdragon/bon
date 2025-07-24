@@ -20,7 +20,7 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         public void Run(IEnumerable<IDefinition> definitions)
         {
-            definitions = GetMoreDefinitions(definitions);
+            definitions = GetAllDefinitions(definitions);
 
             _codeGenerator.AddMethod(
                 "public void UpdateSchemaStore(BonFacade bonFacade)",
@@ -44,28 +44,29 @@ namespace Bon.SourceGeneration.CodeGenerators
             _codeGenerator.AppendClassBody("}");
         }
 
-        private IReadOnlyList<IDefinition> GetMoreDefinitions(IEnumerable<IDefinition> definitions)
+        private IReadOnlyList<IDefinition> GetAllDefinitions(IEnumerable<IDefinition> definitions)
         {
-            var result = new HashSet<IDefinition>(TypeComparer.Instance);
+            var result = new Dictionary<int, IDefinition>();
 
             AddDefinitionsRecursive(result, definitions);
 
-            return result.ToArray();
+            return result.Values.ToArray();
         }
 
-        private void AddDefinitionsRecursive(HashSet<IDefinition> definitions, IEnumerable<IDefinition> definitionsToAdd)
+        private void AddDefinitionsRecursive(Dictionary<int, IDefinition> definitions, IEnumerable<IDefinition> definitionsToAdd)
         {
             foreach (var definition in definitionsToAdd.Where(definition =>
                 !(definition is NativeDefinition) &&
-                definitions.Add(definition)))
+                !definitions.ContainsKey(GetId(definition))))
             {
+                definitions.Add(GetId(definition), definition);
                 AddDefinitionsRecursive(definitions, definition.GetInnerDefinitions());
             }
         }
 
         private void CreateSchema(IDefinition definition)
         {
-            var id = _codeGenerator.GetId(definition);
+            var id = GetId(definition);
             var schemaType = $"SchemaType.{definition.SchemaType}";
 
             _codeGenerator.AppendClassBody(
@@ -81,7 +82,7 @@ namespace Bon.SourceGeneration.CodeGenerators
                 return;
             }
 
-            var id = _codeGenerator.GetId(definition);
+            var id = GetId(definition);
             var arguments = string.Join(", ", definition.GetInnerDefinitions().Select(GetSchemaArgument));
 
             if (arguments.Length > 0)
@@ -93,7 +94,7 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         private void UpdateCustomSchema(ICustomDefinition definition)
         {
-            var id = _codeGenerator.GetId(definition);
+            var id = GetId(definition);
             var arguments = string.Join(", ", definition.Members.Select(GetMemberArgument));
 
             _codeGenerator.AppendClassBody(
@@ -107,7 +108,7 @@ namespace Bon.SourceGeneration.CodeGenerators
                 return nativeDefinition.SchemaIdentifier;
             }
 
-            var id = _codeGenerator.GetId(definition);
+            var id = GetId(definition);
 
             return $"schema{id}";
         }
@@ -119,10 +120,12 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         private void PushSchema(IDefinition definition)
         {
-            var id = _codeGenerator.GetId(definition);
+            var id = GetId(definition);
 
             _codeGenerator.AppendClassBody(
-                $"bonFacade.AddSchema({definition.TypeOf}, schema{id});");
+                $"bonFacade.AddSchema(typeof({definition.TypeForWriter}), schema{id});");
         }
+
+        private int GetId(IDefinition definition) => _codeGenerator.GetId(definition.TypeForWriter);
     }
 }

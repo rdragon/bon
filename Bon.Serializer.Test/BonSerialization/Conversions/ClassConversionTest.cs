@@ -5,7 +5,7 @@ public sealed class ClassConversionTest : BonSerializerTestBase
     [Fact] public void DogToCat() => DeserializeSlow(Dog, Cat);
     [Fact] public void DogToInt() => DeserializeSlow(Dog, 0);
     [Fact] public void CatToDog() => DeserializeSlow(Cat, Dog);
-    [Fact] public void IntToDog() => DeserializeSlow(0, DefaultDog);
+    [Fact] public void IntToDog() => DeserializeSlow(0, DefaultNullableDog);
     [Fact] public void TurtleToTortoise1() => DeserializeSlow(Turtle1, Tortoise1);
     [Fact] public void TurtleToTortoise2() => DeserializeSlow(Turtle2, Tortoise2);
     [Fact] public void TurtleToTortoise3() => DeserializeSlow(Turtle3, Tortoise3);

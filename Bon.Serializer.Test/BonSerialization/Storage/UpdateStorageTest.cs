@@ -12,7 +12,7 @@ public class UpdateStorageTest : BonSerializerTestBase
     public async Task AllSchemasWereWrittenToStorage()
     {
         var expected = Blob.Bytes.Length;
-        await BonSerializer.CreateAsync(new BonSerializerContext(), Blob);
+        await BonSerializer.CreateAsync(new TestBonSerializerContext(), Blob);
 
         Assert.Equal(expected, Blob.Bytes.Length);
     }
@@ -20,7 +20,7 @@ public class UpdateStorageTest : BonSerializerTestBase
     [Fact]
     public async Task CompareSerializers()
     {
-        var serializer = await BonSerializer.CreateAsync(new BonSerializerContext(), Blob);
+        var serializer = await BonSerializer.CreateAsync(new TestBonSerializerContext(), Blob);
         Assert.Equal(BonSerializer.GetSchemaHash(), serializer.GetSchemaHash());
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Bon.Serializer.Schemas;
 
-internal sealed class SchemaDataStore(SchemaByTypeStore schemaByTypeStore)
+internal sealed class SchemaDataStore(SchemaStore schemaStore)
 {
     private readonly ConcurrentDictionary<Type, SchemaData> _schemaDatas = new();
 
@@ -8,7 +8,7 @@ internal sealed class SchemaDataStore(SchemaByTypeStore schemaByTypeStore)
     {
         if (!_schemaDatas.TryGetValue(type, out var schemaData))
         {
-            schemaData = SchemaData.Create(schemaByTypeStore.GetSchemaByType(type));
+            schemaData = SchemaData.Create(schemaStore.GetOrAdd(type));
             schemaData = _schemaDatas.TryAdd(type, schemaData) ? schemaData : _schemaDatas[type];
         }
 

@@ -7,7 +7,7 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
     /// <summary>
     /// Returns a method that reads binary data formatted according to the schema and throws away the result.
     /// </summary>
-    public Action<BonInput> GetSkipper(Schema schema)
+    public Action<BonInput> GetSkipper(Schema1 schema)
     {
         return schema switch
         {

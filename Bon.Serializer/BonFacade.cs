@@ -5,36 +5,36 @@
 /// </summary>
 public sealed class BonFacade
 {
-    private readonly SchemaContentsStore _schemaContentsStore;
-    private readonly SchemaByTypeStore _schemaByTypeStore;
+    private readonly LayoutStore _layoutStore;
+    private readonly SchemaStore _schemaStore;
     private readonly DeserializerStore _deserializerStore;
     private readonly WriterStore _writerStore;
 
     internal BonFacade(
-        SchemaContentsStore schemaContentsStore,
-        SchemaByTypeStore schemaByTypeStore,
+        LayoutStore layoutStore,
+        SchemaStore schemaStore,
         DeserializerStore deserializerStore,
         WriterStore writerStore)
     {
-        _schemaContentsStore = schemaContentsStore;
-        _schemaByTypeStore = schemaByTypeStore;
+        _layoutStore = layoutStore;
+        _schemaStore = schemaStore;
         _deserializerStore = deserializerStore;
         _writerStore = writerStore;
     }
 
     public void AddSchema(Type type, Schema schema)
     {
-        if (_schemaByTypeStore.TryAdd(type, schema) && schema is CustomSchema customSchema)
+        _schemaStore.AddSchema(type, schema);
+
+        if (schema.IsCustomSchema)
         {
-            var contentsId = _schemaContentsStore.GetOrAddContentsId(customSchema.Contents);
-            customSchema.ContentsId = contentsId;
+            _layoutStore.Add(schema);
         }
     }
 
-    public void AddWriter<T>(Action<BinaryWriter, T> writeValue, bool usesCustomSchemas) => _writerStore.Add(writeValue, usesCustomSchemas);
+    public void AddWriter(Type type, Delegate writer, bool usesCustomSchemas) => _writerStore.Add(type, writer, usesCustomSchemas);
 
-    public void AddEnumData(Type type, Type underlyingType, Func<Delegate, Delegate> addEnumCast) =>
-        _deserializerStore.AddEnumData(type, underlyingType, addEnumCast);
+    public void AddWeakDeserializerFactory<T1, T2>(Func<T2, T1> func) => _deserializerStore.AddWeakDeserializerFactory(func);
 
     public void AddReaderFactory(Type type, Delegate factory) => _deserializerStore.AddReaderFactory(type, factory);
 

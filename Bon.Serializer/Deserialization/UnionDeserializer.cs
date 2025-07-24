@@ -3,7 +3,7 @@
 internal sealed class UnionDeserializer(
      DeserializerStore deserializerStore) : IUseReflection
 {
-    public Read<T?>? TryCreateDeserializer<T>(Schema sourceSchema, Schema? targetSchema)
+    public Read<T?>? TryCreateDeserializer<T>(Schema1 sourceSchema, Schema1? targetSchema)
     {
         if (sourceSchema is not UnionSchema unionSourceSchema || targetSchema is not UnionSchema unionTargetSchema)
         {
@@ -49,5 +49,5 @@ internal sealed class UnionDeserializer(
         };
     }
 
-    private Delegate GetRecordDeserializer<T>(Schema sourceSchema) => deserializerStore.GetDeserializer<T>(sourceSchema);
+    private Delegate GetRecordDeserializer<T>(Schema1 sourceSchema) => deserializerStore.GetDeserializer<T>(sourceSchema);
 }

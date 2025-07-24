@@ -12,7 +12,9 @@ public sealed class SerializationResult(BonSerializer bonSerializer, MemoryStrea
     {
         stream.Position = 0;
         var countBefore = bonSerializer.DeserializerCount;
-        var result = bonSerializer.DeserializeAsync<T>(stream).Result;
+        var result = bonSerializer.Deserialize<T>(stream);
+
+        // Check if we are at the end of the stream.
         Assert.Equal(stream.Length, stream.Position);
 
         if (expectNewDeserializer.HasValue)
@@ -24,7 +26,7 @@ public sealed class SerializationResult(BonSerializer bonSerializer, MemoryStrea
         return result;
     }
 
-    public string DeserializeToJson() => bonSerializer.BonToJsonAsync(Bytes).Result;
+    public string DeserializeToJson() => bonSerializer.BonToJson(Bytes);
 
     public IEnumerator<byte> GetEnumerator() => ((IEnumerable<byte>)Bytes).GetEnumerator();
 

@@ -7,7 +7,7 @@ internal sealed class CollectionDeserializer(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Delegate? TryCreateDeserializer<T>(Schema sourceSchema)
+    public Delegate? TryCreateDeserializer<T>(Schema1 sourceSchema)
     {
         if (sourceSchema is ArraySchema arraySchema && TryParseAsCollectionType(typeof(T)) is { } tuple)
         {

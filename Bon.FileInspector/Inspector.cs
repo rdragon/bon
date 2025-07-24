@@ -25,14 +25,14 @@ internal class Inspector(IFileSystem fileSystem)
         {
             using var inputStream = fileSystem.File.OpenRead(path);
             using var outputStream = GetOutputStream(path, ".json");
-            await BonFileInspector.BonToJson(inputStream, outputStream, bonSerializer);
+            BonFileInspector.BonToJson(inputStream, outputStream, bonSerializer);
         }
 
         foreach (var path in input.JsonFiles)
         {
             using var inputStream = fileSystem.File.OpenRead(path);
             using var outputStream = GetOutputStream(path, ".bon");
-            await BonFileInspector.JsonToBon(inputStream, outputStream, bonSerializer);
+            BonFileInspector.JsonToBon(inputStream, outputStream, bonSerializer);
         }
     }
 

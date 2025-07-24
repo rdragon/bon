@@ -1,44 +1,27 @@
 ﻿namespace Bon.Serializer.Schemas;
 
-/// <summary>
-/// Represents a string, bool, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, or decimal.
-/// </summary>
-public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
+// Used by source generated code.
+public static class NativeSchema
 {
-    public override IEnumerable<Schema> GetInnerSchemas() => [];
+    public static Schema String { get; } = Schema.Create(SchemaType.String);
+    public static Schema Byte { get; } = Schema.Create(SchemaType.Byte);
+    public static Schema SByte { get; } = Schema.Create(SchemaType.SByte);
+    public static Schema Short { get; } = Schema.Create(SchemaType.Short);
+    public static Schema UShort { get; } = Schema.Create(SchemaType.UShort);
+    public static Schema Int { get; } = Schema.Create(SchemaType.Int);
+    public static Schema UInt { get; } = Schema.Create(SchemaType.UInt);
+    public static Schema Long { get; } = Schema.Create(SchemaType.Long);
+    public static Schema ULong { get; } = Schema.Create(SchemaType.ULong);
+    public static Schema Float { get; } = Schema.Create(SchemaType.Float);
+    public static Schema Double { get; } = Schema.Create(SchemaType.Double);
+    public static Schema NullableDecimal { get; } = Schema.Create(SchemaType.NullableDecimal);
+    public static Schema WholeNumber { get; } = Schema.Create(SchemaType.WholeNumber);
+    public static Schema SignedWholeNumber { get; } = Schema.Create(SchemaType.SignedWholeNumber);
+    public static Schema FractionalNumber { get; } = Schema.Create(SchemaType.FractionalNumber);
 
-    public override void AppendHashCode(Dictionary<Schema, int> ancestors, ref HashCode hashCode)
-    {
-        hashCode.Add(SchemaType);
-    }
+    public static Schema Create(SchemaType schemaType) => FromSchemaType(schemaType);
 
-    public override bool Equals(object? obj, Dictionary<Ancestor, int> ancestors)
-    {
-        return obj is NativeSchema other && SchemaType == other.SchemaType;
-    }
-
-    // These properties are used by the source generated code.
-    // For every native schema type there should be a property with the correct name.
-    public static NativeSchema String { get; } = new(SchemaType.String);
-    public static NativeSchema Byte { get; } = new(SchemaType.Byte);
-    public static NativeSchema SByte { get; } = new(SchemaType.SByte);
-    public static NativeSchema Short { get; } = new(SchemaType.Short);
-    public static NativeSchema UShort { get; } = new(SchemaType.UShort);
-    public static NativeSchema Int { get; } = new(SchemaType.Int);
-    public static NativeSchema UInt { get; } = new(SchemaType.UInt);
-    public static NativeSchema Long { get; } = new(SchemaType.Long);
-    public static NativeSchema ULong { get; } = new(SchemaType.ULong);
-    public static NativeSchema Float { get; } = new(SchemaType.Float);
-    public static NativeSchema Double { get; } = new(SchemaType.Double);
-    public static NativeSchema NullableDecimal { get; } = new(SchemaType.NullableDecimal);
-    public static NativeSchema WholeNumber { get; } = new(SchemaType.WholeNumber);
-    public static NativeSchema SignedWholeNumber { get; } = new(SchemaType.SignedWholeNumber);
-    public static NativeSchema FractionalNumber { get; } = new(SchemaType.FractionalNumber);
-
-    /// <summary>
-    /// Used by source generated code.
-    /// </summary>
-    public static NativeSchema Create(SchemaType schemaType)
+    public static Schema FromSchemaType(SchemaType schemaType)
     {
         return schemaType switch
         {
@@ -59,4 +42,10 @@ public sealed class NativeSchema(SchemaType schemaType) : Schema(schemaType)
             SchemaType.FractionalNumber => FractionalNumber,
         };
     }
+}
+
+// Used by source generated code.
+public static class ArraySchema
+{
+    public static Schema ByteArray => Schema.Create(SchemaType.Array, [NativeSchema.Byte]);
 }

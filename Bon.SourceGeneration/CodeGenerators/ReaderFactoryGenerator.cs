@@ -24,6 +24,11 @@ namespace Bon.SourceGeneration.CodeGenerators
 
             foreach (var definition in definitions)
             {
+                if (definition.IsReferenceType && !definition.IsNullable)
+                {
+                    continue;
+                }
+
                 AddReaderFactory(definition, index);
                 index++;
             }
@@ -88,7 +93,7 @@ namespace Bon.SourceGeneration.CodeGenerators
                 "};",
                 "}");
 
-            _codeGenerator.AddStatement($"bonFacade.AddReaderFactory({definition.TypeOf}, (Delegate){methodName});");
+            _codeGenerator.AddStatement($"bonFacade.AddReaderFactory(typeof({definition.Type}), (Delegate){methodName});");
         }
     }
 }

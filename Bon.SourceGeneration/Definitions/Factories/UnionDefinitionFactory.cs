@@ -28,6 +28,12 @@ namespace Bon.SourceGeneration.Definitions.Factories
             foreach (var attribute in GetBonIncludeAttributes(symbol).OrderBy(attribute => attribute.MemberId))
             {
                 var definition = _definitionFactory.GetDefinition(attribute.Symbol);
+
+                if (definition.IsNullable)
+                {
+                    definition = ((ICriticalDefinition)definition).SwapNullability();
+                }
+
                 members.Add(new UnionMember(attribute.MemberId, definition));
             }
 

@@ -15,8 +15,8 @@
 [BonObject] public sealed record class WithNullableCat([property: BonMember(1)] Cat? Cat);
 [BonObject] public sealed record class WithWithDog([property: BonMember(1)] WithDog WithDog);
 
-[BonObject] public sealed record class WithString([property: BonMember(1)] string Text) : IAnimalImitation;
-[BonObject] public sealed record class WithNullableString([property: BonMember(1)] string? Text) : IAnimalFailedImitation;
+[BonObject] public sealed record class WithString([property: BonMember(1)] string Text) : IAnimalImitation, IAnimalFailedImitation;
+[BonObject] public sealed record class WithNullableString([property: BonMember(1)] string? Text);
 [BonObject] public sealed record class WithBool([property: BonMember(1)] bool Bool);
 [BonObject] public sealed record class WithNullableBool([property: BonMember(1)] bool? Bool);
 [BonObject] public sealed record class WithByte([property: BonMember(1)] byte Byte);
@@ -27,8 +27,8 @@
 [BonObject] public sealed record class WithNullableShort([property: BonMember(1)] short? Short);
 [BonObject] public sealed record class WithUShort([property: BonMember(1)] ushort UShort);
 [BonObject] public sealed record class WithNullableUShort([property: BonMember(1)] ushort? UShort);
-[BonObject] public sealed record class WithInt([property: BonMember(1)] int Int) : IAnimalImitation, IAnimalFailedImitation;
-[BonObject] public sealed record class WithNullableInt([property: BonMember(1)] int? Int);
+[BonObject] public sealed record class WithInt([property: BonMember(1)] int Int) : IAnimalImitation;
+[BonObject] public sealed record class WithNullableInt([property: BonMember(1)] int? Int) : IAnimalFailedImitation;
 [BonObject] public sealed record class WithUInt([property: BonMember(1)] uint UInt);
 [BonObject] public sealed record class WithNullableUInt([property: BonMember(1)] uint? UInt);
 [BonObject] public sealed record class WithLong([property: BonMember(1)] long Long);

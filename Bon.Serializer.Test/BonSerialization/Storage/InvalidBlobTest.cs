@@ -9,7 +9,7 @@ public class InvalidBlobTest
     private static void Run(byte[] bytes, string expectedSubstring)
     {
         var blob = new FakeBlob { Bytes = bytes };
-        var exception = Assert.ThrowsAny<Exception>(() => BonSerializer.CreateAsync(new BonSerializerContext(), blob).Result);
+        var exception = Assert.ThrowsAny<Exception>(() => BonSerializer.CreateAsync(new TestBonSerializerContext(), blob).Result);
         Assert.Contains(expectedSubstring, exception.Message);
     }
 }

@@ -31,15 +31,16 @@ namespace Bon.SourceGeneration.Definitions
             IReadOnlyList<Member> members,
             bool isValueType,
             bool hasValidConstructor,
-            bool isConcreteType) : base(type, GetSchemaType(type, isValueType), isValueType)
+            bool isConcreteType,
+            bool isNullable) : base(type, GetSchemaType(isNullable), isValueType)
         {
             Members = members;
             HasValidConstructor = hasValidConstructor;
             IsConcreteType = isConcreteType;
         }
 
-        private static SchemaType GetSchemaType(string type, bool isValueType) =>
-            Helper.IsNullableType(type, isValueType) ? SchemaType.NullableRecord : SchemaType.Record;
+        private static SchemaType GetSchemaType(bool isNullable) =>
+            isNullable ? SchemaType.NullableRecord : SchemaType.Record;
 
         public override bool Equals(object obj, AncestorCollection ancestors)
         {
@@ -75,7 +76,15 @@ namespace Bon.SourceGeneration.Definitions
 
         public override string SchemaBaseClass => "CustomSchema";
 
+        public override string TypeForWriter => IsReferenceType && !IsNullable ? $"NotNull<{Type}>" : Type;
+
         public ICriticalDefinition SwapNullability() =>
-            new RecordDefinition(Helper.SwapNullability(Type, IsValueType), Members, IsValueType, HasValidConstructor, IsConcreteType);
+            new RecordDefinition(
+                Helper.SwapNullability(Type, IsValueType),
+                Members,
+                IsValueType,
+                HasValidConstructor,
+                IsConcreteType,
+                !IsNullable);
     }
 }

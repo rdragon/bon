@@ -14,21 +14,21 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         public void Run(IEnumerable<ICustomDefinition> definitions)
         {
+            _codeGenerator.StartNewSection();
+
             foreach (var definition in definitions)
             {
-                if (definition.IsNullableValueType)
+                if (definition is RecordDefinition && definition.IsNullable)
                 {
                     continue;
                 }
 
-                _codeGenerator.StartNewSection();
-
                 foreach (var member in definition.Members)
                 {
                     _codeGenerator.AddStatement($"bonFacade.AddMemberType(" +
-                        $"{definition.TypeOf}, " +
+                        $"typeof({definition.Type}), " +
                         $"{member.Id}, " +
-                        $"{member.Definition.TypeOf});");
+                        $"typeof({member.Definition.Type}));");
                 }
             }
         }

@@ -16,123 +16,129 @@ internal sealed class SimpleWriterStore
         _writers[(int)SimpleWriterType.ULong] = WriteULong;
     }
 
-    public Action<BinaryWriter, T> GetWriter<T>(SimpleWriterType simpleWriterType) =>
-        (Action<BinaryWriter, T>)_writers[(int)simpleWriterType];
+    public Action<BonOutput, T> GetWriter<T>(SimpleWriterType simpleWriterType) =>
+        (Action<BonOutput, T>)_writers[(int)simpleWriterType];
 
-    private static void WriteByteNow(BinaryWriter writer, byte value)
+    private static void WriteByteNow(BonOutput output, byte value)
     {
-        WriteFormatType(writer, FormatType.Byte);
-        NativeSerializer.WriteByte(writer, value);
+        WriteSchemaType(output, SchemaType.Byte);
+        NativeSerializer.WriteByte(output.Writer, value);
     }
 
-    private static void WriteSByteNow(BinaryWriter writer, sbyte value)
+    private static void WriteSByteNow(BonOutput output, sbyte value)
     {
-        WriteFormatType(writer, FormatType.SByte);
-        NativeSerializer.WriteSByte(writer, value);
+        WriteSchemaType(output, SchemaType.SByte);
+        NativeSerializer.WriteSByte(output.Writer, value);
     }
 
-    private static void WriteShortNow(BinaryWriter writer, short value)
+    private static void WriteShortNow(BonOutput output, short value)
     {
-        WriteFormatType(writer, FormatType.Short);
-        NativeSerializer.WriteShort(writer, value);
+        WriteSchemaType(output, SchemaType.Short);
+        NativeSerializer.WriteShort(output.Writer, value);
     }
 
-    private static void WriteUShortNow(BinaryWriter writer, ushort value)
+    private static void WriteUShortNow(BonOutput output, ushort value)
     {
-        WriteFormatType(writer, FormatType.UShort);
-        NativeSerializer.WriteUShort(writer, value);
+        WriteSchemaType(output, SchemaType.UShort);
+        NativeSerializer.WriteUShort(output.Writer, value);
     }
 
-    private static void WriteIntNow(BinaryWriter writer, int value)
+    private static void WriteIntNow(BonOutput output, int value)
     {
-        WriteFormatType(writer, FormatType.Int);
-        NativeSerializer.WriteInt(writer, value);
+        WriteSchemaType(output, SchemaType.Int);
+        NativeSerializer.WriteInt(output.Writer, value);
     }
 
-    private static void WriteUIntNow(BinaryWriter writer, uint value)
+    private static void WriteUIntNow(BonOutput output, uint value)
     {
-        WriteFormatType(writer, FormatType.UInt);
-        NativeSerializer.WriteUInt(writer, value);
+        WriteSchemaType(output, SchemaType.UInt);
+        NativeSerializer.WriteUInt(output.Writer, value);
     }
 
-    private static void WriteLongNow(BinaryWriter writer, long value)
+    private static void WriteLongNow(BonOutput output, long value)
     {
-        WriteFormatType(writer, FormatType.Long);
-        NativeSerializer.WriteLong(writer, value);
+        WriteSchemaType(output, SchemaType.Long);
+        NativeSerializer.WriteLong(output.Writer, value);
     }
 
-    private static void WriteULongNow(BinaryWriter writer, ulong value)
+    private static void WriteULongNow(BonOutput output, ulong value)
     {
-        WriteFormatType(writer, FormatType.ULong);
-        NativeSerializer.WriteULong(writer, value);
+        WriteSchemaType(output, SchemaType.ULong);
+        NativeSerializer.WriteULong(output.Writer, value);
     }
 
-    private static void WriteShort(BinaryWriter writer, short value) => WriteLong(writer, value);
+    private static void WriteShort(BonOutput output, short value) => WriteLong(output, value);
 
-    private static void WriteUShort(BinaryWriter writer, ushort value) => WriteULong(writer, value);
+    private static void WriteUShort(BonOutput output, ushort value) => WriteULong(output, value);
 
-    private static void WriteInt(BinaryWriter writer, int value) => WriteLong(writer, value);
+    private static void WriteInt(BonOutput output, int value) => WriteLong(output, value);
 
-    private static void WriteUInt(BinaryWriter writer, uint value) => WriteULong(writer, value);
+    private static void WriteUInt(BonOutput output, uint value) => WriteULong(output, value);
 
-    private static void WriteLong(BinaryWriter writer, long value)
+    private static void WriteLong(BonOutput output, long value)
     {
         if (value >= 0)
         {
             if (value <= byte.MaxValue)
             {
-                WriteByteNow(writer, (byte)value);
+                WriteByteNow(output, (byte)value);
             }
             else if (value <= short.MaxValue)
             {
-                WriteShortNow(writer, (short)value);
+                WriteShortNow(output, (short)value);
             }
             else if (value <= int.MaxValue)
             {
-                WriteIntNow(writer, (int)value);
+                WriteIntNow(output, (int)value);
             }
             else
             {
-                WriteLongNow(writer, value);
+                WriteLongNow(output, value);
             }
         }
         else if (value >= sbyte.MinValue)
         {
-            WriteSByteNow(writer, (sbyte)value);
+            WriteSByteNow(output, (sbyte)value);
         }
         else if (value >= short.MinValue)
         {
-            WriteShortNow(writer, (short)value);
+            WriteShortNow(output, (short)value);
         }
         else if (value >= int.MinValue)
         {
-            WriteIntNow(writer, (int)value);
+            WriteIntNow(output, (int)value);
         }
         else
         {
-            WriteLongNow(writer, value);
+            WriteLongNow(output, value);
         }
     }
 
-    private static void WriteULong(BinaryWriter writer, ulong value)
+    private static void WriteULong(BonOutput output, ulong value)
     {
         if (value <= byte.MaxValue)
         {
-            WriteByteNow(writer, (byte)value);
+            WriteByteNow(output, (byte)value);
         }
         else if (value <= ushort.MaxValue)
         {
-            WriteUShortNow(writer, (ushort)value);
+            WriteUShortNow(output, (ushort)value);
         }
         else if (value <= uint.MaxValue)
         {
-            WriteUIntNow(writer, (uint)value);
+            WriteUIntNow(output, (uint)value);
         }
         else
         {
-            WriteULongNow(writer, value);
+            WriteULongNow(output, value);
         }
     }
 
-    private static void WriteFormatType(BinaryWriter writer, FormatType formatType) => writer.Write((byte)formatType);
+    private static void WriteSchemaType(BonOutput output, SchemaType schemaType)
+    {
+        if (output.Options?.IncludeHeader != false)
+        {
+            output.Writer.Write((byte)schemaType);
+        }
+    }
 }

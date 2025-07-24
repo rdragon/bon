@@ -1,11 +1,13 @@
-﻿namespace Bon.Serializer.Schemas;
+﻿using System.Collections.Immutable;
+
+namespace Bon.Serializer.Schemas;
 
 /// <summary>
 /// The collection of members inside a <see cref="CustomSchema"/>.
 /// </summary>
-public readonly struct SchemaContents(IReadOnlyList<SchemaMember> members)
+public readonly struct SchemaContents(IReadOnlyList<SchemaMember1> members)
 {
-    public IReadOnlyList<SchemaMember> Members { get; } = members;
+    public IReadOnlyList<SchemaMember1> Members { get; } = members;
 }
 
 public sealed class SchemaContentsEqualityComparer : IEqualityComparer<SchemaContents>
@@ -38,7 +40,7 @@ public sealed class SchemaContentsEqualityComparer : IEqualityComparer<SchemaCon
     public int GetHashCode(SchemaContents obj)
     {
         var hashCode = new HashCode();
-        var ancestors = new Dictionary<Schema, int>(ReferenceEqualityComparer.Instance);
+        var ancestors = new Dictionary<Schema1, int>(ReferenceEqualityComparer.Instance);
 
         foreach (var member in obj.Members)
         {
@@ -49,3 +51,5 @@ public sealed class SchemaContentsEqualityComparer : IEqualityComparer<SchemaCon
         return hashCode.ToHashCode();
     }
 }
+
+public readonly record struct Layout(int Id, IReadOnlyList<SchemaMember> Members);

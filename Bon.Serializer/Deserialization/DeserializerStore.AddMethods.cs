@@ -8,12 +8,9 @@ partial class DeserializerStore
     /// </param>
     public void AddDeserializer(Type targetType, Delegate deserializer)
     {
-        var schema = schemaByTypeStore.GetSchemaByType(targetType);
+        var schema = schemaStore.GetOrAdd(targetType);
         _deserializers[(schema, targetType)] = deserializer;
     }
-
-    public void AddEnumData(Type type, Type underlyingType, Func<Delegate, Delegate> addEnumCast) =>
-        NativeDeserializer.AddEnumData(type, underlyingType, addEnumCast);
 
     public void AddReaderFactory(Type type, Delegate factory) => RecordDeserializer.ReaderFactories[type] = factory;
 

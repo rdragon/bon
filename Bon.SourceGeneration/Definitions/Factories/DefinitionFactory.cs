@@ -92,8 +92,9 @@ namespace Bon.SourceGeneration.Definitions.Factories
 
             var item1Definition = GetDefinition(symbolInfo.TypeArguments[0]);
             var item2Definition = GetDefinition(symbolInfo.TypeArguments[1]);
+            var schemaType = symbolInfo.IsNullable ? SchemaType.NullableTuple2 : SchemaType.Tuple2;
 
-            return new Tuple2Definition(symbolInfo.Type, item1Definition, item2Definition);
+            return new Tuple2Definition(symbolInfo.Type, schemaType, item1Definition, item2Definition);
         }
 
         private IDefinition TryGetTuple3Definition(SymbolInfo symbolInfo)
@@ -106,9 +107,11 @@ namespace Bon.SourceGeneration.Definitions.Factories
             var item1Definition = GetDefinition(symbolInfo.TypeArguments[0]);
             var item2Definition = GetDefinition(symbolInfo.TypeArguments[1]);
             var item3Definition = GetDefinition(symbolInfo.TypeArguments[2]);
+            var schemaType = symbolInfo.IsNullable ? SchemaType.NullableTuple3 : SchemaType.Tuple3;
 
             return new Tuple3Definition(
                 symbolInfo.Type,
+                schemaType,
                 item1Definition,
                 item2Definition,
                 item3Definition);
@@ -124,6 +127,13 @@ namespace Bon.SourceGeneration.Definitions.Factories
             }
 
             var underlyingDefinition = NativeDefinition.GetNativeDefinition(underlyingSymbol.GetTypeName());
+
+            //2at
+            if (symbolInfo.IsNullable)
+            {
+                underlyingDefinition = underlyingDefinition.SwapNullability();
+            }
+
             return new EnumDefinition(symbolInfo.Type, underlyingDefinition);
         }
     }

@@ -176,4 +176,17 @@ internal static class ExtensionMethods
         SchemaType.Array or
         SchemaType.Dictionary or
         SchemaType.String;
+
+    public static string ToHexString(this byte[] bytes) =>
+        string.Join(" ", Convert.ToHexString(bytes).Chunk(2).Select(xs => new string(xs)));
+
+    public static bool IsCustomSchema(this SchemaType schemaType)
+    {
+        throw new NotImplementedException();//1at
+    }
+
+    public static bool IsNativeSchema(this SchemaType schemaType)
+    {
+        throw new NotImplementedException();//1at
+    }
 }

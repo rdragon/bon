@@ -3,19 +3,27 @@
 /// <summary>
 /// //2at
 /// </summary>
-internal class WeakDeserializer(DeserializerStore deserializerStore)
+internal class WeakDeserializer
 {
-    private Dictionary<Type, Func<Schema, Delegate>>? _factories;
+    private readonly DeserializerStore _deserializerStore;
 
-    private Dictionary<Type, Func<Schema, Delegate>> Factories => _factories ??= CreateFactories();
+    /// <summary>
+    /// //2at
+    /// </summary>
+    private readonly Dictionary<Type, Func<Schema1, Delegate>> _factories = [];
 
-    private Dictionary<Type, Func<Schema, Delegate>> CreateFactories()
+    public WeakDeserializer(DeserializerStore deserializerStore)
     {
-        var factories = new Dictionary<Type, Func<Schema, Delegate>>();
+        _deserializerStore = deserializerStore;
+        AddNativeFactories();
+    }
 
+    private void AddNativeFactories()
+    {
         // Bookmark 659516266 (native serialization)
-        // All native types that cannot be found in the enum 212882721 should be added here. They should be mapped to types that
-        // can be found in the enum.
+        // All native types that cannot be found in the NativeType enum (bookmark 212882721) should be added here.
+        // They should be mapped to types that can be found in the enum.
+        // This mapping should be in sync with the mapping at bookmark 988874999.
         AddFactory<bool, byte>(x => x != 0);
         AddFactory<decimal, decimal?>(x => x ?? 0);
         AddFactory<char, ulong?>(x => (char)(x ?? 0));
@@ -41,21 +49,17 @@ internal class WeakDeserializer(DeserializerStore deserializerStore)
         AddFactory<DateOnly?, int?>(x => x?.ToDateOnly());
         AddFactory<TimeOnly?, long?>(x => x?.ToTimeOnly());
         AddFactory<Guid?, byte[]?>(x => x?.ToGuid());
-
-        void AddFactory<T1, T2>(Func<T2, T1> func)
-        {
-            factories[typeof(T1)] = schema =>
-            {
-                var read = deserializerStore.GetDeserializer<T2>(schema);
-                return (Read<T1>)(input => func(read(input)));
-            };
-        }
-
-        return factories;
     }
 
-    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
+    public void AddFactory<T1, T2>(Func<T2, T1> func)
     {
-        return Factories.TryGetValue(targetType, out var factory) ? factory(sourceSchema) : null;
+        _factories[typeof(T1)] = schema =>
+        {
+            var read = _deserializerStore.GetDeserializer<T2>(schema);
+            return (Read<T1>)(input => func(read(input)));
+        };
     }
+
+    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType) =>
+        _factories.TryGetValue(targetType, out var factory) ? factory(sourceSchema) : null;
 }

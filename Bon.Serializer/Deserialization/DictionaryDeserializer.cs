@@ -2,7 +2,7 @@
 
 internal sealed class DictionaryDeserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType)
     {
         if (sourceSchema is not DictionarySchema dictionarySchema || !targetType.IsGenericType)
         {

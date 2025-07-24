@@ -7,24 +7,18 @@ partial class BonSerializer
 {
     /// <summary>
     /// Deserializes a value from a stream and then converts the value to a <see cref="JsonObject"/>.
-    /// Loads new schemas from the storage if unknown schema IDs are encountered.
+    /// If unknown schema IDs are encountered then an exception is thrown.
     /// </summary>
-    public async Task<JsonObject> BonToJsonAsync(Stream stream)
+    public JsonObject BonToJson(Stream stream)
     {
         var reader = new BinaryReader(stream);
-        var (_, blockId, schemaData) = await ReadHeaderAsync(reader).ConfigureAwait(false);
-        var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
+        var schema = ReadSchema(reader);
 
         var result = new JsonObject
         {
             ["body"] = BonToJsonDeserializer.Deserialize(reader, schema),
-            ["schema"] = SchemaJsonSerializer.Serialize(schemaData),
+            //json ["schema"] = SchemaJsonSerializer.Serialize(schema),
         };
-
-        if (blockId != 0)
-        {
-            result["blockId"] = blockId;
-        }
 
         return result;
     }
@@ -33,42 +27,38 @@ partial class BonSerializer
     /// Deserializes a value from a stream and then converts the value to a JSON string.
     /// Loads new schemas from the storage if unknown schema IDs are encountered.
     /// </summary>
-    public async Task<string> BonToJsonAsync(byte[] bytes)
+    public string BonToJson(byte[] bytes)
     {
         var stream = new MemoryStream(bytes);
-        var jsonObject = await BonToJsonAsync(stream).ConfigureAwait(false);
+        var jsonObject = BonToJson(stream);
         return jsonObject.ToJsonString();
     }
 
     /// <summary>
-    /// The reverse of <see cref="BonToJsonAsync(Stream)"/>.
+    /// The reverse of <see cref="BonToJson"/>.
+    /// If unknown schema IDs are encountered then an exception is thrown.
     /// </summary>
-    public async Task JsonToBonAsync(Stream stream, JsonObject jsonObject)
+    public void JsonToBon(Stream stream, JsonObject jsonObject)
     {
-        var blockId = jsonObject["blockId"]?.GetValue<uint>() ?? 0;
+        //json we willen hier methode welke van json direct naar Schema gaat
         var schemaData = SchemaJsonSerializer.Deserialize(jsonObject.GetPropertyValue("schema"));
         var body = jsonObject["body"];
 
-        if (blockId != 0)
-        {
-            await LoadBlock(blockId).ConfigureAwait(false);
-        }
-
-        var schema = _schemaDataResolver.GetSchemaBySchemaData(schemaData);
+        Schema1 schema = null!; // _schemaDataResolver.GetSchemaBySchemaData(schemaData);
         var writer = new BinaryWriter(stream);
 
-        WriteHeader(writer, blockId, schemaData);
+        WriteHeader(writer, schemaData);
         JsonToBonSerializer.Serialize(writer, body, schema);
     }
 
     /// <summary>
-    /// The reverse of <see cref="BonToJsonAsync(string)"/>.
+    /// The reverse of <see cref="BonToJson"/>.
     /// </summary>
-    public async Task<byte[]> JsonToBonAsync(string json)
+    public byte[] JsonToBon(string json)
     {
         var stream = new MemoryStream();
         var jsonNode = JsonNode.Parse(json) ?? throw new ArgumentException("Parsing returned null");
-        await JsonToBonAsync(stream, jsonNode.AsObject());
+        JsonToBon(stream, jsonNode.AsObject());
 
         return stream.ToArray();
     }

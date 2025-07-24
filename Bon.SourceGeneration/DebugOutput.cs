@@ -1,25 +1,29 @@
 ﻿#if DEBUG
 #pragma warning disable RS1035 // Do not use APIs banned for analyzers
+using Bon.SourceGeneration.Definitions;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace Bon.SourceGeneration
 {
     internal static class DebugOutput
     {
-        private const int Version = 5;
-        private const string OutputDirectory = "C:/kw/out";
+        private const string OutputDirectory = "C:/kw/out/bon";
 
-        private static readonly Mutex _mutex = new Mutex(false, "Bon.SourceGeneration." + Version);
+        private static readonly Mutex _mutex = new Mutex(false, OutputDirectory);
 
-        public static void AppendLine(string text, string name = "log")
+        public static void AppendLine(string text, string name)
         {
             _mutex.WaitOne();
 
             try
             {
-                File.AppendAllText($"{OutputDirectory}/bon-{name}-{Version}.txt", $"{DateTimeOffset.Now:HH:mm:ss} {text}\n");
+                Directory.CreateDirectory(OutputDirectory);
+                File.AppendAllText($"{OutputDirectory}/{name}", $"{DateTimeOffset.Now:HH:mm:ss} {text}\n");
             }
             finally
             {
@@ -27,13 +31,14 @@ namespace Bon.SourceGeneration
             }
         }
 
-        public static void WriteAllText(string text, string name = "output")
+        public static void WriteAllText(string text, string name)
         {
             _mutex.WaitOne();
 
             try
             {
-                File.WriteAllText($"{OutputDirectory}/bon-{name}-{Version}.cs", $"{text}\n");
+                Directory.CreateDirectory(OutputDirectory);
+                File.WriteAllText($"{OutputDirectory}/{name}", $"{text}\n");
             }
             finally
             {
@@ -43,7 +48,12 @@ namespace Bon.SourceGeneration
 
         public static void WriteException(Exception ex)
         {
-            AppendLine(ex.ToString(), "errors");
+            AppendLine(ex.ToString(), "errors.txt");
+        }
+
+        public static void PrintDefinitions(IEnumerable<IDefinition> definitions, string name)
+        {
+            WriteAllText(string.Join("\n", definitions.Select(x => x.ToPrettyString())), name);
         }
     }
 }
@@ -55,11 +65,13 @@ namespace Bon.SourceGeneration
 {
     internal static class DebugOutput
     {
-        public static void AppendLine(string text, string name = "log") { }
+        public static void AppendLine(string text, string name) { }
 
-        public static void WriteAllText(string text, string name = "output") { }
+        public static void WriteAllText(string text, string name) { }
 
         public static void WriteException(Exception ex) { }
+
+        public static void PrintDefinitions(IEnumerable<IDefinition> definitions) { }
     }
 }
 #endif

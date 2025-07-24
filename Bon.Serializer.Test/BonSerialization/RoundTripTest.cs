@@ -50,9 +50,9 @@ public sealed class RoundTripTest : BonSerializerTestBase
     [Fact] public void WithIEnumerableRoundTrip() => RoundTripFast(WithIEnumerable);
 
     [Fact] public void StringRoundTrip() => RoundTripFast(String);
-    [Fact] public void BoolRoundTrip() => RoundTripFast(Bool);
-    [Fact] public void NullableBoolRoundTrip() => RoundTripFast(NullableBool);
-    [Fact] public void DefaultNullableBoolRoundTrip() => RoundTripFast(DefaultNullableBool);
+    [Fact] public void BoolRoundTrip() => RoundTripSlow(Bool);
+    [Fact] public void NullableBoolRoundTrip() => RoundTripSlow(NullableBool);
+    [Fact] public void DefaultNullableBoolRoundTrip() => RoundTripSlow(DefaultNullableBool);
     [Fact] public void ByteRoundTrip() => RoundTripFast(Byte);
     [Fact] public void NullableByteRoundTrip() => RoundTripSlow(NullableByte);
     [Fact] public void DefaultNullableByteRoundTrip() => RoundTripSlow(DefaultNullableByte);
@@ -78,17 +78,17 @@ public sealed class RoundTripTest : BonSerializerTestBase
     [Fact] public void NullableULongRoundTrip() => RoundTripFast(NullableULong);
     [Fact] public void DefaultNullableULongRoundTrip() => RoundTripFast(DefaultNullableULong);
     [Fact] public void FloatRoundTrip() => RoundTripFast(Float);
-    [Fact] public void NullableFloatRoundTrip() => RoundTripFast(NullableFloat);
-    [Fact] public void DefaultNullableFloatRoundTrip() => RoundTripFast(DefaultNullableFloat);
+    [Fact] public void NullableFloatRoundTrip() => RoundTripSlow(NullableFloat);
+    [Fact] public void DefaultNullableFloatRoundTrip() => RoundTripSlow(DefaultNullableFloat);
     [Fact] public void DoubleRoundTrip() => RoundTripFast(Double);
     [Fact] public void NullableDoubleRoundTrip() => RoundTripFast(NullableDouble);
     [Fact] public void DefaultNullableDoubleRoundTrip() => RoundTripFast(DefaultNullableDouble);
-    [Fact] public void DecimalRoundTrip() => RoundTripFast(Decimal);
+    [Fact] public void DecimalRoundTrip() => RoundTripSlow(Decimal);
     [Fact] public void NullableDecimalRoundTrip() => RoundTripFast(NullableDecimal);
     [Fact] public void DefaultNullableDecimalRoundTrip() => RoundTripFast(DefaultNullableDecimal);
-    [Fact] public void GuidRoundTrip() => RoundTripFast(Guid);
-    [Fact] public void NullableGuidRoundTrip() => RoundTripFast(NullableGuid);
-    [Fact] public void DefaultNullableGuidRoundTrip() => RoundTripFast(DefaultNullableGuid);
+    [Fact] public void GuidRoundTrip() => RoundTripSlow(Guid);
+    [Fact] public void NullableGuidRoundTrip() => RoundTripSlow(NullableGuid);
+    [Fact] public void DefaultNullableGuidRoundTrip() => RoundTripSlow(DefaultNullableGuid);
 
     [Fact] public void WithStringRoundTrip() => RoundTripFast(WithString);
     [Fact] public void DefaultWithStringRoundTrip() => RoundTripFast(DefaultWithString);
@@ -245,12 +245,12 @@ public sealed class RoundTripTest : BonSerializerTestBase
 
     [Fact] public void ParentClassRoundTrip() => RoundTripFast((ParentClass)new ChildClass(5));
 
-    [Fact] public void Turtle1RoundTrip() => RoundTripFast(Turtle1);
-    [Fact] public void Turtle2RoundTrip() => RoundTripFast(Turtle2);
-    [Fact] public void Turtle3RoundTrip() => RoundTripFast(Turtle3);
-    [Fact] public void Tortoise1RoundTrip() => RoundTripFast(Tortoise1);
-    [Fact] public void Tortoise2RoundTrip() => RoundTripFast(Tortoise2);
-    [Fact] public void Tortoise3RoundTrip() => RoundTripFast(Tortoise3);
+    [Fact] public void Turtle1RoundTrip() => RoundTripSlow(Turtle1);
+    [Fact] public void Turtle2RoundTrip() => RoundTripSlow(Turtle2);
+    [Fact] public void Turtle3RoundTrip() => RoundTripSlow(Turtle3);
+    [Fact] public void Tortoise1RoundTrip() => RoundTripSlow(Tortoise1);
+    [Fact] public void Tortoise2RoundTrip() => RoundTripSlow(Tortoise2);
+    [Fact] public void Tortoise3RoundTrip() => RoundTripSlow(Tortoise3);
 
     // "Slow" because of the laziness.
     [Fact] public void Node1RoundTrip() => RoundTripSlow(Node1);

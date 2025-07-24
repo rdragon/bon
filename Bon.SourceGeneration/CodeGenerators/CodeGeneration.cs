@@ -9,6 +9,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         /// <param name="foundDefinitions">All classes, structs, interfaces and enums with a BonObject attribute.</param>
         public static CodeGeneratorOutput GetCode(IEnumerable<IDefinition> foundDefinitions, ContextClass contextClass)
         {
+            DebugOutput.PrintDefinitions(foundDefinitions, "foundDefinitions.txt");
             var codeGenerator = new CodeGenerator(contextClass);
             var factoryMethodGenerator = new FactoryMethodGenerator(codeGenerator);
             var schemaGenerator = new SchemaGenerator(codeGenerator);
@@ -19,6 +20,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             var readerFactoryGenerator = new ReaderFactoryGenerator(codeGenerator);
 
             var definitions = GetCriticalDefinitions(foundDefinitions, new HashSet<string>()).ToArray();
+            DebugOutput.PrintDefinitions(definitions.Cast<IDefinition>(), "criticalDefinitions.txt");
             factoryMethodGenerator.Run(definitions.OfType<RecordDefinition>());
             schemaGenerator.Run(definitions);
             writerGenerator.Run(definitions);
@@ -39,8 +41,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         /// </summary>
         private static IEnumerable<ICriticalDefinition> GetCriticalDefinitions(IEnumerable<IDefinition> definitions, HashSet<string> types)
         {
-            //3at waarom orderby?
-            return definitions.SelectMany(definition => GetCriticalDefinitions(definition, types)).OrderBy(definition => definition.Type);
+            return definitions.SelectMany(definition => GetCriticalDefinitions(definition, types));
         }
 
         /// <summary>
@@ -49,11 +50,6 @@ namespace Bon.SourceGeneration.CodeGenerators
         /// </summary>
         private static IEnumerable<ICriticalDefinition> GetCriticalDefinitions(IDefinition definition, HashSet<string> types)
         {
-            if ((definition as RecordDefinition)?.IsConcreteType == false)
-            {
-                yield break;
-            }
-
             if (definition is ICriticalDefinition criticalDefinition)
             {
                 if (!types.Add(criticalDefinition.TypeNonNullable))
@@ -63,7 +59,7 @@ namespace Bon.SourceGeneration.CodeGenerators
 
                 yield return criticalDefinition;
 
-                if (definition.IsValueType)
+                if (criticalDefinition is RecordDefinition || criticalDefinition is EnumDefinition)
                 {
                     yield return criticalDefinition.SwapNullability();
                 }

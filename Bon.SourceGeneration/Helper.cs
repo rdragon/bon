@@ -39,7 +39,5 @@ namespace Bon.SourceGeneration
 
             return type;
         }
-
-        public static bool IsNullableType(string type, bool isValueType) => !isValueType || type.EndsWith("?");
     }
 }

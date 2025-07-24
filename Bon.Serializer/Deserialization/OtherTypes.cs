@@ -11,3 +11,9 @@ public readonly struct BonInput
         Reader = reader;
     }
 }
+
+internal readonly struct BonOutput(BinaryWriter writer, BonSerializerOptions? options)
+{
+    public BinaryWriter Writer { get; } = writer;
+    public BonSerializerOptions? Options { get; } = options;
+}

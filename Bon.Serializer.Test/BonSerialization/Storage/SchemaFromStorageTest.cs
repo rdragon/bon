@@ -2,7 +2,7 @@
 
 public sealed class SchemaFromStorageTest : StorageTestBase
 {
-    public SchemaFromStorageTest() : base(new FakeBlob { Bytes = GetSchemaStorageContents() }) { }
+    public SchemaFromStorageTest() : base(new FakeBlob { Bytes = GetLayoutStorageContents() }) { }
 
     /// <summary>
     /// Test whether a type that was serialized using a schema that cannot be found via the source generation context but only

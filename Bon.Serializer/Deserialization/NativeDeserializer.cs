@@ -6,44 +6,25 @@ internal partial class NativeDeserializer(DeserializerStore deserializerStore)
 {
     private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
 
-    /// <summary>
-    /// Contains for each enum type the underlying type and a method that adds a cast to the enum type.
-    /// This dictionary becomes read-only after the source generation context has run.
-    /// </summary>
-    private readonly Dictionary<Type, EnumData> _enumDatas = [];
-
     private Dictionary<Type, NativeType>? _nativeTypes = null;
-
-    public void AddEnumData(Type type, Type underlyingType, Func<Delegate, Delegate> addEnumCast) =>
-        _enumDatas[type] = new(underlyingType, addEnumCast);
 
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType)
     {
-        Func<Delegate, Delegate>? addEnumCast = null;
-
         if (sourceSchema is not NativeSchema)
         {
             return null;
         }
 
-        if (_enumDatas.TryGetValue(targetType, out var enumData))
-        {
-            addEnumCast = enumData.AddEnumCast;
-            targetType = enumData.UnderlyingType;
-        }
-
-        var method = TryCreateDeserializerNow(sourceSchema, targetType);
-
-        return addEnumCast is null || method is null ? method : addEnumCast(method);
+        return TryCreateDeserializerNow(sourceSchema, targetType);
     }
 
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    private Delegate? TryCreateDeserializerNow(Schema sourceSchema, Type targetType)
+    private Delegate? TryCreateDeserializerNow(Schema1 sourceSchema, Type targetType)
     {
         if (TryGetNativeType(targetType) is not { } foundTargetType)
         {
@@ -104,13 +85,4 @@ internal partial class NativeDeserializer(DeserializerStore deserializerStore)
     };
 
     private NativeType? TryGetNativeType(Type type) => NativeTypes.TryGetValue(type, out var nativeType) ? nativeType : null;
-
-    /// <param name="UnderlyingType">
-    /// The underlying type of the enum.
-    /// Nullable if the enum is nullable.
-    /// </param>
-    /// <param name="AddEnumCast">
-    /// A method that converts a Read{UnderlyingType} to a Read{EnumType}.
-    /// </param>
-    private readonly record struct EnumData(Type UnderlyingType, Func<Delegate, Delegate> AddEnumCast);
 }

@@ -26,7 +26,7 @@ internal sealed class RecordDeserializer(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Read<T?>? TryCreateDeserializer<T>(Schema sourceSchema, Schema? targetSchema)
+    public Read<T?>? TryCreateDeserializer<T>(Schema1 sourceSchema, Schema1? targetSchema)
     {
         if (sourceSchema is not RecordSchema recordSourceSchema || targetSchema is not RecordSchema recordTargetSchema)
         {
@@ -75,7 +75,7 @@ internal sealed class RecordDeserializer(
         return CombineSkippers(sourceMembers.PopAllUpTo(maxId).Select(GetSkipper).ToArray());
     }
 
-    private Action<BonInput> GetSkipper(SchemaMember sourceMember) => skipperStore.GetSkipper(sourceMember.Schema);
+    private Action<BonInput> GetSkipper(SchemaMember1 sourceMember) => skipperStore.GetSkipper(sourceMember.Schema);
 
     private static Action<BonInput>? CombineSkippers(Action<BonInput>[] skippers)
     {
@@ -124,9 +124,9 @@ internal sealed class RecordDeserializer(
         };
     }
 
-    private Delegate GetReaderFactory(MemberCollection sourceMembers, SchemaMember targetMember, Type targetMemberType)
+    private Delegate GetReaderFactory(MemberCollection sourceMembers, SchemaMember1 targetMember, Type targetMemberType)
     {
-        if (sourceMembers.TryPopMember(targetMember.Id) is SchemaMember sourceMember)
+        if (sourceMembers.TryPopMember(targetMember.Id) is SchemaMember1 sourceMember)
         {
             return () => deserializerStore.GetDeserializer(sourceMember.Schema, targetMemberType);
         }
@@ -134,11 +134,11 @@ internal sealed class RecordDeserializer(
         return () => deserializerStore.LoadDefaultValueGetter(targetMemberType);
     }
 
-    public class MemberCollection(IReadOnlyList<SchemaMember> members)
+    public class MemberCollection(IReadOnlyList<SchemaMember1> members)
     {
         private int _index;
 
-        public IEnumerable<SchemaMember> PopAllUpTo(int id)
+        public IEnumerable<SchemaMember1> PopAllUpTo(int id)
         {
             while (_index < members.Count)
             {
@@ -154,7 +154,7 @@ internal sealed class RecordDeserializer(
             }
         }
 
-        public SchemaMember? TryPopMember(int id)
+        public SchemaMember1? TryPopMember(int id)
         {
             if (_index == members.Count)
             {

@@ -4,7 +4,7 @@ namespace Bon.Serializer.Deserialization;
 
 internal static class BonToJsonDeserializer
 {
-    public static JsonNode? Deserialize(BinaryReader reader, Schema schema)
+    public static JsonNode? Deserialize(BinaryReader reader, Schema1 schema)
     {
         return schema switch
         {
@@ -39,7 +39,7 @@ internal static class BonToJsonDeserializer
         };
     }
 
-    private static JsonArray? DeserializeRecordLike(BinaryReader reader, Schema schema)
+    private static JsonArray? DeserializeRecordLike(BinaryReader reader, Schema1 schema)
     {
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.

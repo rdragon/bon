@@ -107,10 +107,10 @@ public sealed class WithNullableListOfEmptyClass(List<EmptyClass>? values) : Wit
 }
 
 [BonObject]
-public sealed class WithDictionary(Dictionary<int, Dog> dictionary) : WithArrayBase<KeyValuePair<int, Dog>>(dictionary.ToArray(), dictionary)
+public sealed class WithDictionary(Dictionary<int, Dog> dictionary) : WithArrayBase<KeyValuePair<int, Dog>>(dictionary?.ToArray(), dictionary)
 {
     [BonMember(1)]
-    public Dictionary<int, Dog> Dictionary => _values!.ToDictionary(pair => pair.Key, pair => pair.Value);
+    public Dictionary<int, Dog>? Dictionary => _values?.ToDictionary(pair => pair.Key, pair => pair.Value);
 }
 
 [BonObject]

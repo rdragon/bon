@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Bon.FileInspector\Bon.FileInspector.csproj" />
     <ProjectReference Include="..\Bon.Serializer\Bon.Serializer.csproj" />
     <ProjectReference Include="..\Bon.SourceGeneration\Bon.SourceGeneration.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

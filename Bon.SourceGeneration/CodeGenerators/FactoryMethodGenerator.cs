@@ -27,7 +27,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         {
             foreach (var definition in definitions.OfType<RecordDefinition>())
             {
-                if (!definition.IsNullableValueType && !definition.HasValidConstructor)
+                if (!definition.IsNullable && !definition.HasValidConstructor)
                 {
                     AddFactoryMethod(definition);
                 }

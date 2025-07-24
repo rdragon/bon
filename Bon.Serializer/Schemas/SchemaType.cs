@@ -1,7 +1,7 @@
 ﻿namespace Bon.Serializer.Schemas;
 
 // Keeps this enum identical to the enum at bookmark 954139432.
-public enum SchemaType
+public enum SchemaType : byte
 {
     /// <summary>
     /// A non-nullable struct.

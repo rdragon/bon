@@ -127,8 +127,6 @@ namespace Bon.SourceGeneration
 
         public static int AddHashOf<T>(this int hash, T value) => hash * 87977 + value.GetHashCode();
 
-        public static int AddHashesOf<T>(this int hash, IEnumerable<T> values) => values.Aggregate(hash, AddHashOf);
-
         public static Location TryGetLocation(this ISymbol symbol)
         {
             if (symbol.Locations.Length > 0)
@@ -139,9 +137,19 @@ namespace Bon.SourceGeneration
             return null;
         }
 
-        public static bool IsNullable(this INamedTypeSymbol symbol)
-        {
-            return !symbol.IsValueType || symbol.NullableAnnotation == NullableAnnotation.Annotated;
+        public static bool IsNullable(this SchemaType schemaType)
+        {//2at also see other isnullable
+            return
+                schemaType == SchemaType.WholeNumber ||
+                schemaType == SchemaType.SignedWholeNumber ||
+                schemaType == SchemaType.FractionalNumber ||
+                schemaType == SchemaType.NullableRecord ||
+                schemaType == SchemaType.NullableTuple2 ||
+                schemaType == SchemaType.NullableTuple3 ||
+                schemaType == SchemaType.Union ||
+                schemaType == SchemaType.Array ||
+                schemaType == SchemaType.Dictionary ||
+                schemaType == SchemaType.String;
         }
     }
 }

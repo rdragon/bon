@@ -17,8 +17,6 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            DebugOutput.AppendLine("Initialize");
-
             var maybeDefinitions = context.SyntaxProvider.ForAttributeWithMetadataName(
                 "Bon.Serializer.BonObjectAttribute",
                 (_, _1) => true,
@@ -29,7 +27,12 @@ namespace Bon.SourceGeneration.CodeGenerators
                 (_, _1) => true,
                 TransformBonSerializerContext);
 
-            var definitions = maybeDefinitions.Where(maybe => maybe.HasData).Select((maybe, _) => maybe.Data).Collect();
+            var definitions = maybeDefinitions
+                .Where(maybe => maybe.HasData)
+                .Select((maybe, _) => maybe.Data)
+                .Where(definition => (definition as RecordDefinition)?.IsConcreteType != false)
+                .Collect();
+
             var contextClasses = maybeContextClasses.Where(maybe => maybe.HasData).Select((maybe, _) => maybe.Data);
             var maybeOutputs = contextClasses.Combine(definitions).Select(TryGetOutput);
             var outputs = maybeOutputs.Where(maybe => maybe.HasData).Select((maybe, _) => maybe.Data);
@@ -82,8 +85,9 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         private static void WriteFile(SourceProductionContext context, CodeGeneratorOutput output)
         {
-            DebugOutput.WriteAllText(output.Code);
-            context.AddSource($"{output.ClassName}.g.cs", output.Code);
+            var fileName = $"{output.ClassName}.g.cs";
+            DebugOutput.WriteAllText(output.Code, fileName);
+            context.AddSource(fileName, output.Code);
         }
 
         private static void ReportDiagnostic(SourceProductionContext context, Diagnostic diagnostic)

@@ -9,13 +9,12 @@ public sealed class AddMemberTest : BonSerializerTestBase
 
     [Fact] public void AddIntMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultDog);
     [Fact] public void AddIntMemberToEmptyStruct() => DeserializeSlow(EmptyStruct, DefaultHouse);
-    [Fact] public void AddClassMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithDog);
+    [Fact] public void AddClassMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithNullableDog);
     [Fact] public void AddStructMemberToEmptyStruct() => DeserializeSlow(EmptyStruct, DefaultHoldsHouse);
-    [Fact] public void AddInterfaceMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithIAnimal);
-    [Fact] public void AddNullableClassMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithNullableDog);
+    [Fact] public void AddInterfaceMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithNullableIAnimal);
     [Fact] public void AddNullableStructMemberToEmptyStruct() => DeserializeSlow(EmptyStruct, DefaultHoldsNullableHouse);
-    [Fact] public void AddArrayMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithArray);
-    [Fact] public void AddStringMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithString);
+    [Fact] public void AddArrayMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithNullableArray);
+    [Fact] public void AddStringMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithNullableString);
     [Fact] public void AddEnumMemberToEmptyClass() => DeserializeSlow(EmptyClass, DefaultWithDayOfWeek);
 
     [Fact] public void AddSecondIntMemberToStartOfClass() => DeserializeSlow(WithIntOnPositionTwo, CreateTwoInts(0, Int));

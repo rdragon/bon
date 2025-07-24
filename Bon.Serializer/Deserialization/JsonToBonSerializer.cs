@@ -4,7 +4,7 @@ namespace Bon.Serializer.Deserialization;
 
 internal static class JsonToBonSerializer
 {
-    public static void Serialize(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
+    public static void Serialize(BinaryWriter writer, JsonNode? jsonNode, Schema1 schema)
     {
         switch (schema)
         {
@@ -38,7 +38,7 @@ internal static class JsonToBonSerializer
         }
     }
 
-    private static void SerializeRecordLike(BinaryWriter writer, JsonNode? jsonNode, bool isNullable, IReadOnlyList<Schema> memberSchemas)
+    private static void SerializeRecordLike(BinaryWriter writer, JsonNode? jsonNode, bool isNullable, IReadOnlyList<Schema1> memberSchemas)
     {
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
@@ -84,7 +84,7 @@ internal static class JsonToBonSerializer
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
-        if (arraySchema.IsNullable && jsonNode is null)
+        if (jsonNode is null)
         {
             IntSerializer.WriteNull(writer);
 

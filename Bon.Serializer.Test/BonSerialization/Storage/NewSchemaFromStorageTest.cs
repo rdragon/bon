@@ -6,7 +6,7 @@ public sealed class NewSchemaFromStorageTest : StorageTestBase
     public void Run()
     {
         // Update the blob contents. This simulates another process writing a new schema to the storage.
-        Blob.Bytes = GetSchemaStorageContents();
+        Blob.Bytes = GetLayoutStorageContents();
 
         Assert.Equal(Instance, GetSerializationResult(GetInstanceBytes()).DeserializeSlow<Class>());
     }

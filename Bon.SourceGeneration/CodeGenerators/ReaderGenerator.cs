@@ -28,9 +28,14 @@ namespace Bon.SourceGeneration.CodeGenerators
             {
                 var id = GetId(definition);
 
+                if (definition.IsReferenceType && !definition.IsNullable)
+                {
+                    continue;
+                }
+
                 _codeGenerator.AddStatement(
                     $"bonFacade.AddDeserializer(" +
-                    $"{definition.TypeOf}, " +
+                    $"typeof({definition.TypeForWriter}), " +
                     $"(Bon.Serializer.Deserialization.Read<{definition.Type}>){GetMethodName(definition.IsNullable, id)});");
             }
         }
@@ -39,7 +44,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         {
             var id = _codeGenerator.GetId(definition.TypeNonNullable);
 
-            if (_writtenMethods.Add(definition.Type))
+            if (_writtenMethods.Add(definition.TypeForWriter))
             {
                 AddReadMethod(definition, id);
             }
@@ -91,35 +96,35 @@ namespace Bon.SourceGeneration.CodeGenerators
         {
             // See bookmark 831853187 for all places where a record is serialized/deserialized.
 
-            if (definition.IsReferenceType)
+            if (definition.IsNullable)
             {
-                AddReadMethodForClass(definition, id);
+                AddReadMethodForNullableRecord(definition, id);
             }
             else
             {
-                if (definition.IsNullable)
-                {
-                    AddReadMethodForNullableStruct(definition, id);
-                }
-                else
-                {
-                    AddReadMethodForStruct(definition, id);
-                }
+                AddReadMethodForRecord(definition, id);
             }
         }
 
-        private void AddReadMethodForClass(RecordDefinition definition, int id)
+        private static string ReadByte() => "NativeSerializer.ReadByte(input.Reader)";
+
+        private void AddReadMethodForNullableRecord(RecordDefinition definition, int id)
         {
             var method = StartReadMethod(id, definition);
 
-            method.Add($"if ({ReadByte()} == NULL) return null;");
+            method.Add($"return {ReadByte()} == NULL ? null : {Read(id, false)};");
+
+            AddMethod(method);
+        }
+
+        private void AddReadMethodForRecord(RecordDefinition definition, int id)
+        {
+            var method = StartReadMethod(id, definition);
 
             ReadMembers(method, definition);
 
             AddMethod(method);
         }
-
-        private static string ReadByte() => "NativeSerializer.ReadByte(input.Reader)";
 
         private void ReadMembers(List<string> method, RecordDefinition definition)
         {
@@ -132,24 +137,6 @@ namespace Bon.SourceGeneration.CodeGenerators
 
             method.AddEmptyLine();
             method.Add($"return {definition.GetLongConstructorName(_codeGenerator)}({args});");
-        }
-
-        private void AddReadMethodForNullableStruct(RecordDefinition definition, int id)
-        {
-            var method = StartReadMethod(id, definition);
-
-            method.Add($"return {ReadByte()} == NULL ? null : {Read(id, false)};");
-
-            AddMethod(method);
-        }
-
-        private void AddReadMethodForStruct(RecordDefinition definition, int id)
-        {
-            var method = StartReadMethod(id, definition);
-
-            ReadMembers(method, definition);
-
-            AddMethod(method);
         }
 
         private void AddReadMethod(ArrayDefinition definition, int id)

@@ -2,7 +2,7 @@
 
 internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType)
     {
         if (sourceSchema is not Tuple2Schema tuple2Schema ||
             targetType.TryGetTuple2Type() is not { } tuple2Type)

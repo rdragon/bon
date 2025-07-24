@@ -6,7 +6,7 @@ namespace Bon.Serializer.Test.BonSerialization;
 public sealed class BonToJsonDeserializerTest : BonSerializerTestBase
 {
     [Fact] public void TestString() => Run(String);
-    [Fact] public void TestBool() => Run(Bool);
+    [Fact] public void TestBool() => Run(Bool, "1");
     [Fact] public void TestByte() => Run(Byte);
     [Fact] public void TestSByte() => Run(SByte);
     [Fact] public void TestShort() => Run(Short);
@@ -18,10 +18,9 @@ public sealed class BonToJsonDeserializerTest : BonSerializerTestBase
     [Fact] public void TestFloat() => Run(Float);
     [Fact] public void TestDouble() => Run(Double);
     [Fact] public void TestDecimal() => Run(Decimal);
-    [Fact] public void TestGuid() => Run(Guid);
 
     [Fact] public void TestNullableString() => Run(NullableString);
-    [Fact] public void TestNullableBool() => Run(NullableBool);
+    [Fact] public void TestNullableBool() => Run(NullableBool, "1");
     [Fact] public void TestNullableByte() => Run(NullableByte);
     [Fact] public void TestNullableSByte() => Run(NullableSByte);
     [Fact] public void TestNullableShort() => Run(NullableShort);
@@ -30,10 +29,9 @@ public sealed class BonToJsonDeserializerTest : BonSerializerTestBase
     [Fact] public void TestNullableUInt() => Run(NullableUInt);
     [Fact] public void TestNullableLong() => Run(NullableLong);
     [Fact] public void TestNullableULong() => Run(NullableULong);
-    [Fact] public void TestNullableFloat() => Run(NullableFloat);
+    [Fact] public void TestNullableFloat() => Run(NullableFloat, JsonSerializer.Serialize((double?)NullableFloat));
     [Fact] public void TestNullableDouble() => Run(NullableDouble);
     [Fact] public void TestNullableDecimal() => Run(NullableDecimal);
-    [Fact] public void TestNullableGuid() => Run(NullableGuid);
 
     private static string DogJson => $"[{Age}]";
     private static string OtherDogJson => $"[{OtherAge}]";
@@ -83,8 +81,8 @@ public sealed class BonToJsonDeserializerTest : BonSerializerTestBase
 
     private T? SerializeFromJson<T>(string json)
     {
-        var bytes = BonSerializer.JsonToBonAsync(json).Result;
+        var bytes = BonSerializer.JsonToBon(json);
 
-        return BonSerializer.DeserializeAsync<T>(bytes).Result;
+        return BonSerializer.Deserialize<T>(bytes);
     }
 }

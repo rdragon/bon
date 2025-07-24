@@ -19,8 +19,9 @@ namespace Bon.SourceGeneration.Definitions.Factories
         {
             var isConcreteType = symbolInfo.TypeArguments.All(arg => !(arg is ITypeParameterSymbol));
             var isValueType = symbolInfo.Symbol.IsValueType;
+            var isNullable = symbolInfo.IsNullable;
 
-            return new RecordDefinition(symbolInfo.Type, Array.Empty<Member>(), isValueType, false, isConcreteType);
+            return new RecordDefinition(symbolInfo.Type, Array.Empty<Member>(), isValueType, false, isConcreteType, isNullable);
         }
 
         public void AddMembers(RecordDefinition definition, INamedTypeSymbol symbol)

@@ -24,54 +24,27 @@ partial class BonSerializer
 
         if (options?.AllowSchemaTypeOptimization != false && simpleWriterType != SimpleWriterType.None)
         {
-            _simpleWriterStore.GetWriter<T>(simpleWriterType)(writer, value);
+            var output = new BonOutput(writer, options);
+            _simpleWriterStore.GetWriter<T>(simpleWriterType)(output, value);
             return;
         }
 
-        var blockId = usesCustomSchemas ? _blockStore.LastBlockId : 0;
+        if (options?.IncludeHeader != false)
+        {
+            WriteHeader(writer, typeof(T));
+        }
 
-        WriteHeader(writer, blockId, typeof(T));
         writeValue(writer, value);
     }
 
-    /// <param name="blockId">If zero then no block ID is included in the header.</param>
-    private void WriteHeader(BinaryWriter writer, uint blockId, Type type)
+    private void WriteHeader(BinaryWriter writer, Type type)
     {
         var schemaData = _schemaDataStore.GetSchemaData(type);
-        WriteHeader(writer, blockId, schemaData);
+        WriteHeader(writer, schemaData);
     }
 
-    /// <param name="blockId">If zero then no block ID is included in the header.</param>
-    private static void WriteHeader(BinaryWriter writer, uint blockId, SchemaData schemaData)
+    private static void WriteHeader(BinaryWriter writer, SchemaData schemaData)
     {
-        var formatType = GetFormatType(blockId, schemaData);
-        writer.Write((byte)formatType);
-
-        if (formatType == FormatType.Full)
-        {
-            writer.Write(blockId);
-        }
-
-        if (formatType is FormatType.Full or FormatType.WithoutBlockId)
-        {
-            SchemaSerializer.Write(writer, schemaData);
-        }
-    }
-
-    private static FormatType GetFormatType(uint blockId, SchemaData schemaData)
-    {
-        return (blockId, schemaData.SchemaType) switch
-        {
-            (_, SchemaType.Byte) => FormatType.Byte,
-            (_, SchemaType.SByte) => FormatType.SByte,
-            (_, SchemaType.Short) => FormatType.Short,
-            (_, SchemaType.UShort) => FormatType.UShort,
-            (_, SchemaType.Int) => FormatType.Int,
-            (_, SchemaType.UInt) => FormatType.UInt,
-            (_, SchemaType.Long) => FormatType.Long,
-            (_, SchemaType.ULong) => FormatType.ULong,
-            (0, _) => FormatType.WithoutBlockId,
-            _ => FormatType.Full
-        };
+        SchemaSerializer.Write(writer, schemaData);
     }
 }

@@ -86,8 +86,8 @@ public class InspectorTest
         SerializeToFile(expected);
         await RunInspector("data", "schemas");
         var json = _fileSystem.File.ReadAllText("data.json");
-        var bytes = await _serializer.JsonToBonAsync(json);
-        var actual = await _serializer.DeserializeAsync<T>(bytes);
+        var bytes = _serializer.JsonToBon(json);
+        var actual = _serializer.Deserialize<T>(bytes);
 
         Assert.Equal(expected, actual);
     }
@@ -101,19 +101,19 @@ public class InspectorTest
 
     private async Task JsonToBon<T>(T expected)
     {
-        var json = await GetJson(expected);
+        var json = GetJson(expected);
         _fileSystem.File.WriteAllText("data.json", json);
         await RunInspector("data.json", "schemas");
         var bytes = _fileSystem.File.ReadAllBytes("data.json.bon");
-        var actual = await _serializer.DeserializeAsync<T>(bytes);
+        var actual = _serializer.Deserialize<T>(bytes);
 
         Assert.Equal(expected, actual);
     }
 
-    private async Task<string> GetJson<T>(T value)
+    private string GetJson<T>(T value)
     {
         var bytes = _serializer.Serialize(value);
-        return await _serializer.BonToJsonAsync(bytes);
+        return _serializer.BonToJson(bytes);
     }
 
     private async Task RunInspector(params string[] args)

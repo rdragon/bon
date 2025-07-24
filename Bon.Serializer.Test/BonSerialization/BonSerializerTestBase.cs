@@ -19,48 +19,67 @@ public class BonSerializerTestBase
     public BonSerializerTestBase(FakeBlob? blob = null)
     {
         Blob = blob ?? new FakeBlob();
-        BonSerializer = BonSerializer.CreateAsync(new BonSerializerContext(), Blob).Result;
+        BonSerializer = BonSerializer.CreateAsync(new TestBonSerializerContext(), Blob).Result;
     }
 
     public static EmptyClass EmptyClass => new();
+
     public static EmptyStruct EmptyStruct => default;
+    public static EmptyStruct? NullableEmptyStruct => EmptyStruct;
+
+    public static WithInt WithInt70 => new(70);
+    public static WithInt? NullWithInt => null;
+
 
     public static Dog Dog => new(Age);
     public static Dog OtherDog => new(OtherAge);
     public static Dog DefaultDog => new(0);
+    public static Dog RealDefaultDog => null!;
+    public static Dog? DefaultNullableDog => null;
     public static Cat Cat => new(Age.ToString());
     public static Cat OtherCat => new(OtherAge.ToString());
     public static Cat DefaultCat => new(DefaultString);
     public static IAnimal IAnimal => Dog;
     public static IAnimal OtherIAnimal => Cat;
     public static IAnimal DefaultIAnimal => DefaultCat;
+    public static IAnimal RealDefaultIAnimal => null!;
     public static IDog IDog => Dog;
     public static IDog DefaultIDog => DefaultDog;
+    public static IDog RealDefaultIDog => null!;
     public static ICat ICat => Cat;
     public static ICat DefaultICat => DefaultCat;
+    public static ICat RealDefaultICat => null!;
     public static WithIDog WithIDog => new(Dog);
     public static WithIDog DefaultWithIDog => new(DefaultDog);
+    public static WithIDog RealDefaultWithIDog => new(null!);
     public static WithNullableIDog WithNullableIDog => new(Dog);
     public static WithNullableIDog DefaultWithNullableIDog => new(null);
     public static WithICat WithICat => new(Cat);
     public static WithICat DefaultWithICat => new(DefaultCat);
+    public static WithICat DefaultWithNullICat => new(null!);
     public static WithNullableICat WithNullableICat => new(Cat);
     public static WithNullableICat DefaultWithNullableICat => new(null);
     public static WithIAnimal WithIAnimal => new(Dog);
     public static WithIAnimal DefaultWithIAnimal => new(DefaultIAnimal);
+    public static WithIAnimal DefaultWithNullIAnimal => new(null!);
     public static WithNullableIAnimal WithNullableIAnimal => new(Dog);
     public static WithNullableIAnimal DefaultWithNullableIAnimal => new(null);
+    public static WithNullableIAnimal RealDefaultWithNullableIAnimal => null!;
     public static WithDog WithDog => new(Dog);
     public static WithDog DefaultWithDog => new(DefaultDog);
+    public static WithDog DefaultWithDogNull => new(null!);
     public static WithNullableDog WithNullableDog => new(Dog);
     public static WithNullableDog DefaultWithNullableDog => new(null);
     public static WithCat WithCat => new(Cat);
     public static WithCat DefaultWithCat => new(DefaultCat);
+    public static WithCat RealDefaultWithCat => new(null!);
     public static WithNullableCat WithNullableCat => new(Cat);
     public static WithNullableCat DefaultWithNullableCat => new(null);
 
     public static byte[] ByteArray => [1, 2, 3];
     public static byte[] DefaultByteArray => [];
+    public static int[] IntArray => [4, 5];
+    public static int[] RealDefaultIntArray => null!;
     public static Dog[] Array => [Dog, OtherDog];
     public static Dog[] DefaultArray => [];
     public static Dog[] OtherArray => [Dog];
@@ -84,6 +103,7 @@ public class BonSerializerTestBase
     public static IEnumerable<Dog> OtherIEnumerable => OtherArray;
     public static Dictionary<int, Dog> Dictionary => new() { [Int] = Dog };
     public static Dictionary<int, Dog> DefaultDictionary => new();
+    public static Dictionary<int, Dog> RealDefaultDictionary => null!;
     public static IDictionary<int, Dog> IDictionary => Dictionary;
     public static IDictionary<int, Dog> DefaultIDictionary => DefaultDictionary;
     public static IReadOnlyDictionary<int, Dog> IReadOnlyDictionary => Dictionary;
@@ -113,6 +133,7 @@ public class BonSerializerTestBase
     public static WithIEnumerable OtherWithIEnumerable => new(OtherIEnumerable);
     public static WithDictionary WithDictionary => new(Dictionary);
     public static WithDictionary DefaultWithDictionary => new(DefaultDictionary);
+    public static WithDictionary DefaultWithDictionaryNull => new(null!);
     public static WithDictionaryOfCats WithDictionaryOfCats => new(DictionaryOfCats);
     public static WithIDictionary WithIDictionary => new(IDictionary);
     public static WithIDictionary DefaultWithIDictionary => new(DefaultIDictionary);
@@ -131,6 +152,7 @@ public class BonSerializerTestBase
     public static WithArrayOfNullable WithArrayOfNullable => new([Dog, null]);
     public static WithArrayOfNullable DefaultWithArrayOfNullable => new([]);
     public static WithArrayOfNullable OtherWithArrayOfNullable => new([Dog]);
+    public static WithArrayOfNullable AnotherWithArrayOfNullable => new([Dog, OtherDog]);
     public static WithArrayOfEmptyClass WithArrayOfEmptyClass => new([EmptyClass, EmptyClass]);
     public static WithArrayOfEmptyClass DefaultWithArrayOfEmptyClass => new([]);
     public static WithListOfEmptyClass WithListOfEmptyClass => new([EmptyClass, EmptyClass]);
@@ -156,6 +178,7 @@ public class BonSerializerTestBase
     public static WithNullableDayOfWeek DefaultWithNullableDayOfWeek => new(null);
 
     public static WithString WithString => new(String);
+    public static WithString WithStringNull => new(null!);
     public static WithString DefaultWithString => new(DefaultString);
     public static WithNullableString WithNullableString => new(String);
     public static WithNullableString DefaultWithNullableString => new(null);
@@ -240,7 +263,11 @@ public class BonSerializerTestBase
     public static HoldsHouse HoldsHouse => new(House);
     public static HoldsHouse DefaultHoldsHouse => new(DefaultHouse);
     public static HoldsNullableHouse HoldsNullableHouse => new(House);
+    public static HoldsNullableHouse? NullableHoldsNullableHouse => HoldsNullableHouse;
     public static HoldsNullableHouse DefaultHoldsNullableHouse => new(null);
+    public static HoldsNullableHouse? NullableDefaultHoldsNullableHouse => (HoldsNullableHouse?)DefaultHoldsNullableHouse;
+    public static HoldsInt HoldsInt => new(Int);
+    public static HoldsInt HoldsSmallInt => new(SmallInt);
 
     public static string String => "abc";
     public static string OtherString => "d";
@@ -271,6 +298,7 @@ public class BonSerializerTestBase
     public static ushort? DefaultNullableUShort => null;
     public static int Int => int.MaxValue - 10;
     public static int OtherInt => int.MaxValue - 20;
+    public static int SmallInt => 30;
     public static int DefaultInt => 0;
     public static int NegativeInt => int.MinValue + 10;
     public static int? NullableInt => Int;
@@ -305,7 +333,7 @@ public class BonSerializerTestBase
     public static Guid? NullableGuid => Guid;
     public static Guid? DefaultNullableGuid => null;
 
-    public static IAnimalFailedImitation IAnimalFailedImitation => WithInt;
+    public static IAnimalFailedImitation IAnimalFailedImitation => WithNullableInt;
     public static WithIntOnPositionTwo WithIntOnPositionTwo => new(Int);
 
     public static DateTime DefaultDateTime => default;
@@ -358,12 +386,17 @@ public class BonSerializerTestBase
     public static WithNullableChar DefaultWithNullableChar => new(null);
     public static char[] CharArray => [Char, 'b'];
 
+    public static (int, int) IntTuple2 => (Int, OtherInt);
+    public static (int, int)? NullableIntTuple2 => (Int, OtherInt);
+    public static (int, int)? DefaultNullableIntTuple2 => null;
     public static (Dog, int) Tuple2 => (Dog, Int);
     public static (Dog, int) DefaultTuple2 => (DefaultDog, DefaultInt);
+    public static (Dog, int) RealDefaultTuple2 => (null!, DefaultInt);
     public static (Dog, int)? NullableTuple2 => Tuple2;
     public static (Dog, int)? DefaultNullableTuple2 => null;
     public static WithTuple2 WithTuple2 => new(Tuple2);
     public static WithTuple2 DefaultWithTuple2 => new(DefaultTuple2);
+    public static WithTuple2 RealDefaultWithTuple2 => new(RealDefaultTuple2);
     public static WithNullableTuple2 WithNullableTuple2 => new(Tuple2);
     public static WithNullableTuple2 DefaultWithNullableTuple2 => new(null);
     public static WithTuple2OfNullables WithTuple2OfNullables => new((Dog, Int));
@@ -407,7 +440,6 @@ public class BonSerializerTestBase
     {
         var stream = new MemoryStream();
         BonSerializer.Serialize(stream, value, options);
-
         return new SerializationResult(BonSerializer, stream);
     }
 
@@ -417,6 +449,8 @@ public class BonSerializerTestBase
     /// First serializes the source value.
     /// Then deserializes the result into a new value of type <typeparamref name="T2"/>.
     /// Finally asserts that the new value is equal to the expected value.
+    /// The distinction between fast and slow is that fast means the deserialize method already exists and for slow the
+    /// deserialize method is created on the fly.
     /// </summary>
     public void DeserializeSlow<T1, T2>(T1 source, T2 expected, BonSerializerOptions? serializationOptions = null) =>
         Assert.Equal(expected, Serialize(source, serializationOptions).DeserializeSlow<T2>());
@@ -451,7 +485,9 @@ public class BonSerializerTestBase
     /// </summary>
     public void RoundTripSlow<T>(T value) => Assert.Equal(value, Serialize(value).DeserializeSlow<T>());
 
-    public int GetContentsId<T>() => BonSerializer.GetContentsId(typeof(T));
+    public int GetLayoutId<T>() => BonSerializer.GetLayoutId(typeof(T));
+
+    public string PrintSchema<T>() => BonSerializer.PrintSchema<T>();
 
     protected void RequireSameSerialization<T1, T2>(T1 expected, T2 actual, BonSerializerOptions? expectedValueOptions = null) =>
         Assert.Equal(Serialize(expected, expectedValueOptions), Serialize(actual));
@@ -463,9 +499,8 @@ public class BonSerializerTestBase
         var exception = Assert.Throws<SchemaException>(() => Serialize(value));
         Assert.StartsWith("No schema for", exception.Message);
 
-        var aggregateException = Assert.Throws<AggregateException>(() => Serialize(0).DeserializeSlow<T>());
-        Assert.IsType<SchemaException>(aggregateException.InnerException);
-        Assert.StartsWith("No schema for", aggregateException.InnerException.Message);
+        exception = Assert.Throws<SchemaException>(() => Serialize(0).DeserializeSlow<T>());
+        Assert.StartsWith("No schema for", exception.Message);
     }
 
     /// <summary>

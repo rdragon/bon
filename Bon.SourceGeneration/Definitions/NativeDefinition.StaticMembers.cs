@@ -12,6 +12,7 @@ namespace Bon.SourceGeneration.Definitions
             // Bookmark 659516266 (native serialization)
             // For every native type we add a definition.
             // This is the same set of types as can be found at bookmark 293228595.
+            // This mapping should be in sync with the mapping at bookmark 988874999.
             Add("string", SchemaType.String, false);
             Add("bool", SchemaType.Byte);
             Add("byte", SchemaType.Byte);
@@ -44,7 +45,7 @@ namespace Bon.SourceGeneration.Definitions
             Add("ulong?", SchemaType.WholeNumber);
             Add("float?", SchemaType.FractionalNumber);
             Add("double?", SchemaType.FractionalNumber);
-            Add("decimal?", SchemaType.FractionalNumber);
+            Add("decimal?", SchemaType.NullableDecimal);
             Add("System.Guid?", schemaIdentifier: "ArraySchema.ByteArray");
             Add("char?", SchemaType.WholeNumber);
             Add("System.DateTime?", SchemaType.SignedWholeNumber);

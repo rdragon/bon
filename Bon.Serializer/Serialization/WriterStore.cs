@@ -68,6 +68,11 @@ internal sealed class WriterStore : IUseReflection
         _writers[typeof(T)] = new(writer, usesCustomSchemas, simpleWriterType);
     }
 
+    public void Add(Type type, Delegate writer, bool usesCustomSchemas)
+    {
+        _writers[type] = new(writer, usesCustomSchemas);
+    }
+
     /// <summary>
     /// Returns a serializer that writes a value of type <typeparamref name="T"/> using the schema corresponding to
     /// <typeparamref name="T"/> if <typeparamref name="T"/> is a value type.
@@ -152,8 +157,14 @@ internal sealed class WriterStore : IUseReflection
 
         var (writeElement, usesCustomSchemas, _) = GetWriter<TElement>();
 
-        return new((BinaryWriter writer, IEnumerable<TElement> collection) =>
-        {//0at: goed met nullable omgaan, 791351735
+        return new((BinaryWriter writer, IEnumerable<TElement>? collection) =>
+        {
+            if (collection is null)
+            {
+                IntSerializer.WriteNull(writer);
+                return;
+            }
+
             var elements = collection as IReadOnlyList<TElement> ?? collection.ToArray();
             var count = elements.Count;
             IntSerializer.Write(writer, count);
@@ -210,8 +221,14 @@ internal sealed class WriterStore : IUseReflection
 
         var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
 
-        return new((BinaryWriter writer, IDictionary<TKey, TValue> dictionary) =>
+        return new((BinaryWriter writer, IDictionary<TKey, TValue>? dictionary) =>
         {
+            if (dictionary is null)
+            {
+                IntSerializer.WriteNull(writer);
+                return;
+            }
+
             var count = dictionary.Count;
             IntSerializer.Write(writer, count);
             var actualCount = 0;
@@ -239,8 +256,14 @@ internal sealed class WriterStore : IUseReflection
 
         var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
 
-        return new((BinaryWriter writer, IReadOnlyDictionary<TKey, TValue> dictionary) =>
+        return new((BinaryWriter writer, IReadOnlyDictionary<TKey, TValue>? dictionary) =>
         {
+            if (dictionary is null)
+            {
+                IntSerializer.WriteNull(writer);
+                return;
+            }
+
             var count = dictionary.Count;
             IntSerializer.Write(writer, count);
             var actualCount = 0;

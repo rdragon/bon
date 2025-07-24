@@ -12,9 +12,10 @@ namespace Bon.SourceGeneration.Definitions
 
         public Tuple3Definition(
             string type,
+            SchemaType schemaType,
             IDefinition item1Definition,
             IDefinition item2Definition,
-            IDefinition item3Definition) : base(type, SchemaType.Tuple3, true)
+            IDefinition item3Definition) : base(type, schemaType, true)
         {
             Item1Definition = item1Definition;
             Item2Definition = item2Definition;

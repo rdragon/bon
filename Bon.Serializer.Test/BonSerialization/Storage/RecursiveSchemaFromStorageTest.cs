@@ -3,7 +3,7 @@
 public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
 {
     /// <summary>
-    /// By using such a large member ID there is practically no chance that the schema returned by <see cref="GetSchemaStorageContents"/>
+    /// By using such a large member ID there is practically no chance that the schema returned by <see cref="GetLayoutStorageContents"/>
     /// already exists somewhere in the source code.
     /// </summary>
     private const int MemberId = 295764629;
@@ -12,13 +12,13 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
     /// The contents ID of the schema.
     /// A large number to not conflict with IDs created by the source generation context.
     /// </summary>
-    private const int ContentsId = int.MaxValue;
+    private const int LayoutId = int.MaxValue;
 
     private const int Value1 = 355375878;
     private const int Value2 = 671172479;
     private const uint BlockId = 0xb1cbdcb6;
 
-    public RecursiveSchemaFromStorageTest() : base(new FakeBlob { Bytes = GetSchemaStorageContents() }) { }
+    public RecursiveSchemaFromStorageTest() : base(new FakeBlob { Bytes = GetLayoutStorageContents() }) { }
 
     /// <summary>
     /// Test whether a recursive type that was serialized using a schema that cannot be found via the source generation context but only
@@ -26,11 +26,11 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
     /// </summary>
     [Fact] public void Run() => Assert.Equal(Instance, GetSerializationResult(GetInstanceBytes()).DeserializeSlow<Class>());
 
-    private static byte[] GetSchemaStorageContents()
+    private static byte[] GetLayoutStorageContents()
     {
-        var memberA = new SchemaMemberData(2, new CustomSchemaData(SchemaType.NullableRecord, ContentsId));
+        var memberA = new SchemaMemberData(2, new CustomSchemaData(SchemaType.NullableRecord, LayoutId));
         var memberB = new SchemaMemberData(MemberId, new SchemaData(SchemaType.Int, []));
-        var schema = new SchemaContentsData(ContentsId, [memberA, memberB]);
+        var schema = new SchemaContentsData(LayoutId, [memberA, memberB]);
 
         var block = new Block(BlockId, [schema]);
         var stream = new MemoryStream();
@@ -40,12 +40,11 @@ public class RecursiveSchemaFromStorageTest : BonSerializerTestBase
     }
 
     private byte[] GetInstanceBytes() => [.. GetManualSerializer()
-        .WriteFirstPartOfHeader(BlockId)
         .WriteSchemaType(SchemaType.NullableRecord)
-        .WriteBool(false)
-        .WriteCompactInt(ContentsId)
-        .WriteByte(NOT_NULL)
-        .WriteByte(NULL)
+        .WriteCompactInt(LayoutId)
+        .WriteNotNull()
+        .WriteNotNull()
+        .WriteNull()
         .WriteFullInt(Value1)
         .WriteFullInt(Value2)];
 

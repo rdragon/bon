@@ -21,15 +21,13 @@ namespace Bon.SourceGeneration.Definitions
 
         protected Definition(string type, SchemaType schemaType, bool isValueType)
         {
-            var isNullable = Helper.IsNullableType(type, isValueType);
+            var isNullable = schemaType.IsNullable();
             Type = type;
             SchemaType = schemaType;
             IsNullable = isNullable;
             IsValueType = isValueType;
             TypeNonNullable = isNullable && isValueType ? Helper.SwapNullability(type, isValueType) : type;
         }
-
-        public bool IsNullableValueType => IsNullable && IsValueType;
 
         // Equality is important for incremental source generators.
         public override bool Equals(object obj)
@@ -117,8 +115,6 @@ namespace Bon.SourceGeneration.Definitions
 
         public override string ToString() => Type;
 
-        public string TypeOf => $"typeof({Type})";
-
         public virtual IEnumerable<IDefinition> GetInnerDefinitions() => Array.Empty<IDefinition>();
 
         protected virtual IEnumerable<IRecursiveEquatable> GetInnerObjects() => GetInnerDefinitions();
@@ -127,6 +123,19 @@ namespace Bon.SourceGeneration.Definitions
 
         public virtual string SchemaBaseClass => "Schema";
 
-        public string SafeType => IsReferenceType ? TypeNonNullable + "?" : Type;//0at
+        public virtual string TypeForWriter => Type;
+
+        public string ToPrettyString(bool allowRecursion = true)
+        {
+            var firstLine = $"{Type} - SchemaType:{SchemaType} IsNullable:{IsNullable} Type:{GetType()}";
+
+            if (!allowRecursion)
+            {
+                return firstLine;
+            }
+
+            var moreLines = GetInnerDefinitions().Select(x => "    " + x.ToPrettyString(false));
+            return string.Join("\n", new[] { firstLine }.Concat(moreLines));
+        }
     }
 }

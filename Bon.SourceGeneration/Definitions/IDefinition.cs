@@ -23,7 +23,7 @@ namespace Bon.SourceGeneration.Definitions
 
         /// <summary>
         /// The schema type that will be used when serializing this type.
-        /// This property is only used when obtaining the schema corresponding to this definition.
+        /// This property is only used when obtaining the schema corresponding to this definition, and to determine nullability.
         /// (And it is used when comparing two definitions.)
         /// Therefore, if you have a custom way to obtain the schema, you can set this property to anything you like.
         /// </summary>
@@ -34,16 +34,9 @@ namespace Bon.SourceGeneration.Definitions
         /// </summary>
         bool IsNullable { get; }
 
-        /// <summary>
-        /// Returns e.g. "typeof(ExampleNamespace.ExampleClass)".
-        /// </summary>
-        string TypeOf { get; }
-
         bool IsReferenceType { get; }
 
         bool IsValueType { get; }
-
-        bool IsNullableValueType { get; }
 
         /// <summary>
         /// Returns the definitions of the type parameters for generic types.
@@ -56,6 +49,10 @@ namespace Bon.SourceGeneration.Definitions
         /// The class that contains the create method that creates the schema for this definition.
         /// </summary>
         string SchemaBaseClass { get; }
+
+        string ToPrettyString(bool allowRecursion = true);
+
+        string TypeForWriter { get; }
     }
 
     /// <summary>
