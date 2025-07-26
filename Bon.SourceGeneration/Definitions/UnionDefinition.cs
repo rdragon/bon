@@ -27,8 +27,6 @@ namespace Bon.SourceGeneration.Definitions
 
         protected override IEnumerable<IRecursiveEquatable> GetInnerObjects() => Members;
 
-        public override string SchemaBaseClass => "CustomSchema";
-
         public ICriticalDefinition SwapNullability() => this;
     }
 

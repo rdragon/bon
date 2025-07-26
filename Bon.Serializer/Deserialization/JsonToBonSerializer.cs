@@ -4,19 +4,18 @@ namespace Bon.Serializer.Deserialization;
 
 internal static class JsonToBonSerializer
 {
-    public static void Serialize(BinaryWriter writer, JsonNode? jsonNode, Schema1 schema)
+    public static void Serialize(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
         switch (schema)
         {
-            case NativeSchema nativeSchema: SerializeNative(writer, jsonNode, nativeSchema); break;
-            case UnionSchema unionSchema: SerializeUnion(writer, jsonNode, unionSchema); break;
-            case ArraySchema arraySchema: SerializeArray(writer, jsonNode, arraySchema); break;
-            case DictionarySchema dictionarySchema: SerializeDictionary(writer, jsonNode, dictionarySchema); break;
-            default: SerializeRecordLike(writer, jsonNode, schema.IsNullable, schema.GetInnerSchemas().ToArray()); break;
+            case { IsNative: true }: SerializeNative(writer, jsonNode, schema); break;
+            case { IsUnion: true }: SerializeUnion(writer, jsonNode, schema); break;
+            case { IsArray: true }: SerializeArray(writer, jsonNode, schema); break;
+            default: SerializeRecordLike(writer, jsonNode, schema.IsNullable, schema); break;
         }
     }
 
-    private static void SerializeNative(BinaryWriter writer, JsonNode? jsonNode, NativeSchema schema)
+    private static void SerializeNative(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
         switch (schema.SchemaType)
         {
@@ -38,10 +37,13 @@ internal static class JsonToBonSerializer
         }
     }
 
-    private static void SerializeRecordLike(BinaryWriter writer, JsonNode? jsonNode, bool isNullable, IReadOnlyList<Schema1> memberSchemas)
+    // for tuple and record
+    private static void SerializeRecordLike(BinaryWriter writer, JsonNode? jsonNode, bool isNullable, Schema schema)
     {
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
+
+        var valueSchemas = schema.IsTuple ? schema.InnerSchemas : schema.Members.Select(member => member.Schema).ToArray();
 
         if (isNullable)
         {
@@ -55,17 +57,17 @@ internal static class JsonToBonSerializer
             writer.Write(NativeWriter.NOT_NULL);
         }
 
-        foreach (var (member, memberSchema) in ExpectArray(jsonNode, memberSchemas.Count).Zip(memberSchemas))
+        foreach (var (value, valueSchema) in ExpectArray(jsonNode, valueSchemas.Count).Zip(valueSchemas))
         {
-            Serialize(writer, member, memberSchema);
+            Serialize(writer, value, valueSchema);
         }
     }
 
-    private static void SerializeUnion(BinaryWriter writer, JsonNode? jsonNode, UnionSchema unionSchema)
+    private static void SerializeUnion(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
         // See bookmark 628227999 for all places where a union is serialized/deserialized.
 
-        if (unionSchema.IsNullable && jsonNode is null)
+        if (schema.IsNullable && jsonNode is null)
         {
             IntSerializer.WriteNull(writer);
 
@@ -76,11 +78,11 @@ internal static class JsonToBonSerializer
         var unionId = ExpectNotNull(parts[0]).GetValue<int>();
         var unionNode = parts[1];
         IntSerializer.Write(writer, unionId);
-        var recordSchema = unionSchema.Members.First(member => member.Id == unionId).Schema;
+        var recordSchema = schema.Members.First(member => member.Id == unionId).Schema;
         Serialize(writer, unionNode, recordSchema);
     }
 
-    private static void SerializeArray(BinaryWriter writer, JsonNode? jsonNode, ArraySchema arraySchema)
+    private static void SerializeArray(BinaryWriter writer, JsonNode? jsonNode, Schema schema)
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
@@ -96,26 +98,8 @@ internal static class JsonToBonSerializer
 
         foreach (var element in array)
         {
-            Serialize(writer, element, arraySchema.InnerSchema);
+            Serialize(writer, element, schema.InnerSchemas[0]);
         }
-    }
-
-    private static void SerializeDictionary(BinaryWriter writer, JsonNode? jsonNode, DictionarySchema dictionarySchema)
-    {
-        // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
-
-        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2)
-        {
-            InnerSchema1 = dictionarySchema.InnerSchema1,
-            InnerSchema2 = dictionarySchema.InnerSchema2,
-        };
-
-        var arraySchema = new ArraySchema()
-        {
-            InnerSchema = tupleSchema,
-        };
-
-        SerializeArray(writer, jsonNode, arraySchema);
     }
 
     private static JsonArray ExpectArray(JsonNode? jsonNode, int count) => ExpectCount(ExpectNotNull(jsonNode).AsArray(), count);

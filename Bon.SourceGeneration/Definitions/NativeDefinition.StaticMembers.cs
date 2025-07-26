@@ -26,7 +26,7 @@ namespace Bon.SourceGeneration.Definitions
             Add("float", SchemaType.Float);
             Add("double", SchemaType.Double);
             Add("decimal", SchemaType.NullableDecimal);
-            Add("System.Guid", schemaIdentifier: "ArraySchema.ByteArray");
+            Add("System.Guid", schemaIdentifier: "Schema.ByteArray");
             Add("char", SchemaType.WholeNumber);
             Add("System.DateTime", SchemaType.Long);
             Add("System.DateTimeOffset", SchemaType.Long);
@@ -46,7 +46,7 @@ namespace Bon.SourceGeneration.Definitions
             Add("float?", SchemaType.FractionalNumber);
             Add("double?", SchemaType.FractionalNumber);
             Add("decimal?", SchemaType.NullableDecimal);
-            Add("System.Guid?", schemaIdentifier: "ArraySchema.ByteArray");
+            Add("System.Guid?", schemaIdentifier: "Schema.ByteArray");
             Add("char?", SchemaType.WholeNumber);
             Add("System.DateTime?", SchemaType.SignedWholeNumber);
             Add("System.DateTimeOffset?", SchemaType.SignedWholeNumber);
@@ -57,7 +57,7 @@ namespace Bon.SourceGeneration.Definitions
 
         private static void Add(string type, SchemaType schemaType = default, bool isValueType = true, string schemaIdentifier = null)
         {
-            schemaIdentifier = schemaIdentifier ?? $"NativeSchema.{schemaType}";
+            schemaIdentifier = schemaIdentifier ?? $"Schema.{schemaType}";
             _definitions[type] = new NativeDefinition(type, schemaType, isValueType, schemaIdentifier);
         }
 

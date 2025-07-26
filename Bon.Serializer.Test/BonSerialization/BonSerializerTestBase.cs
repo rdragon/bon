@@ -485,7 +485,7 @@ public class BonSerializerTestBase
     /// </summary>
     public void RoundTripSlow<T>(T value) => Assert.Equal(value, Serialize(value).DeserializeSlow<T>());
 
-    public int GetLayoutId<T>() => BonSerializer.GetLayoutId(typeof(T));
+    public int GetLayoutId<T>() => BonSerializer.GetSchema(typeof(T)).LayoutId;
 
     public string PrintSchema<T>() => BonSerializer.PrintSchema<T>();
 
@@ -508,4 +508,6 @@ public class BonSerializerTestBase
     /// is serialized.
     /// </summary>
     public static BonSerializerOptions ForbidSchemaTypeOptimization => new() { AllowSchemaTypeOptimization = false };
+
+    public byte[] GetCompactIntBytes(int value) => GetManualSerializer().WriteCompactInt(value).ToArray();
 }

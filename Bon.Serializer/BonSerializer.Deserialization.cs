@@ -17,7 +17,7 @@ partial class BonSerializer
         return DeserializeBody<T>(reader, schema);
     }
 
-    private T DeserializeBody<T>(BinaryReader reader, Schema1 schema)
+    private T DeserializeBody<T>(BinaryReader reader, Schema schema)
     {
         var deserialize = _deserializerStore.GetDeserializer<T>(schema);
         var input = new BonInput(reader);
@@ -27,11 +27,36 @@ partial class BonSerializer
     /// <summary>
     /// //2at
     /// </summary>
-    public string PrintSchema(byte[] message)
+    public string PrintSchema(byte[] message, bool printFullSchema = true)
     {
         var reader = new BinaryReader(new MemoryStream(message));
         var schema = ReadSchema(reader);
-        return new SchemaPrinter().Print(schema);
+        return printFullSchema ? new FullSchemaPrinter().Print(schema) : LimitedSchemaPrinter.PrintSingleLine(schema);
+    }
+
+    public string PrintHeader(byte[] message, bool multiLineFormatting = false)
+    {
+        var reader = new BinaryReader(new MemoryStream(message));
+        var schema = ReadSchema(reader);
+        var schemaBytes = message[..(int)reader.BaseStream.Position];
+        var builder = new StringBuilder();
+        builder.AppendLine("Header");
+        builder.AppendLine("Length       " + schemaBytes.Length);
+        builder.AppendLine("Hexadecimal  " + schemaBytes.ToHexString());
+
+        if (multiLineFormatting)
+        {
+            builder.AppendLine("Formatted");
+            builder.AppendLine("{");
+            builder.Append(LimitedSchemaPrinter.PrintMultiLine(schema, "    "));
+            builder.AppendLine("}");
+        }
+        else
+        {
+            builder.AppendLine("Formatted    " + LimitedSchemaPrinter.PrintSingleLine(schema));
+        }
+
+        return builder.ToString();
     }
 
     /// <summary>
@@ -39,9 +64,8 @@ partial class BonSerializer
     /// </summary>
     public string PrintSchema<T>() => PrintSchema(Serialize<T?>(default));
 
-    private Schema1 ReadSchema(BinaryReader reader)
+    private Schema ReadSchema(BinaryReader reader)
     {
-        var data = SchemaSerializer.ReadSchemaData(reader);
-        return _schemaDataResolver.GetSchemaBySchemaData(data);
+        return new LayoutReader(_layoutStore, reader, false).ReadSingleSchema();
     }
 }

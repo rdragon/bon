@@ -20,31 +20,30 @@ partial class BonSerializer
     {
         var writer = new BinaryWriter(stream);
 
-        var (writeValue, usesCustomSchemas, simpleWriterType) = _writerStore.GetWriter<T>();
+        var (writeValue, simpleWriterType) = _writerStore.GetWriter<T>();
 
         if (options?.AllowSchemaTypeOptimization != false && simpleWriterType != SimpleWriterType.None)
         {
             var output = new BonOutput(writer, options);
-            _simpleWriterStore.GetWriter<T>(simpleWriterType)(output, value);
+            SimpleWriter.GetWriter<T>(simpleWriterType)(output, value);
             return;
         }
 
         if (options?.IncludeHeader != false)
         {
-            WriteHeader(writer, typeof(T));
+            WriteSchema(writer, typeof(T));
         }
 
         writeValue(writer, value);
     }
 
-    private void WriteHeader(BinaryWriter writer, Type type)
+    private void WriteSchema(BinaryWriter writer, Type type)
     {
-        var schemaData = _schemaDataStore.GetSchemaData(type);
-        WriteHeader(writer, schemaData);
+        WriteSchema(writer, _schemaStore.GetOrAddSchema(type));
     }
 
-    private static void WriteHeader(BinaryWriter writer, SchemaData schemaData)
+    private static void WriteSchema(BinaryWriter writer, Schema schema)
     {
-        SchemaSerializer.Write(writer, schemaData);
+        new LayoutWriter(writer).WriteSchema(schema);
     }
 }

@@ -1,20 +1,54 @@
-﻿using System.Diagnostics;
+﻿namespace Bon.Serializer.Schemas;
 
-namespace Bon.Serializer.Schemas;
-
-internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader)
+internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader, bool allowUnknownLayoutIds)
 {
-    public void Read()
+    //2at
+    private List<Schema>? _partialSchemas = null;
+
+    public void ReadManyLayouts()
     {
-        var id = ReadInt(min: 1);
+        _partialSchemas = [];
+        while (reader.BaseStream.Position < reader.BaseStream.Length)
+        {
+            ReadSingleLayout();
+        }
+    }
+
+    private void ReadSingleLayout()
+    {
+        WholeNumberSerializer.Read(reader);
+        var id = ReadLayoutId();
         var members = ReadMembers();
         var layout = new Layout(id, members);
-        layoutStore.Add(layout);
+        layoutStore.AddLayout(layout);
+        FillPartialSchemas(layout);
+    }
+
+    public Schema ReadSingleSchema()
+    {
+        var schemaType = ReadSchemaType();
+
+        if (schemaType.IsNativeSchema())
+        {
+            return Schema.GetNativeSchema(schemaType);
+        }
+
+        var innerSchemas = ReadInnerSchemas(schemaType);
+        var layoutId = ReadLayoutId(schemaType);
+        var members = ReadMembers(schemaType, layoutId);
+        var schema = Schema.Create(schemaType, innerSchemas, layoutId, members!);
+
+        if (members is null)
+        {
+            _partialSchemas!.Add(schema);
+        }
+
+        return schema;
     }
 
     private IReadOnlyList<SchemaMember> ReadMembers()
     {
-        var count = ReadInt(0, 10_000);
+        var count = ReadInt("Member count out of range", 0, 10_000);
         var members = new SchemaMember[count];
 
         for (int i = 0; i < count; i++)
@@ -27,31 +61,9 @@ internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader)
 
     private SchemaMember ReadMember()
     {
-        var id = ReadInt(min: 0);
-        var schema = ReadSchema();
+        var id = ReadInt("Member ID out of range", min: 0);
+        var schema = ReadSingleSchema();
         return new SchemaMember(id, schema);
-    }
-
-    private Schema ReadSchema()
-    {
-        var schemaType = ReadSchemaType();
-
-        if (schemaType.IsNativeSchema())
-        {
-            return NativeSchema.FromSchemaType(schemaType);
-        }
-
-        var innerSchemas = ReadInnerSchemas(schemaType);
-        var layoutId = ReadLayoutId(schemaType);//3at: hier moeten we dict lookup doen van schematype + layoutid als het custom is. als we ref eq willen doen
-        var members = ReadMembers(schemaType, layoutId);
-        var schema = new Schema(schemaType, innerSchemas, layoutId, members!);
-
-        if (members is null)
-        {
-            layoutStore.PartialSchemas.Add(schema);
-        }
-
-        return schema;
     }
 
     private IReadOnlyList<Schema> ReadInnerSchemas(SchemaType schemaType)
@@ -61,13 +73,13 @@ internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader)
 
         for (int i = 0; i < count; i++)
         {
-            innerSchemas[i] = ReadSchema();
+            innerSchemas[i] = ReadSingleSchema();
         }
 
         return innerSchemas;
     }
 
-    private int ReadLayoutId(SchemaType schemaType) => schemaType.IsCustomSchema() ? ReadInt(min: 1) : 0;
+    private int ReadLayoutId(SchemaType schemaType) => schemaType.IsCustomSchema() ? ReadLayoutId() : 0;
 
     private IReadOnlyList<SchemaMember>? ReadMembers(SchemaType schemaType, int layoutId)
     {
@@ -76,18 +88,34 @@ internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader)
             return [];
         }
 
-        if (layoutStore.TryGet(layoutId, out var layout))
+        if (!allowUnknownLayoutIds)
         {
-            return layout.Members;
+            return layoutStore.GetLayout(layoutId).Members;
         }
 
-        return null;
+        return layoutStore.TryGetLayout(layoutId, out var layout) ? layout.Members : null;
     }
 
-    private int ReadInt(int min = int.MinValue, int max = int.MaxValue)
+    private void FillPartialSchemas(Layout layout)
+    {
+        for (int i = 0; i < _partialSchemas!.Count; i++)
+        {
+            if (_partialSchemas[i].LayoutId == layout.Id)
+            {
+                _partialSchemas[i].Members = layout.Members;
+                _partialSchemas[i] = _partialSchemas[^1];
+                _partialSchemas.RemoveAt(_partialSchemas.Count - 1);
+                i--;
+            }
+        }
+    }
+
+    private int ReadLayoutId() => ReadInt("Layout ID out of range", min: 1);
+
+    private int ReadInt(string? message, int min = int.MinValue, int max = int.MaxValue)
     {
         var value = IntSerializer.Read(reader) ?? 0;
-        Trace.Assert(min <= value && value <= max);
+        Trace.Assert(min <= value && value <= max, message);
         return value;
     }
 

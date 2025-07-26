@@ -1,23 +1,21 @@
 ﻿namespace Bon.Serializer.Serialization;
 
-internal sealed class SimpleWriterStore
+internal static class SimpleWriter
 {
-    private readonly Delegate[] _writers = new Delegate[9];
+    private static readonly Delegate[] _writers =
+    [
+        WriteByteNow,
+        WriteSByteNow,
+        WriteShort,
+        WriteUShort,
+        WriteInt,
+        WriteUInt,
+        WriteLong,
+        WriteULong,
+    ];
 
-    public void Initialize()
-    {
-        _writers[(int)SimpleWriterType.Byte] = WriteByteNow;
-        _writers[(int)SimpleWriterType.SByte] = WriteSByteNow;
-        _writers[(int)SimpleWriterType.Short] = WriteShort;
-        _writers[(int)SimpleWriterType.UShort] = WriteUShort;
-        _writers[(int)SimpleWriterType.Int] = WriteInt;
-        _writers[(int)SimpleWriterType.UInt] = WriteUInt;
-        _writers[(int)SimpleWriterType.Long] = WriteLong;
-        _writers[(int)SimpleWriterType.ULong] = WriteULong;
-    }
-
-    public Action<BonOutput, T> GetWriter<T>(SimpleWriterType simpleWriterType) =>
-        (Action<BonOutput, T>)_writers[(int)simpleWriterType];
+    public static Action<BonOutput, T> GetWriter<T>(SimpleWriterType simpleWriterType) =>
+        (Action<BonOutput, T>)_writers[(int)simpleWriterType - 1];
 
     private static void WriteByteNow(BonOutput output, byte value)
     {

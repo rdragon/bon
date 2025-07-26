@@ -112,15 +112,7 @@ public sealed class ManualSerializer : IEnumerable<byte>
         return this;
     }
 
-    public ManualSerializer WriteClassHeader<T>() =>
-        WriteClassSchema<T>();
-
-    public ManualSerializer WriteInterfaceHeader<T>() =>
-        WriteInterfaceSchema<T>();
-
-    public ManualSerializer WriteClassSchema<T>() => WriteCustomSchema<T>(GetSchemaTypeOfRecord<T>());
-
-    private static SchemaType GetSchemaTypeOfRecord<T>() => typeof(T).IsNullable() ? SchemaType.NullableRecord : SchemaType.Record;
+    public ManualSerializer WriteClassSchema<T>(bool isNullable = true) => WriteCustomSchema<T>(isNullable ? SchemaType.NullableRecord : SchemaType.Record);
 
     public ManualSerializer WriteInterfaceSchema<T>() => WriteCustomSchema<T>(SchemaType.Union);
 

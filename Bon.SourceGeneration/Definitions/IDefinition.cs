@@ -45,11 +45,6 @@ namespace Bon.SourceGeneration.Definitions
         /// </summary>
         IEnumerable<IDefinition> GetInnerDefinitions();
 
-        /// <summary>
-        /// The class that contains the create method that creates the schema for this definition.
-        /// </summary>
-        string SchemaBaseClass { get; }
-
         string ToPrettyString(bool allowRecursion = true);
 
         string TypeForWriter { get; }

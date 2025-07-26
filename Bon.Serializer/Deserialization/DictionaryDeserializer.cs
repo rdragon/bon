@@ -2,9 +2,9 @@
 
 internal sealed class DictionaryDeserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        if (sourceSchema is not DictionarySchema dictionarySchema || !targetType.IsGenericType)
+        if (!sourceSchema.IsDictionary || !targetType.IsGenericType)
         {
             return null;
         }
@@ -21,10 +21,10 @@ internal sealed class DictionaryDeserializer(DeserializerStore deserializerStore
 
         return (Delegate?)this.GetPrivateMethod(nameof(TryCreateDictionaryReaderFor))
             .MakeGenericMethod(keyType, valueType)
-            .Invoke(this, [dictionarySchema, targetType])!;
+            .Invoke(this, [sourceSchema, targetType])!;
     }
 
-    private Read<Dictionary<TKey, TValue>?>? TryCreateDictionaryReaderFor<TKey, TValue>(DictionarySchema sourceSchema, Type targetType)
+    private Read<Dictionary<TKey, TValue>?>? TryCreateDictionaryReaderFor<TKey, TValue>(Schema sourceSchema, Type targetType)
         where TKey : notnull
     {
         // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
@@ -34,8 +34,8 @@ internal sealed class DictionaryDeserializer(DeserializerStore deserializerStore
             return null;
         }
 
-        var readKey = deserializerStore.GetDeserializer<TKey>(sourceSchema.InnerSchema1);
-        var readValue = deserializerStore.GetDeserializer<TValue>(sourceSchema.InnerSchema2);
+        var readKey = deserializerStore.GetDeserializer<TKey>(sourceSchema.InnerSchemas[0]);
+        var readValue = deserializerStore.GetDeserializer<TValue>(sourceSchema.InnerSchemas[1]);
 
         return input =>
         {

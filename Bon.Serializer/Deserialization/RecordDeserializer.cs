@@ -26,18 +26,13 @@ internal sealed class RecordDeserializer(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Read<T?>? TryCreateDeserializer<T>(Schema1 sourceSchema, Schema1? targetSchema)
+    public Read<T?>? TryCreateDeserializer<T>(Schema sourceSchema, Schema? targetSchema)
     {
-        if (sourceSchema is not RecordSchema recordSourceSchema || targetSchema is not RecordSchema recordTargetSchema)
+        if (!sourceSchema.IsRecord || targetSchema?.IsRecord != true)
         {
             return null;
         }
 
-        return CreateDeserializer<T>(recordSourceSchema, recordTargetSchema);
-    }
-
-    private Read<T?> CreateDeserializer<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
-    {
         var deserializer = CreateDeserializerNow<T>(sourceSchema, targetSchema);
 
         if (sourceSchema.IsNullable)
@@ -51,7 +46,7 @@ internal sealed class RecordDeserializer(
         return deserializer;
     }
 
-    private Read<T> CreateDeserializerNow<T>(RecordSchema sourceSchema, RecordSchema targetSchema)
+    private Read<T> CreateDeserializerNow<T>(Schema sourceSchema, Schema targetSchema)
     {
         var index = 0;
         var arguments = new object?[targetSchema.Members.Count * 2 + 1];
@@ -75,7 +70,7 @@ internal sealed class RecordDeserializer(
         return CombineSkippers(sourceMembers.PopAllUpTo(maxId).Select(GetSkipper).ToArray());
     }
 
-    private Action<BonInput> GetSkipper(SchemaMember1 sourceMember) => skipperStore.GetSkipper(sourceMember.Schema);
+    private Action<BonInput> GetSkipper(SchemaMember sourceMember) => skipperStore.GetSkipper(sourceMember.Schema);
 
     private static Action<BonInput>? CombineSkippers(Action<BonInput>[] skippers)
     {
@@ -124,9 +119,9 @@ internal sealed class RecordDeserializer(
         };
     }
 
-    private Delegate GetReaderFactory(MemberCollection sourceMembers, SchemaMember1 targetMember, Type targetMemberType)
+    private Delegate GetReaderFactory(MemberCollection sourceMembers, SchemaMember targetMember, Type targetMemberType)
     {
-        if (sourceMembers.TryPopMember(targetMember.Id) is SchemaMember1 sourceMember)
+        if (sourceMembers.TryPopMember(targetMember.Id) is SchemaMember sourceMember)
         {
             return () => deserializerStore.GetDeserializer(sourceMember.Schema, targetMemberType);
         }
@@ -134,11 +129,11 @@ internal sealed class RecordDeserializer(
         return () => deserializerStore.LoadDefaultValueGetter(targetMemberType);
     }
 
-    public class MemberCollection(IReadOnlyList<SchemaMember1> members)
+    public class MemberCollection(IReadOnlyList<SchemaMember> members)
     {
         private int _index;
 
-        public IEnumerable<SchemaMember1> PopAllUpTo(int id)
+        public IEnumerable<SchemaMember> PopAllUpTo(int id)
         {
             while (_index < members.Count)
             {
@@ -154,7 +149,7 @@ internal sealed class RecordDeserializer(
             }
         }
 
-        public SchemaMember1? TryPopMember(int id)
+        public SchemaMember? TryPopMember(int id)
         {
             if (_index == members.Count)
             {

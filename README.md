@@ -120,29 +120,24 @@ The first parameter of the attribute is an identifier of type `int`. Each implem
 The serializer outputs a binary message that consists of the following parts:
 
 ```
-message = format_type + block_id + schema + body
+message = schema + body
 ```
 
 These parts can be described as follows:
 
-- `format_type`: one byte indicating the format type.
-- `block_id`: four bytes representing the ID of a schema block, or zero bytes if the format type doesn't include a block ID.
-- `schema`: two or more bytes determining the schema used by the `body` part, or zero bytes if the format type doesn't include a block ID.
+- `schema`: one or more bytes determining the schema used by the `body` part
 - `body`: the actual payload of the message.
-
-A message can only be deserialized if the schema block with ID `block_id` is known by the deserializer (or if there is no `block_id`).
 
 ### The schema part
 The `schema` part consists itself of three parts:
 
 ```
-schema = schema_type + is_nullable + additional_data
+schema = schema_type + additional_data
 ```
 
 These parts can be described as follows:
 
-- `schema_type`: one byte representing one of the following values: `record`, `union`, `array`, `dictionary`, `tuple2`, `tuple3`, `string`, `bool`, `byte`, `sbyte`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `unsigned_whole_number`, `signed_whole_number`, `float`, `double`, `decimal`, `guid`.
-- `is_nullable`: one byte indicating whether the value `null` is allowed.
+- `schema_type`: one byte representing one of the following values: `record`, `record?`, `union`, `array`, `dictionary`, `tuple2`, `tuple2?`, `tuple3`, `tuple3?`, `string`, `bool`, `byte`, `sbyte`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `unsigned_whole_number`, `signed_whole_number`, `float`, `double`, `double?`, `decimal?`.
 - `additional_data`: zero or more bytes containing additional data.
 
 The additional data depends on the schema type:

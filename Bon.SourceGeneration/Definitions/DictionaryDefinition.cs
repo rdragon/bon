@@ -34,8 +34,6 @@ namespace Bon.SourceGeneration.Definitions
             yield return KeyDefinition;
             yield return ValueDefinition;
         }
-
-        public override string SchemaBaseClass => "GenericSchema2";
     }
 
     public enum DictionaryType

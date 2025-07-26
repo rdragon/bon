@@ -17,7 +17,7 @@ partial class BonSerializer
         var result = new JsonObject
         {
             ["body"] = BonToJsonDeserializer.Deserialize(reader, schema),
-            //json ["schema"] = SchemaJsonSerializer.Serialize(schema),
+            ["schema"] = SchemaJsonSerializer.Write(schema),
         };
 
         return result;
@@ -40,14 +40,10 @@ partial class BonSerializer
     /// </summary>
     public void JsonToBon(Stream stream, JsonObject jsonObject)
     {
-        //json we willen hier methode welke van json direct naar Schema gaat
-        var schemaData = SchemaJsonSerializer.Deserialize(jsonObject.GetPropertyValue("schema"));
+        var schema = new SchemaJsonSerializer(_layoutStore).Read(jsonObject.GetPropertyValue("schema"));
         var body = jsonObject["body"];
-
-        Schema1 schema = null!; // _schemaDataResolver.GetSchemaBySchemaData(schemaData);
         var writer = new BinaryWriter(stream);
-
-        WriteHeader(writer, schemaData);
+        WriteSchema(writer, schema);
         JsonToBonSerializer.Serialize(writer, body, schema);
     }
 

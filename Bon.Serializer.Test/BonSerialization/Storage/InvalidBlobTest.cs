@@ -1,10 +1,28 @@
 ﻿namespace Bon.Serializer.Test.BonSerialization.Storage;
 
-public class InvalidBlobTest
+public class InvalidBlobTest : BonSerializerTestBase
 {
-    [Fact] public void InvalidMarker() => Run([1, 2], "Expected marker");
+    private const byte Timestamp = 255;
+    private const byte LayoutId = 1;
+    private const byte MemberCount = 1;
 
-    [Fact] public void InvalidVersion() => Run([0x5d, 0xad, 0xff], "Cannot handle block version");
+    [Fact]
+    public void LayoutIdOutOfRange() => Run([
+        Timestamp,
+        0], "Layout ID out of range");
+
+    [Fact]
+    public void MemberCountOutOfRange() => Run([
+        Timestamp,
+        LayoutId,
+        .. GetCompactIntBytes(10_001)], "Member count out of range");
+
+    [Fact]
+    public void MemberIdOutOfRange() => Run([
+        Timestamp,
+        LayoutId,
+        MemberCount,
+        .. GetCompactIntBytes(-1)], "Member ID out of range");
 
     private static void Run(byte[] bytes, string expectedSubstring)
     {

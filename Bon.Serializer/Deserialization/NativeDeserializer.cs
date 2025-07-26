@@ -11,9 +11,9 @@ internal partial class NativeDeserializer(DeserializerStore deserializerStore)
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        if (sourceSchema is not NativeSchema)
+        if (!sourceSchema.IsNative)
         {
             return null;
         }
@@ -24,7 +24,7 @@ internal partial class NativeDeserializer(DeserializerStore deserializerStore)
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    private Delegate? TryCreateDeserializerNow(Schema1 sourceSchema, Type targetType)
+    private Delegate? TryCreateDeserializerNow(Schema sourceSchema, Type targetType)
     {
         if (TryGetNativeType(targetType) is not { } foundTargetType)
         {

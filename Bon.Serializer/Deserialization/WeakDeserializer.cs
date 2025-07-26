@@ -10,7 +10,7 @@ internal class WeakDeserializer
     /// <summary>
     /// //2at
     /// </summary>
-    private readonly Dictionary<Type, Func<Schema1, Delegate>> _factories = [];
+    private readonly Dictionary<Type, Func<Schema, Delegate>> _factories = [];
 
     public WeakDeserializer(DeserializerStore deserializerStore)
     {
@@ -60,6 +60,6 @@ internal class WeakDeserializer
         };
     }
 
-    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType) =>
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType) =>
         _factories.TryGetValue(targetType, out var factory) ? factory(sourceSchema) : null;
 }

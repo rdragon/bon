@@ -7,23 +7,23 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
     /// <summary>
     /// Returns a method that reads binary data formatted according to the schema and throws away the result.
     /// </summary>
-    public Action<BonInput> GetSkipper(Schema1 schema)
+    public Action<BonInput> GetSkipper(Schema schema)
     {
         return schema switch
         {
-            ArraySchema arraySchema => GetArraySkipper(arraySchema),
-            DictionarySchema dictionarySchema => GetDictionarySkipper(dictionarySchema),
-            Tuple2Schema tuple2Schema => GetTuple2Skipper(tuple2Schema),
-            Tuple3Schema tuple3Schema => GetTuple3Skipper(tuple3Schema),
-            NativeSchema nativeSchema => GetNativeSkipper(nativeSchema),
-            RecordSchema recordSchema => GetRecordSkipper(recordSchema),
-            UnionSchema unionSchema => GetUnionSkipper(unionSchema),
+            { IsArray: true } => GetArraySkipper(schema),
+            { IsDictionary: true } => GetDictionarySkipper(schema),
+            { IsTuple2: true } => GetTuple2Skipper(schema),
+            { IsTuple3: true } => GetTuple3Skipper(schema),
+            { IsNative: true } => GetNativeSkipper(schema),
+            { IsRecord: true } => GetRecordSkipper(schema),
+            { IsUnion: true } => GetUnionSkipper(schema),
         };
     }
 
-    private Action<BonInput> GetArraySkipper(ArraySchema schema)
+    private Action<BonInput> GetArraySkipper(Schema schema)
     {
-        var skipElement = GetSkipper(schema.InnerSchema);
+        var skipElement = GetSkipper(schema.InnerSchemas[0]);
 
         return (BonInput input) =>
         {
@@ -39,10 +39,10 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetDictionarySkipper(DictionarySchema schema)
+    private Action<BonInput> GetDictionarySkipper(Schema schema)
     {
-        var skipKey = GetSkipper(schema.InnerSchema1);
-        var skipValue = GetSkipper(schema.InnerSchema2);
+        var skipKey = GetSkipper(schema.InnerSchemas[0]);
+        var skipValue = GetSkipper(schema.InnerSchemas[1]);
 
         return (BonInput input) =>
         {
@@ -59,10 +59,10 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetTuple2Skipper(Tuple2Schema schema)
+    private Action<BonInput> GetTuple2Skipper(Schema schema)
     {
-        var skipItem1 = GetSkipper(schema.InnerSchema1);
-        var skipItem2 = GetSkipper(schema.InnerSchema2);
+        var skipItem1 = GetSkipper(schema.InnerSchemas[0]);
+        var skipItem2 = GetSkipper(schema.InnerSchemas[1]);
 
         if (schema.IsNullable)
         {
@@ -85,11 +85,11 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetTuple3Skipper(Tuple3Schema schema)
+    private Action<BonInput> GetTuple3Skipper(Schema schema)
     {
-        var skipItem1 = GetSkipper(schema.InnerSchema1);
-        var skipItem2 = GetSkipper(schema.InnerSchema2);
-        var skipItem3 = GetSkipper(schema.InnerSchema3);
+        var skipItem1 = GetSkipper(schema.InnerSchemas[0]);
+        var skipItem2 = GetSkipper(schema.InnerSchemas[1]);
+        var skipItem3 = GetSkipper(schema.InnerSchemas[2]);
 
         if (schema.IsNullable)
         {
@@ -114,9 +114,9 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         };
     }
 
-    private Action<BonInput> GetNativeSkipper(NativeSchema schema) => deserializerStore.GetNativeSkipper(schema.SchemaType);
+    private Action<BonInput> GetNativeSkipper(Schema schema) => deserializerStore.GetNativeSkipper(schema.SchemaType);
 
-    private Action<BonInput> GetRecordSkipper(RecordSchema schema)
+    private Action<BonInput> GetRecordSkipper(Schema schema)
     {
         Action<BonInput>[]? skippers = null;
 
@@ -151,7 +151,7 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
         Action<BonInput>[] getSkippers() => schema.Members.Select(member => GetSkipper(member.Schema)).ToArray();
     }
 
-    private Action<BonInput> GetUnionSkipper(UnionSchema schema)
+    private Action<BonInput> GetUnionSkipper(Schema schema)
     {
         var skippers = schema.Members.ToDictionary(member => member.Id, member => GetSkipper(member.Schema));
 

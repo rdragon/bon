@@ -25,7 +25,5 @@ namespace Bon.SourceGeneration.Definitions
             yield return Item1Definition;
             yield return Item2Definition;
         }
-
-        public override string SchemaBaseClass => "GenericSchema2";
     }
 }

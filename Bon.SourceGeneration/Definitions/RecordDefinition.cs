@@ -74,8 +74,6 @@ namespace Bon.SourceGeneration.Definitions
 
         protected override IEnumerable<IRecursiveEquatable> GetInnerObjects() => Members;
 
-        public override string SchemaBaseClass => "CustomSchema";
-
         public override string TypeForWriter => IsReferenceType && !IsNullable ? $"NotNull<{Type}>" : Type;
 
         public ICriticalDefinition SwapNullability() =>

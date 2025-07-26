@@ -131,22 +131,6 @@ internal static class ExtensionMethods
         throw new ArgumentException($"Property '{propertyName}' not found or null.", nameof(propertyName));
     }
 
-    public static void AddMultiple<T>(this ref HashCode hashCode, IEnumerable<T> values)
-    {
-        foreach (var value in values)
-        {
-            hashCode.Add(value);
-        }
-    }
-
-    public static void AddMultipleUnordered<T>(this ref HashCode hashCode, IEnumerable<T> values)
-    {
-        foreach (var hash in values.Select(x => x?.GetHashCode() ?? 0).Order())
-        {
-            hashCode.Add(hash);
-        }
-    }
-
     // The reason for using extension methods is that you can then use the null-conditional operator "?.".
 
     public static ulong? ToNullableULong(this char value) => value;
@@ -165,28 +149,42 @@ internal static class ExtensionMethods
     public static TimeOnly ToTimeOnly(this long value) => new(value);
     public static Guid? ToGuid(this byte[]? value) => value?.Length == 16 ? new(value) : null;
 
-    public static bool IsNullable(this SchemaType schemaType) => schemaType is
-        SchemaType.WholeNumber or
-        SchemaType.SignedWholeNumber or
-        SchemaType.FractionalNumber or
-        SchemaType.NullableRecord or
-        SchemaType.NullableTuple2 or
-        SchemaType.NullableTuple3 or
-        SchemaType.Union or
-        SchemaType.Array or
-        SchemaType.Dictionary or
-        SchemaType.String;
-
     public static string ToHexString(this byte[] bytes) =>
         string.Join(" ", Convert.ToHexString(bytes).Chunk(2).Select(xs => new string(xs)));
 
-    public static bool IsCustomSchema(this SchemaType schemaType)
-    {
-        throw new NotImplementedException();//1at
-    }
+    public static bool IsNullable(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsNullable) != 0;
 
-    public static bool IsNativeSchema(this SchemaType schemaType)
+    public static bool IsCustomSchema(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsCustom) != 0;
+
+    public static bool IsNativeSchema(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsNative) != 0;
+
+    public static bool IsTupleSchema(this SchemaType schemaType) => (schemaType.GetSchemaFlags() & SchemaFlags.IsTuple) != 0;
+
+    public static SchemaFlags GetSchemaFlags(this SchemaType schemaType) => schemaType switch
     {
-        throw new NotImplementedException();//1at
-    }
+        SchemaType.Record => SchemaFlags.IsCustom,
+        SchemaType.NullableRecord => SchemaFlags.IsCustom | SchemaFlags.IsNullable,
+        SchemaType.Union => SchemaFlags.IsCustom | SchemaFlags.IsNullable,
+        SchemaType.String => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.Byte => SchemaFlags.IsNative,
+        SchemaType.SByte => SchemaFlags.IsNative,
+        SchemaType.Short => SchemaFlags.IsNative,
+        SchemaType.UShort => SchemaFlags.IsNative,
+        SchemaType.Int => SchemaFlags.IsNative,
+        SchemaType.UInt => SchemaFlags.IsNative,
+        SchemaType.Long => SchemaFlags.IsNative,
+        SchemaType.ULong => SchemaFlags.IsNative,
+        SchemaType.Float => SchemaFlags.IsNative,
+        SchemaType.Double => SchemaFlags.IsNative,
+        SchemaType.NullableDecimal => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.WholeNumber => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.SignedWholeNumber => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.FractionalNumber => SchemaFlags.IsNative | SchemaFlags.IsNullable,
+        SchemaType.Array => SchemaFlags.IsNullable,
+        SchemaType.Dictionary => SchemaFlags.IsNullable,
+        SchemaType.Tuple2 => SchemaFlags.IsTuple,
+        SchemaType.NullableTuple2 => SchemaFlags.IsTuple | SchemaFlags.IsNullable,
+        SchemaType.Tuple3 => SchemaFlags.IsTuple,
+        SchemaType.NullableTuple3 => SchemaFlags.IsTuple | SchemaFlags.IsNullable,
+    };
 }

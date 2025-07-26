@@ -3,19 +3,14 @@
 internal sealed class UnionDeserializer(
      DeserializerStore deserializerStore) : IUseReflection
 {
-    public Read<T?>? TryCreateDeserializer<T>(Schema1 sourceSchema, Schema1? targetSchema)
+    public Read<T?>? TryCreateDeserializer<T>(Schema sourceSchema, Schema? targetSchema)
     {
-        if (sourceSchema is not UnionSchema unionSourceSchema || targetSchema is not UnionSchema unionTargetSchema)
+        // See bookmark 628227999 for all places where a union is serialized/deserialized.
+
+        if (!sourceSchema.IsUnion || targetSchema?.IsUnion != true)
         {
             return null;
         }
-
-        return CreateDeserializer<T>(unionSourceSchema, unionTargetSchema);
-    }
-
-    public Read<T?> CreateDeserializer<T>(UnionSchema sourceSchema, UnionSchema targetSchema)
-    {
-        // See bookmark 628227999 for all places where a union is serialized/deserialized.
 
         var deserializers = new Dictionary<int, Read<T?>>();
         var targetMembers = targetSchema.Members.ToDictionary(member => member.Id);
@@ -49,5 +44,5 @@ internal sealed class UnionDeserializer(
         };
     }
 
-    private Delegate GetRecordDeserializer<T>(Schema1 sourceSchema) => deserializerStore.GetDeserializer<T>(sourceSchema);
+    private Delegate GetRecordDeserializer<T>(Schema sourceSchema) => deserializerStore.GetDeserializer<T>(sourceSchema);
 }

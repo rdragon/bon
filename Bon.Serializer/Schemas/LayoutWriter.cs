@@ -1,26 +1,24 @@
-﻿using System.Diagnostics;
-
-namespace Bon.Serializer.Schemas;
+﻿namespace Bon.Serializer.Schemas;
 
 internal sealed class LayoutWriter(BinaryWriter writer)
 {
     public void Write(Layout layout)
     {
-        WriteInt(layout.Id, min: 1);
+        WriteLayoutId(layout.Id);
         WriteMembers(layout.Members);
     }
 
     private void WriteMembers(IReadOnlyList<SchemaMember> members)
     {
-        WriteInt(members.Count, max: 10_000);
+        WriteInt(members.Count, "Member count out of range", max: 10_000);
         foreach (var member in members)
         {
-            WriteInt(member.Id, min: 0);
+            WriteInt(member.Id, "Member ID out of range", min: 0);
             WriteSchema(member.Schema);
         }
     }
 
-    private void WriteSchema(Schema schema)
+    public void WriteSchema(Schema schema)
     {
         WriteSchemaType(schema.SchemaType);
         WriteInnerSchemas(schema.InnerSchemas);
@@ -37,16 +35,21 @@ internal sealed class LayoutWriter(BinaryWriter writer)
 
     private void WriteLayoutId(Schema schema)
     {
-        if (schema.IsCustomSchema)
+        if (schema.IsCustom)
         {
-            WriteInt(schema.LayoutId, min: 1);
+            WriteLayoutId(schema.LayoutId);
         }
     }
 
-    private void WriteInt(int value, int min = int.MinValue, int max = int.MaxValue)
+    private void WriteLayoutId(int layoutId)
     {
+        WriteInt(layoutId, "Layout ID out of range", min: 1);
+    }
+
+    private void WriteInt(int value, string? message, int min = int.MinValue, int max = int.MaxValue)
+    {
+        Trace.Assert(min <= value && value <= max, message);
         IntSerializer.Write(writer, value);
-        Trace.Assert(min <= value && value <= max);
     }
 
     private void WriteSchemaType(SchemaType schemaType) => writer.Write((byte)schemaType);

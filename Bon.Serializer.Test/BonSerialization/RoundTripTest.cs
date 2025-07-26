@@ -224,10 +224,6 @@ public sealed class RoundTripTest : BonSerializerTestBase
     [Fact] public void WithNullableByteArrayRoundTrip() => RoundTripFast(WithNullableByteArray);
     [Fact] public void DefaultWithNullableByteArrayRoundTrip() => RoundTripFast(DefaultWithNullableByteArray);
 
-    // ----------------------------------------------------------------------------------------------
-    // End of the "keep in sync" region.
-    // ----------------------------------------------------------------------------------------------
-
     [Fact] public void DefaultNullableTuple2RoundTrip() => RoundTripSlow(DefaultNullableTuple2);
     [Fact] public void DefaultWithTuple2RoundTrip() => RoundTripFast(DefaultWithTuple2);
 
@@ -245,15 +241,14 @@ public sealed class RoundTripTest : BonSerializerTestBase
 
     [Fact] public void ParentClassRoundTrip() => RoundTripFast((ParentClass)new ChildClass(5));
 
-    [Fact] public void Turtle1RoundTrip() => RoundTripSlow(Turtle1);
-    [Fact] public void Turtle2RoundTrip() => RoundTripSlow(Turtle2);
-    [Fact] public void Turtle3RoundTrip() => RoundTripSlow(Turtle3);
-    [Fact] public void Tortoise1RoundTrip() => RoundTripSlow(Tortoise1);
-    [Fact] public void Tortoise2RoundTrip() => RoundTripSlow(Tortoise2);
-    [Fact] public void Tortoise3RoundTrip() => RoundTripSlow(Tortoise3);
+    [Fact] public void Turtle1RoundTrip() => RoundTripFast(Turtle1);
+    [Fact] public void Turtle2RoundTrip() => RoundTripFast(Turtle2);
+    [Fact] public void Turtle3RoundTrip() => RoundTripFast(Turtle3);
+    [Fact] public void Tortoise1RoundTrip() => RoundTripFast(Tortoise1);
+    [Fact] public void Tortoise2RoundTrip() => RoundTripFast(Tortoise2);
+    [Fact] public void Tortoise3RoundTrip() => RoundTripFast(Tortoise3);
 
-    // "Slow" because of the laziness.
-    [Fact] public void Node1RoundTrip() => RoundTripSlow(Node1);
-    [Fact] public void Node2RoundTrip() => RoundTripSlow(Node2);
-    [Fact] public void Node3RoundTrip() => RoundTripSlow(Node3);
+    [Fact] public void Node1RoundTrip() => RoundTripFast(Node1);
+    [Fact] public void Node2RoundTrip() => RoundTripFast(Node2);
+    [Fact] public void Node3RoundTrip() => RoundTripFast(Node3);
 }

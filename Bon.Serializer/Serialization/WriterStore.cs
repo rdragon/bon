@@ -10,6 +10,7 @@ internal sealed class WriterStore : IUseReflection
     /// 3. by the method <see cref="CreateWriter"/>.
     /// </summary>
     private readonly ConcurrentDictionary<Type, Writer> _writers = new();
+
     private Func<Type, Writer>? _createWriter;
 
     public void AddNativeWriters()
@@ -17,60 +18,56 @@ internal sealed class WriterStore : IUseReflection
         // Bookmark 659516266 (native serialization)
         // All non-generic types for which the source generation context does not provide a writer should be added here.
         // This is the same set of types as can be found at bookmark 293228595.
-        Add<string>(NativeSerializer.WriteString, false);
-        Add<bool>(NativeSerializer.WriteBool, false);
-        Add<byte>(NativeSerializer.WriteByte, false, SimpleWriterType.Byte);
-        Add<sbyte>(NativeSerializer.WriteSByte, false, SimpleWriterType.SByte);
-        Add<short>(NativeSerializer.WriteShort, false, SimpleWriterType.Short);
-        Add<ushort>(NativeSerializer.WriteUShort, false, SimpleWriterType.UShort);
-        Add<int>(NativeSerializer.WriteInt, false, SimpleWriterType.Int);
-        Add<uint>(NativeSerializer.WriteUInt, false, SimpleWriterType.UInt);
-        Add<long>(NativeSerializer.WriteLong, false, SimpleWriterType.Long);
-        Add<ulong>(NativeSerializer.WriteULong, false, SimpleWriterType.ULong);
-        Add<float>(NativeSerializer.WriteFloat, false);
-        Add<double>(NativeSerializer.WriteDouble, false);
-        Add<decimal>(NativeSerializer.WriteDecimal, false);
-        Add<Guid>(NativeSerializer.WriteGuid, false);
-        Add<char>(NativeSerializer.WriteChar, false);
-        Add<DateTime>(NativeSerializer.WriteDateTime, false);
-        Add<DateTimeOffset>(NativeSerializer.WriteDateTimeOffset, false);
-        Add<TimeSpan>(NativeSerializer.WriteTimeSpan, false);
-        Add<DateOnly>(NativeSerializer.WriteDateOnly, false);
-        Add<TimeOnly>(NativeSerializer.WriteTimeOnly, false);
+        Add<string>(NativeSerializer.WriteString);
+        Add<bool>(NativeSerializer.WriteBool);
+        Add<byte>(NativeSerializer.WriteByte, SimpleWriterType.Byte);
+        Add<sbyte>(NativeSerializer.WriteSByte, SimpleWriterType.SByte);
+        Add<short>(NativeSerializer.WriteShort, SimpleWriterType.Short);
+        Add<ushort>(NativeSerializer.WriteUShort, SimpleWriterType.UShort);
+        Add<int>(NativeSerializer.WriteInt, SimpleWriterType.Int);
+        Add<uint>(NativeSerializer.WriteUInt, SimpleWriterType.UInt);
+        Add<long>(NativeSerializer.WriteLong, SimpleWriterType.Long);
+        Add<ulong>(NativeSerializer.WriteULong, SimpleWriterType.ULong);
+        Add<float>(NativeSerializer.WriteFloat);
+        Add<double>(NativeSerializer.WriteDouble);
+        Add<decimal>(NativeSerializer.WriteDecimal);
+        Add<Guid>(NativeSerializer.WriteGuid);
+        Add<char>(NativeSerializer.WriteChar);
+        Add<DateTime>(NativeSerializer.WriteDateTime);
+        Add<DateTimeOffset>(NativeSerializer.WriteDateTimeOffset);
+        Add<TimeSpan>(NativeSerializer.WriteTimeSpan);
+        Add<DateOnly>(NativeSerializer.WriteDateOnly);
+        Add<TimeOnly>(NativeSerializer.WriteTimeOnly);
 
-        Add<bool?>(NativeSerializer.WriteNullableBool, false);
-        Add<byte?>(NativeSerializer.WriteNullableByte, false);
-        Add<sbyte?>(NativeSerializer.WriteNullableSByte, false);
-        Add<short?>(NativeSerializer.WriteNullableShort, false);
-        Add<ushort?>(NativeSerializer.WriteNullableUShort, false);
-        Add<int?>(NativeSerializer.WriteNullableInt, false);
-        Add<uint?>(NativeSerializer.WriteNullableUInt, false);
-        Add<long?>(NativeSerializer.WriteNullableLong, false);
-        Add<ulong?>(NativeSerializer.WriteNullableULong, false);
-        Add<float?>(NativeSerializer.WriteNullableFloat, false);
-        Add<double?>(NativeSerializer.WriteNullableDouble, false);
-        Add<decimal?>(NativeSerializer.WriteNullableDecimal, false);
-        Add<Guid?>(NativeSerializer.WriteNullableGuid, false);
-        Add<char?>(NativeSerializer.WriteNullableChar, false);
-        Add<DateTime?>(NativeSerializer.WriteNullableDateTime, false);
-        Add<DateTimeOffset?>(NativeSerializer.WriteNullableDateTimeOffset, false);
-        Add<TimeSpan?>(NativeSerializer.WriteNullableTimeSpan, false);
-        Add<DateOnly?>(NativeSerializer.WriteNullableDateOnly, false);
-        Add<TimeOnly?>(NativeSerializer.WriteNullableTimeOnly, false);
+        Add<bool?>(NativeSerializer.WriteNullableBool);
+        Add<byte?>(NativeSerializer.WriteNullableByte);
+        Add<sbyte?>(NativeSerializer.WriteNullableSByte);
+        Add<short?>(NativeSerializer.WriteNullableShort);
+        Add<ushort?>(NativeSerializer.WriteNullableUShort);
+        Add<int?>(NativeSerializer.WriteNullableInt);
+        Add<uint?>(NativeSerializer.WriteNullableUInt);
+        Add<long?>(NativeSerializer.WriteNullableLong);
+        Add<ulong?>(NativeSerializer.WriteNullableULong);
+        Add<float?>(NativeSerializer.WriteNullableFloat);
+        Add<double?>(NativeSerializer.WriteNullableDouble);
+        Add<decimal?>(NativeSerializer.WriteNullableDecimal);
+        Add<Guid?>(NativeSerializer.WriteNullableGuid);
+        Add<char?>(NativeSerializer.WriteNullableChar);
+        Add<DateTime?>(NativeSerializer.WriteNullableDateTime);
+        Add<DateTimeOffset?>(NativeSerializer.WriteNullableDateTimeOffset);
+        Add<TimeSpan?>(NativeSerializer.WriteNullableTimeSpan);
+        Add<DateOnly?>(NativeSerializer.WriteNullableDateOnly);
+        Add<TimeOnly?>(NativeSerializer.WriteNullableTimeOnly);
     }
 
-    /// <param name="usesCustomSchemas">
-    /// Whether the writer might use custom schemas.
-    /// This value controls whether the header of the final binary message includes a block ID.
-    /// </param>
-    public void Add<T>(Action<BinaryWriter, T> writer, bool usesCustomSchemas, SimpleWriterType simpleWriterType = SimpleWriterType.None)
+    public void Add<T>(Action<BinaryWriter, T> writer, SimpleWriterType simpleWriterType = SimpleWriterType.None)
     {
-        _writers[typeof(T)] = new(writer, usesCustomSchemas, simpleWriterType);
+        _writers[typeof(T)] = new(writer, simpleWriterType);
     }
 
-    public void Add(Type type, Delegate writer, bool usesCustomSchemas)
+    public void Add(Type type, Delegate writer)
     {
-        _writers[type] = new(writer, usesCustomSchemas);
+        _writers[type] = new(writer);
     }
 
     /// <summary>
@@ -155,7 +152,7 @@ internal sealed class WriterStore : IUseReflection
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
-        var (writeElement, usesCustomSchemas, _) = GetWriter<TElement>();
+        var (writeElement, _) = GetWriter<TElement>();
 
         return new((BinaryWriter writer, IEnumerable<TElement>? collection) =>
         {
@@ -173,12 +170,12 @@ internal sealed class WriterStore : IUseReflection
             {
                 writeElement(writer, elements[i]);
             }
-        }, usesCustomSchemas);
+        });
     }
 
     private static Writer CreateByteArrayWriter()
     {
-        return new(WriteByteArray, false);
+        return new(WriteByteArray);
     }
 
     public static void WriteByteArray(BinaryWriter writer, byte[]? array)
@@ -216,10 +213,8 @@ internal sealed class WriterStore : IUseReflection
     {
         // Almost identical to the method below.
 
-        var (writeKey, usesCustomSchemas1, _) = GetWriter<TKey>();
-        var (writeValue, usesCustomSchemas2, _) = GetWriter<TValue>();
-
-        var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
+        var (writeKey, _) = GetWriter<TKey>();
+        var (writeValue, _) = GetWriter<TValue>();
 
         return new((BinaryWriter writer, IDictionary<TKey, TValue>? dictionary) =>
         {
@@ -244,17 +239,15 @@ internal sealed class WriterStore : IUseReflection
             {
                 throw new InvalidOperationException("Dictionary was modified.");
             }
-        }, usesCustomSchemas);
+        });
     }
 
     private Writer CreateReadOnlyDictionaryWriterFor<TKey, TValue>()
     {
         // Almost identical to the method above.
 
-        var (writeKey, usesCustomSchemas1, _) = GetWriter<TKey>();
-        var (writeValue, usesCustomSchemas2, _) = GetWriter<TValue>();
-
-        var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
+        var (writeKey, _) = GetWriter<TKey>();
+        var (writeValue, _) = GetWriter<TValue>();
 
         return new((BinaryWriter writer, IReadOnlyDictionary<TKey, TValue>? dictionary) =>
         {
@@ -279,7 +272,7 @@ internal sealed class WriterStore : IUseReflection
             {
                 throw new InvalidOperationException("Dictionary was modified.");
             }
-        }, usesCustomSchemas);
+        });
     }
 
     private Writer CreateTuple2Writer(Tuple2Type tuple2)
@@ -293,10 +286,8 @@ internal sealed class WriterStore : IUseReflection
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var (writeItem1, usesCustomSchemas1, _) = GetWriter<T1>();
-        var (writeItem2, usesCustomSchemas2, _) = GetWriter<T2>();
-
-        var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2;
+        var (writeItem1, _) = GetWriter<T1>();
+        var (writeItem2, _) = GetWriter<T2>();
 
         if (isNullable)
         {
@@ -312,14 +303,14 @@ internal sealed class WriterStore : IUseReflection
                 writer.Write(NativeWriter.NOT_NULL);
                 writeItem1(writer, tuple.Value.Item1);
                 writeItem2(writer, tuple.Value.Item2);
-            }, usesCustomSchemas);
+            });
         }
 
         return new((BinaryWriter writer, (T1, T2) tuple) =>
         {
             writeItem1(writer, tuple.Item1);
             writeItem2(writer, tuple.Item2);
-        }, usesCustomSchemas);
+        });
     }
 
     private Writer CreateTuple3Writer(Tuple3Type tuple3)
@@ -333,11 +324,9 @@ internal sealed class WriterStore : IUseReflection
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var (writeItem1, usesCustomSchemas1, _) = GetWriter<T1>();
-        var (writeItem2, usesCustomSchemas2, _) = GetWriter<T2>();
-        var (writeItem3, usesCustomSchemas3, _) = GetWriter<T3>();
-
-        var usesCustomSchemas = usesCustomSchemas1 | usesCustomSchemas2 | usesCustomSchemas3;
+        var (writeItem1, _) = GetWriter<T1>();
+        var (writeItem2, _) = GetWriter<T2>();
+        var (writeItem3, _) = GetWriter<T3>();
 
         if (isNullable)
         {
@@ -354,7 +343,7 @@ internal sealed class WriterStore : IUseReflection
                 writeItem1(writer, tuple.Value.Item1);
                 writeItem2(writer, tuple.Value.Item2);
                 writeItem3(writer, tuple.Value.Item3);
-            }, usesCustomSchemas);
+            });
         }
 
         return new((BinaryWriter writer, (T1, T2, T3) tuple) =>
@@ -362,6 +351,6 @@ internal sealed class WriterStore : IUseReflection
             writeItem1(writer, tuple.Item1);
             writeItem2(writer, tuple.Item2);
             writeItem3(writer, tuple.Item3);
-        }, usesCustomSchemas);
+        });
     }
 }

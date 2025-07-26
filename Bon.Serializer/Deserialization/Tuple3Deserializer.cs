@@ -2,9 +2,9 @@
 
 internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : IUseReflection
 {
-    public Delegate? TryCreateDeserializer(Schema1 sourceSchema, Type targetType)
+    public Delegate? TryCreateDeserializer(Schema sourceSchema, Type targetType)
     {
-        if (sourceSchema is not Tuple3Schema tuple3Schema ||
+        if (!sourceSchema.IsTuple3 ||
             targetType.TryGetTuple3Type() is not { } tuple3Type)
         {
             return null;
@@ -12,16 +12,16 @@ internal sealed class Tuple3Deserializer(DeserializerStore deserializerStore) : 
 
         return (Delegate?)this.GetPrivateMethod(nameof(CreateTuple3ReaderFor))
             .MakeGenericMethod(tuple3Type.Item1Type, tuple3Type.Item2Type, tuple3Type.Item3Type)
-            .Invoke(this, [tuple3Schema, tuple3Type.IsNullable])!;
+            .Invoke(this, [sourceSchema, tuple3Type.IsNullable])!;
     }
 
-    private Delegate CreateTuple3ReaderFor<T1, T2, T3>(Tuple3Schema sourceSchema, bool targetIsNullable)
+    private Delegate CreateTuple3ReaderFor<T1, T2, T3>(Schema sourceSchema, bool targetIsNullable)
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchema1);
-        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchema2);
-        var readItem3 = deserializerStore.GetDeserializer<T3>(sourceSchema.InnerSchema3);
+        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchemas[0]);
+        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchemas[1]);
+        var readItem3 = deserializerStore.GetDeserializer<T3>(sourceSchema.InnerSchemas[2]);
         var sourceIsNullable = sourceSchema.IsNullable;
 
         if (sourceIsNullable && targetIsNullable)

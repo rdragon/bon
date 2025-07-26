@@ -57,8 +57,6 @@ namespace Bon.SourceGeneration.Definitions
         {
             yield return ElementDefinition;
         }
-
-        public override string SchemaBaseClass => "GenericSchema1";
     }
 
     /// <summary>

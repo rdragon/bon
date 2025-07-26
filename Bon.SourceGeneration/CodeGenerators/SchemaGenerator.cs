@@ -5,8 +5,7 @@ using System.Linq;
 namespace Bon.SourceGeneration.CodeGenerators
 {
     /// <summary>
-    /// Generates for each and every definition it can find a schema (except the native definitions, as for those we can
-    /// use the NativeSchema class).
+    /// Generates for each and every definition it can find a schema (except the native definitions).
     /// It then publishes the schemas of all found <see cref="ICriticalDefinition"/>s.
     /// </summary>
     internal sealed class SchemaGenerator
@@ -23,7 +22,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             definitions = GetAllDefinitions(definitions);
 
             _codeGenerator.AddMethod(
-                "public void UpdateSchemaStore(BonFacade bonFacade)",
+                "public void LoadSchemas(Action<Type, Schema> onSchemaLoaded)",
                 "{");
 
             foreach (var definition in definitions)
@@ -67,10 +66,9 @@ namespace Bon.SourceGeneration.CodeGenerators
         private void CreateSchema(IDefinition definition)
         {
             var id = GetId(definition);
-            var schemaType = $"SchemaType.{definition.SchemaType}";
 
             _codeGenerator.AppendClassBody(
-                $"var schema{id} = {definition.SchemaBaseClass}.Create({schemaType});");
+                $"var schema{id} = Schema.Create(SchemaType.{definition.SchemaType});");
         }
 
         private void UpdateSchema(IDefinition definition)
@@ -88,7 +86,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             if (arguments.Length > 0)
             {
                 _codeGenerator.AppendClassBody(
-                    $"schema{id}.SetInnerSchemas({arguments});");
+                    $"schema{id}.InnerSchemas = [{arguments}];");
             }
         }
 
@@ -98,7 +96,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             var arguments = string.Join(", ", definition.Members.Select(GetMemberArgument));
 
             _codeGenerator.AppendClassBody(
-                $"schema{id}.SetMembers({arguments});");
+                $"schema{id}.Members = [{arguments}];");
         }
 
         private string GetSchemaArgument(IDefinition definition)
@@ -123,7 +121,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             var id = GetId(definition);
 
             _codeGenerator.AppendClassBody(
-                $"bonFacade.AddSchema(typeof({definition.TypeForWriter}), schema{id});");
+                $"onSchemaLoaded(typeof({definition.TypeForWriter}), schema{id});");
         }
 
         private int GetId(IDefinition definition) => _codeGenerator.GetId(definition.TypeForWriter);

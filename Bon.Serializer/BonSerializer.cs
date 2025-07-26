@@ -12,29 +12,23 @@ namespace Bon.Serializer;
 public sealed partial class BonSerializer
 {
     private readonly LayoutStore _layoutStore;
-    private readonly SchemaDataResolver _schemaDataResolver;
-    private readonly SchemaDataStore _schemaDataStore;
     private readonly WriterStore _writerStore;
-    private readonly SimpleWriterStore _simpleWriterStore;
-    private readonly StoreUpdater _layoutStoreUpdater;
+    private readonly LayoutStorage _layoutStorage;
     private readonly DeserializerStore _deserializerStore;
+    private readonly SchemaStore _schemaStore;
 
     private BonSerializer(
         LayoutStore layoutStore,
-        SchemaDataResolver schemaDataResolver,
-        SchemaDataStore schemaDataStore,
         WriterStore writerStore,
-        SimpleWriterStore simpleWriterStore,
-        StoreUpdater layoutStoreUpdater,
-        DeserializerStore deserializerStore)
+        LayoutStorage layoutStorage,
+        DeserializerStore deserializerStore,
+        SchemaStore schemaStore)
     {
         _layoutStore = layoutStore;
-        _schemaDataResolver = schemaDataResolver;
-        _schemaDataStore = schemaDataStore;
         _writerStore = writerStore;
-        _simpleWriterStore = simpleWriterStore;
-        _layoutStoreUpdater = layoutStoreUpdater;
+        _layoutStorage = layoutStorage;
         _deserializerStore = deserializerStore;
+        _schemaStore = schemaStore;
     }
 
     /// <summary>
@@ -54,28 +48,22 @@ public sealed partial class BonSerializer
         LayoutStore layoutStore = new();
         LayoutStorage layoutStorage = new(blob, layoutStore);
         SchemaStore schemaStore = new();
-        SchemaDataResolver schemaDataResolver = new(layoutStore);
         WriterStore writerStore = new();
-        SimpleWriterStore simpleWriterStore = new();
-        SchemaDataStore schemaDataStore = new(schemaStore);
         DeserializerStore deserializerStore = new(schemaStore);
-        BonFacade bonFacade = new(layoutStore, schemaStore, deserializerStore, writerStore);
-        StoreUpdater layoutStoreUpdater = new(layoutStorage, layoutStore, schemaStore, sourceGenerationContext, bonFacade);
+        BonFacade bonFacade = new(deserializerStore, writerStore);
+        SchemaLoader storeUpdater = new(layoutStorage, layoutStore, schemaStore, sourceGenerationContext);
 
-        await layoutStoreUpdater.InitializeStores().ConfigureAwait(false);
+        await storeUpdater.Run().ConfigureAwait(false);
         writerStore.AddNativeWriters();
         deserializerStore.AddNativeReaders();
         sourceGenerationContext.Run(bonFacade);
-        simpleWriterStore.Initialize();
 
         return new BonSerializer(
             layoutStore,
-            schemaDataResolver,
-            schemaDataStore,
             writerStore,
-            simpleWriterStore,
-            layoutStoreUpdater,
-            deserializerStore);
+            layoutStorage,
+            deserializerStore,
+            schemaStore);
     }
 
     /// <summary>
@@ -92,26 +80,38 @@ public sealed partial class BonSerializer
     public static Task<BonSerializer> CreateAsync(IBonSerializerContext bonSerializerContext, string layoutStorageFile) =>
         CreateAsync(bonSerializerContext, new FileSystemBlob(layoutStorageFile));
 
-    internal int GetLayoutId(Type type) => _layoutStoreUpdater.GetLayoutId(type);
-    internal int DeserializerCount => _deserializerStore.DeserializerCount;
-
-    /// <summary>
-    /// Returns a hash that is mostly based on the schemas inside this serializer.
-    /// </summary>
-    internal int GetSchemaHash()
-    {
-        var hashCode = new HashCode();
-        _layoutStore.AppendHash(ref hashCode);
-        _layoutStoreUpdater.AppendHash(ref hashCode);
-
-        return hashCode.ToHashCode();
-    }
-
     /// <summary>
     /// //2at
     /// </summary>
-    public async Task LoadLatestSchemas()
+    public async Task LoadLatestLayouts()
     {
-        await _layoutStoreUpdater.UpdateLayoutStore().ConfigureAwait(false);
+        await _layoutStorage.LoadLatestLayouts().ConfigureAwait(false);
     }
+
+    public string PrintKnownLayouts()
+    {
+        return new FullSchemaPrinter().Print(_layoutStore.Layouts);
+    }
+
+    public string PrintKnownSchemas(Predicate<Schema>? filter = null)
+    {
+        var schemas = _schemaStore.Schemas.Where(pair => filter is null || filter(pair.Value));
+        return new FullSchemaPrinter().Print(schemas);
+    }
+
+    public static string PrintLayouts(byte[] blob)
+    {
+        var store = new LayoutStore();
+        var reader = new LayoutReader(store, new BinaryReader(new MemoryStream(blob)), true);
+        reader.ReadManyLayouts();
+        return new FullSchemaPrinter().Print(store.Layouts);
+    }
+
+    //2at
+    internal Schema GetSchema(Type type) => _schemaStore.GetOrAddSchema(type);
+
+    //2at
+    internal int DeserializerCount => _deserializerStore.DeserializerCount;
+
+    internal IEnumerable<Layout> KnownLayouts => _layoutStore.Layouts;
 }

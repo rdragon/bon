@@ -7,13 +7,13 @@ internal sealed class CollectionDeserializer(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Delegate? TryCreateDeserializer<T>(Schema1 sourceSchema)
+    public Delegate? TryCreateDeserializer<T>(Schema sourceSchema)
     {
-        if (sourceSchema is ArraySchema arraySchema && TryParseAsCollectionType(typeof(T)) is { } tuple)
+        if (sourceSchema.IsArray && TryParseAsCollectionType(typeof(T)) is { } tuple)
         {
             return (Delegate)this.GetPrivateMethod(nameof(CreateCollectionReaderFor))
                 .MakeGenericMethod(tuple.ElementType)
-                .Invoke(this, [arraySchema, tuple.CollectionKind])!;
+                .Invoke(this, [sourceSchema, tuple.CollectionKind])!;
         }
 
         return null;
@@ -50,7 +50,7 @@ internal sealed class CollectionDeserializer(
         return null;
     }
 
-    private Delegate CreateCollectionReaderFor<TElement>(ArraySchema sourceSchema, CollectionKind collectionKind)
+    private Delegate CreateCollectionReaderFor<TElement>(Schema sourceSchema, CollectionKind collectionKind)
     {
         return collectionKind switch
         {
@@ -59,14 +59,14 @@ internal sealed class CollectionDeserializer(
         };
     }
 
-    private Read<TElement[]?> CreateArrayReaderFor<TElement>(ArraySchema sourceSchema)
+    private Read<TElement[]?> CreateArrayReaderFor<TElement>(Schema sourceSchema)
     {
-        if (typeof(TElement) == typeof(byte) && sourceSchema.InnerSchema == NativeSchema.Byte)
+        if (typeof(TElement) == typeof(byte) && sourceSchema.InnerSchemas[0].SchemaType == SchemaType.Byte)
         {
             return (Read<TElement[]?>)(object)CreateByteArrayReader();
         }
 
-        var readElement = deserializerStore.GetDeserializer<TElement>(sourceSchema.InnerSchema);
+        var readElement = deserializerStore.GetDeserializer<TElement>(sourceSchema.InnerSchemas[0]);
 
         return (BonInput input) =>
         {
@@ -91,9 +91,9 @@ internal sealed class CollectionDeserializer(
         };
     }
 
-    private Read<List<T>?> CreateListReaderFor<T>(ArraySchema sourceSchema)
+    private Read<List<T>?> CreateListReaderFor<T>(Schema sourceSchema)
     {
-        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchema);
+        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchemas[0]);
 
         return (BonInput input) =>
         {

@@ -22,8 +22,8 @@ internal sealed class SchemaStore
     /// Returns the schema that will be used when serializing the given type.
     /// If no schema is found, a new schema is created.
     /// </summary>
-    public Schema GetOrAdd(Type type) => _schemas.TryGetValue(type, out var schema) ?
-        schema : GetOrAdd(type, CreateSchema(type));
+    public Schema GetOrAddSchema(Type type) => _schemas.TryGetValue(type, out var schema) ?
+        schema : GetOrAddSchema(type, CreateSchema(type));
 
     public void AddNativeSchemas()
     {
@@ -31,46 +31,46 @@ internal sealed class SchemaStore
         // All non-generic types for which the source generation context does not provide a schema should be added here.
         // This is the same set of types as can be found at bookmark 293228595.
         // This mapping should be in sync with the mapping at bookmark 988874999.
-        AddSchema(typeof(string), NativeSchema.String);
-        AddSchema(typeof(bool), NativeSchema.Byte);
-        AddSchema(typeof(byte), NativeSchema.Byte);
-        AddSchema(typeof(sbyte), NativeSchema.SByte);
-        AddSchema(typeof(short), NativeSchema.Short);
-        AddSchema(typeof(ushort), NativeSchema.UShort);
-        AddSchema(typeof(int), NativeSchema.Int);
-        AddSchema(typeof(uint), NativeSchema.UInt);
-        AddSchema(typeof(long), NativeSchema.Long);
-        AddSchema(typeof(ulong), NativeSchema.ULong);
-        AddSchema(typeof(float), NativeSchema.Float);
-        AddSchema(typeof(double), NativeSchema.Double);
-        AddSchema(typeof(decimal), NativeSchema.NullableDecimal);
-        AddSchema(typeof(Guid), ArraySchema.ByteArray);
-        AddSchema(typeof(char), NativeSchema.WholeNumber);
-        AddSchema(typeof(DateTime), NativeSchema.Long);
-        AddSchema(typeof(DateTimeOffset), NativeSchema.Long);
-        AddSchema(typeof(TimeSpan), NativeSchema.Long);
-        AddSchema(typeof(DateOnly), NativeSchema.Int);
-        AddSchema(typeof(TimeOnly), NativeSchema.Long);
+        AddSchema(typeof(string), Schema.String);
+        AddSchema(typeof(bool), Schema.Byte);
+        AddSchema(typeof(byte), Schema.Byte);
+        AddSchema(typeof(sbyte), Schema.SByte);
+        AddSchema(typeof(short), Schema.Short);
+        AddSchema(typeof(ushort), Schema.UShort);
+        AddSchema(typeof(int), Schema.Int);
+        AddSchema(typeof(uint), Schema.UInt);
+        AddSchema(typeof(long), Schema.Long);
+        AddSchema(typeof(ulong), Schema.ULong);
+        AddSchema(typeof(float), Schema.Float);
+        AddSchema(typeof(double), Schema.Double);
+        AddSchema(typeof(decimal), Schema.NullableDecimal);
+        AddSchema(typeof(Guid), Schema.ByteArray);
+        AddSchema(typeof(char), Schema.WholeNumber);
+        AddSchema(typeof(DateTime), Schema.Long);
+        AddSchema(typeof(DateTimeOffset), Schema.Long);
+        AddSchema(typeof(TimeSpan), Schema.Long);
+        AddSchema(typeof(DateOnly), Schema.Int);
+        AddSchema(typeof(TimeOnly), Schema.Long);
 
-        AddSchema(typeof(bool?), NativeSchema.WholeNumber);
-        AddSchema(typeof(byte?), NativeSchema.WholeNumber);
-        AddSchema(typeof(sbyte?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(short?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(ushort?), NativeSchema.WholeNumber);
-        AddSchema(typeof(int?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(uint?), NativeSchema.WholeNumber);
-        AddSchema(typeof(long?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(ulong?), NativeSchema.WholeNumber);
-        AddSchema(typeof(float?), NativeSchema.FractionalNumber);
-        AddSchema(typeof(double?), NativeSchema.FractionalNumber);
-        AddSchema(typeof(decimal?), NativeSchema.NullableDecimal);
-        AddSchema(typeof(Guid?), ArraySchema.ByteArray);
-        AddSchema(typeof(char?), NativeSchema.WholeNumber);
-        AddSchema(typeof(DateTime?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(DateTimeOffset?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(TimeSpan?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(DateOnly?), NativeSchema.SignedWholeNumber);
-        AddSchema(typeof(TimeOnly?), NativeSchema.SignedWholeNumber);
+        AddSchema(typeof(bool?), Schema.WholeNumber);
+        AddSchema(typeof(byte?), Schema.WholeNumber);
+        AddSchema(typeof(sbyte?), Schema.SignedWholeNumber);
+        AddSchema(typeof(short?), Schema.SignedWholeNumber);
+        AddSchema(typeof(ushort?), Schema.WholeNumber);
+        AddSchema(typeof(int?), Schema.SignedWholeNumber);
+        AddSchema(typeof(uint?), Schema.WholeNumber);
+        AddSchema(typeof(long?), Schema.SignedWholeNumber);
+        AddSchema(typeof(ulong?), Schema.WholeNumber);
+        AddSchema(typeof(float?), Schema.FractionalNumber);
+        AddSchema(typeof(double?), Schema.FractionalNumber);
+        AddSchema(typeof(decimal?), Schema.NullableDecimal);
+        AddSchema(typeof(Guid?), Schema.ByteArray);
+        AddSchema(typeof(char?), Schema.WholeNumber);
+        AddSchema(typeof(DateTime?), Schema.SignedWholeNumber);
+        AddSchema(typeof(DateTimeOffset?), Schema.SignedWholeNumber);
+        AddSchema(typeof(TimeSpan?), Schema.SignedWholeNumber);
+        AddSchema(typeof(DateOnly?), Schema.SignedWholeNumber);
+        AddSchema(typeof(TimeOnly?), Schema.SignedWholeNumber);
     }
 
     public void AddSchema(Type type, Schema schema)
@@ -81,29 +81,29 @@ internal sealed class SchemaStore
         }
     }
 
-    private Schema GetOrAdd(Type type, Schema schema) => _schemas.GetOrAdd(type, schema);
+    private Schema GetOrAddSchema(Type type, Schema schema) => _schemas.GetOrAdd(type, schema);
 
     private Schema CreateSchema(Type type)
     {
         if (type.TryGetElementTypeOfArray() is Type elementType)
         {
-            var innerSchema = GetOrAdd(elementType);
+            var innerSchema = GetOrAddSchema(elementType);
 
             return Schema.Create(SchemaType.Array, [innerSchema]);
         }
 
         if (type.TryGetInnerTypesOfDictionary() is (Type keyType, Type valueType))
         {
-            var innerSchema = GetOrAdd(keyType);
-            var innerSchema2 = GetOrAdd(valueType);
+            var innerSchema = GetOrAddSchema(keyType);
+            var innerSchema2 = GetOrAddSchema(valueType);
 
             return Schema.Create(SchemaType.Dictionary, [innerSchema, innerSchema2]);
         }
 
         if (type.TryGetTuple2Type() is { } tuple2)
         {
-            var innerSchema = GetOrAdd(tuple2.Item1Type);
-            var innerSchema2 = GetOrAdd(tuple2.Item2Type);
+            var innerSchema = GetOrAddSchema(tuple2.Item1Type);
+            var innerSchema2 = GetOrAddSchema(tuple2.Item2Type);
             var schemaType = tuple2.IsNullable ? SchemaType.NullableTuple2 : SchemaType.Tuple2;
 
             return Schema.Create(schemaType, [innerSchema, innerSchema2]);
@@ -111,9 +111,9 @@ internal sealed class SchemaStore
 
         if (type.TryGetTuple3Type() is { } tuple3)
         {
-            var innerSchema = GetOrAdd(tuple3.Item1Type);
-            var innerSchema2 = GetOrAdd(tuple3.Item2Type);
-            var innerSchema3 = GetOrAdd(tuple3.Item3Type);
+            var innerSchema = GetOrAddSchema(tuple3.Item1Type);
+            var innerSchema2 = GetOrAddSchema(tuple3.Item2Type);
+            var innerSchema3 = GetOrAddSchema(tuple3.Item3Type);
             var schemaType = tuple3.IsNullable ? SchemaType.NullableTuple3 : SchemaType.Tuple3;
 
             return Schema.Create(schemaType, [innerSchema, innerSchema2, innerSchema3]);
@@ -122,13 +122,10 @@ internal sealed class SchemaStore
         throw new SchemaException($"No schema for type '{type}' found. Perhaps this type is missing a [BonObject] attribute?");
     }
 
+    public IEnumerable<KeyValuePair<Type, Schema>> Schemas => _schemas;
+
     public void Clear()
     {
         _schemas.Clear();
-    }
-
-    public void AppendHash(ref HashCode hashCode)
-    {
-        hashCode.AddMultipleUnordered(_schemas);
     }
 }

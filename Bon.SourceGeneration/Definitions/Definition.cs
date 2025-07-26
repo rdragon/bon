@@ -121,8 +121,6 @@ namespace Bon.SourceGeneration.Definitions
 
         public bool IsReferenceType => !IsValueType;
 
-        public virtual string SchemaBaseClass => "Schema";
-
         public virtual string TypeForWriter => Type;
 
         public string ToPrettyString(bool allowRecursion = true)

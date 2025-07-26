@@ -20,7 +20,7 @@ internal sealed partial class DeserializerStore(
     /// Initially populated by <see cref="AddNativeReaders"/> and the source generation context.
     /// New methods will be added on-the-fly.
     /// </summary>
-    private readonly ConcurrentDictionary<(Schema1 SourceSchema, Type TargetType), Delegate> _deserializers = new();
+    private readonly ConcurrentDictionary<(Schema SourceSchema, Type TargetType), Delegate> _deserializers = new();
 
     /// <summary>
     /// //2at
@@ -48,11 +48,11 @@ internal sealed partial class DeserializerStore(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Read<T> GetDeserializer<T>(Schema1 sourceSchema)
+    public Read<T> GetDeserializer<T>(Schema sourceSchema)
     {
         return (Read<T>)_deserializers.GetOrAdd((sourceSchema, typeof(T)), CreateMethod, this);
 
-        static Read<T> CreateMethod((Schema1 SourceSchema, Type TargetType) tuple, DeserializerStore store)
+        static Read<T> CreateMethod((Schema SourceSchema, Type TargetType) tuple, DeserializerStore store)
         {
             return (Read<T>)store.CreateDeserializer<T>(tuple.SourceSchema);
         }
@@ -61,7 +61,7 @@ internal sealed partial class DeserializerStore(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    public Delegate GetDeserializer(Schema1 sourceSchema, Type targetType, bool allowNewDeserializer = true)
+    public Delegate GetDeserializer(Schema sourceSchema, Type targetType, bool allowNewDeserializer = true)
     {
         var key = (sourceSchema, targetType);
 
@@ -72,7 +72,7 @@ internal sealed partial class DeserializerStore(
 
         return _deserializers.GetOrAdd(key, CreateMethod, this);
 
-        static Delegate CreateMethod((Schema1 SourceSchema, Type TargetType) tuple, DeserializerStore store)
+        static Delegate CreateMethod((Schema SourceSchema, Type TargetType) tuple, DeserializerStore store)
         {
             return store.CreateDeserializerSlow(tuple.SourceSchema, tuple.TargetType);
         }
@@ -81,7 +81,7 @@ internal sealed partial class DeserializerStore(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    private Delegate CreateDeserializerSlow(Schema1 sourceSchema, Type targetType)
+    private Delegate CreateDeserializerSlow(Schema sourceSchema, Type targetType)
     {
         return (Delegate)this.GetPrivateMethod(nameof(CreateDeserializer))
             .MakeGenericMethod(targetType)
@@ -91,13 +91,13 @@ internal sealed partial class DeserializerStore(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the source schema and outputs a value of the target type.
     /// </summary>
-    private Delegate CreateDeserializer<T>(Schema1 sourceSchema)
+    private Delegate CreateDeserializer<T>(Schema sourceSchema)
     {
         var targetType = typeof(T);
 
         // The target schema is required for the record and union deserialization.
         // This call also makes sure that the target type is deserializable.
-        var targetSchema = schemaStore.GetOrAdd(targetType);
+        var targetSchema = schemaStore.GetOrAddSchema(targetType);
 
         return
             WeakDeserializer.TryCreateDeserializer(sourceSchema, targetType) ??
@@ -114,7 +114,7 @@ internal sealed partial class DeserializerStore(
     /// <summary>
     /// Returns a method that reads binary data formatted according to the schema and returns the default value for the target type.
     /// </summary>
-    public Read<T?> GetSkipper<T>(Schema1 schema)
+    public Read<T?> GetSkipper<T>(Schema schema)
     {
         var skipper = SkipperStore.GetSkipper(schema);
 

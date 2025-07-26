@@ -46,16 +46,13 @@ namespace Bon.SourceGeneration.CodeGenerators
 
         private void AddMethodToStore(IDefinition definition, string methodName)
         {
-            var usesCustomSchemas = definition.GetType() != typeof(EnumDefinition);
-            var argument = usesCustomSchemas ? "true" : "false";
-
             if (definition.IsReferenceType && !definition.IsNullable)
             {
                 return;
             }
 
             _codeGenerator.AddStatement(
-                $"bonFacade.AddWriter(typeof({definition.TypeForWriter}), {methodName}, {argument});");
+                $"bonFacade.AddWriter(typeof({definition.TypeForWriter}), {methodName});");
         }
 
         private void AddWriteMethod(IDefinition definition, int id)

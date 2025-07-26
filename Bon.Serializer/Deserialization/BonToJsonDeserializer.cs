@@ -4,19 +4,18 @@ namespace Bon.Serializer.Deserialization;
 
 internal static class BonToJsonDeserializer
 {
-    public static JsonNode? Deserialize(BinaryReader reader, Schema1 schema)
+    public static JsonNode? Deserialize(BinaryReader reader, Schema schema)
     {
         return schema switch
         {
-            NativeSchema nativeSchema => DeserializeNative(reader, nativeSchema),
-            UnionSchema unionSchema => DeserializeUnion(reader, unionSchema),
-            ArraySchema arraySchema => DeserializeArray(reader, arraySchema),
-            DictionarySchema dictionarySchema => DeserializeDictionary(reader, dictionarySchema),
+            { IsNative: true } => DeserializeNative(reader, schema),
+            { IsUnion: true } => DeserializeUnion(reader, schema),
+            { IsArray: true } => DeserializeArray(reader, schema),
             _ => DeserializeRecordLike(reader, schema),
         };
     }
 
-    private static JsonValue? DeserializeNative(BinaryReader reader, NativeSchema schema)
+    private static JsonValue? DeserializeNative(BinaryReader reader, Schema schema)
     {
         return schema.SchemaType switch
         {
@@ -39,7 +38,7 @@ internal static class BonToJsonDeserializer
         };
     }
 
-    private static JsonArray? DeserializeRecordLike(BinaryReader reader, Schema1 schema)
+    private static JsonArray? DeserializeRecordLike(BinaryReader reader, Schema schema)
     {
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
@@ -52,10 +51,12 @@ internal static class BonToJsonDeserializer
             }
         }
 
-        return new JsonArray(schema.GetInnerSchemas().Select(memberSchema => Deserialize(reader, memberSchema)).ToArray());
+        var valueSchemas = schema.IsTuple ? schema.InnerSchemas : schema.Members.Select(member => member.Schema).ToArray();
+
+        return new JsonArray(valueSchemas.Select(valueSchema => Deserialize(reader, valueSchema)).ToArray());
     }
 
-    private static JsonArray? DeserializeUnion(BinaryReader reader, UnionSchema schema)
+    private static JsonArray? DeserializeUnion(BinaryReader reader, Schema schema)
     {
         // See bookmark 628227999 for all places where a union is serialized/deserialized.
 
@@ -64,13 +65,13 @@ internal static class BonToJsonDeserializer
             return null;
         }
 
-        var recordSchema = (RecordSchema)schema.Members.First(member => member.Id == id).Schema;
+        var recordSchema = schema.Members.First(member => member.Id == id).Schema;
         var contents = DeserializeRecordLike(reader, recordSchema);
 
         return [id, contents];
     }
 
-    private static JsonArray? DeserializeArray(BinaryReader reader, ArraySchema schema)
+    private static JsonArray? DeserializeArray(BinaryReader reader, Schema schema)
     {
         // See bookmark 791351735 for all places where an array is serialized/deserialized.
 
@@ -83,27 +84,9 @@ internal static class BonToJsonDeserializer
 
         for (var i = 0; i < count; i++)
         {
-            array.Add(Deserialize(reader, schema.InnerSchema));
+            array.Add(Deserialize(reader, schema.InnerSchemas[0]));
         }
 
         return array;
-    }
-
-    private static JsonArray? DeserializeDictionary(BinaryReader reader, DictionarySchema schema)
-    {
-        // See bookmark 662741575 for all places where a dictionary is serialized/deserialized.
-
-        var tupleSchema = new Tuple2Schema(SchemaType.Tuple2)
-        {
-            InnerSchema1 = schema.InnerSchema1,
-            InnerSchema2 = schema.InnerSchema2,
-        };
-
-        var arraySchema = new ArraySchema()
-        {
-            InnerSchema = tupleSchema,
-        };
-
-        return DeserializeArray(reader, arraySchema);
     }
 }
