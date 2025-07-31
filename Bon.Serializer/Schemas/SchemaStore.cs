@@ -85,6 +85,11 @@ internal sealed class SchemaStore
 
     private Schema CreateSchema(Type type)
     {
+        if (WeakTypeHelper.TryGetHelper(type)?.WireType is Type wireType)
+        {
+            return CreateSchema(wireType);
+        }
+
         if (type.TryGetElementTypeOfArray() is Type elementType)
         {
             var elementSchema = GetOrAddSchema(elementType);
@@ -119,7 +124,7 @@ internal sealed class SchemaStore
             return Schema.Create(schemaType, [schemaArgument1, schemaArgument2, schemaArgument3]);
         }
 
-        throw new SchemaException($"No schema for type '{type}' found. Perhaps this type is missing a [BonObject] attribute?");
+        throw new InvalidOperationException($"No schema for type '{type}' found. Perhaps this type is missing a [BonObject] attribute?");
     }
 
     public IEnumerable<KeyValuePair<Type, Schema>> Schemas => _schemas;

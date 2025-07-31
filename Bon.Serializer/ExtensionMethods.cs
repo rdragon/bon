@@ -122,6 +122,14 @@ internal static class ExtensionMethods
             throw new ArgumentException($"Method not found.", methodName);
     }
 
+    public static T CallPrivateStaticMethod<T>(this Type type, string methodName, Type[] typeArguments)
+    {
+        return (T)type
+            .GetPrivateStaticMethod(methodName)
+            .MakeGenericMethod(typeArguments)
+            .Invoke(null, null)!;
+    }
+
     public static JsonNode GetPropertyValue(this JsonObject jsonObject, string propertyName)
     {
         if (jsonObject.TryGetPropertyValue(propertyName, out var jsonNode) && jsonNode is { })

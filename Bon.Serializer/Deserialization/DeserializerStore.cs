@@ -101,6 +101,7 @@ internal sealed partial class DeserializerStore(
         var targetSchema = schemaStore.GetOrAddSchema(targetType);
 
         return
+            WeakTypeHelper.TryCreateDeserializer(this, sourceSchema, targetType) ??
             WeakDeserializer.TryCreateDeserializer(sourceSchema, targetType) ??
             NativeDeserializer.TryCreateDeserializer(sourceSchema, targetType) ??
             CollectionDeserializer.TryCreateDeserializer<T>(sourceSchema) ??

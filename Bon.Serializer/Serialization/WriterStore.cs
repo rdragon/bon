@@ -90,6 +90,11 @@ internal sealed class WriterStore : IUseReflection
     /// </summary>
     private Writer CreateWriter(Type type)
     {
+        if (WeakTypeHelper.TryGetHelper(type) is WeakHelper weakHelper)
+        {
+            return weakHelper.TransformWriter(CreateWriter(weakHelper.WireType));
+        }
+
         if (type.IsArray && type.GetElementType() is Type elementType)
         {
             if (elementType == typeof(byte))
@@ -138,7 +143,7 @@ internal sealed class WriterStore : IUseReflection
             }
         }
 
-        throw new SchemaException($"No schema for type '{type}' found. Perhaps this type is missing a [BonObject] attribute?");
+        throw new InvalidOperationException($"No writer for '{type}' could be constructed. Perhaps this type is missing a [BonObject] attribute?");
     }
 
     private Writer CreateArrayWriter(Type elementType)

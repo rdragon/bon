@@ -5,7 +5,16 @@ partial class BonSerializer
     /// <summary>
     /// Deserializes a value from a byte array.
     /// </summary>
-    public T? Deserialize<T>(byte[] bytes) => Deserialize<T>(new MemoryStream(bytes));
+    public T? Deserialize<T>(byte[] bytes)
+    {
+        var stream = new MemoryStream(bytes);
+        var result = Deserialize<T>(stream);
+        if (stream.Position < stream.Length)
+        {
+            throw new DeserializationFailedException($"{stream.Length - stream.Position} bytes were not read.");
+        }
+        return result;
+    }
 
     /// <summary>
     /// Deserializes a value from a stream.

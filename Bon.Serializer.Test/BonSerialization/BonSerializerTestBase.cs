@@ -496,10 +496,10 @@ public class BonSerializerTestBase
 
     protected void SerializationFailure<T>(T value)
     {
-        var exception = Assert.Throws<SchemaException>(() => Serialize(value));
-        Assert.StartsWith("No schema for", exception.Message);
+        var exception = Assert.Throws<InvalidOperationException>(() => Serialize(value));
+        Assert.StartsWith("No writer for", exception.Message);
 
-        exception = Assert.Throws<SchemaException>(() => Serialize(0).DeserializeSlow<T>());
+        exception = Assert.Throws<InvalidOperationException>(() => Serialize(0).DeserializeSlow<T>());
         Assert.StartsWith("No schema for", exception.Message);
     }
 

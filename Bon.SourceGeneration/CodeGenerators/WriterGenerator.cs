@@ -111,23 +111,6 @@ namespace Bon.SourceGeneration.CodeGenerators
             }
         }
 
-        private void WriteNull(List<string> method) => WriteByte(method, "NULL");
-
-        private void WriteNotNull(List<string> method) => WriteByte(method, "NOT_NULL");
-
-        private void WriteByte(List<string> method, string value)
-        {
-            method.Add($"NativeSerializer.WriteByte(writer, {value});");
-        }
-
-        private void WriteMembers(List<string> method, RecordDefinition definition)
-        {
-            foreach (var member in definition.Members)
-            {
-                Write(method, member.Definition, $"value.{member.Name}");
-            }
-        }
-
         private void AddWriteMethodForNullableRecord(RecordDefinition definition, int id)
         {
             var method = StartWriteMethod(id, definition, "maybeValue");
@@ -145,6 +128,15 @@ namespace Bon.SourceGeneration.CodeGenerators
             AddMethod(method);
         }
 
+        private void WriteNull(List<string> method) => WriteByte(method, "NULL");
+
+        private void WriteNotNull(List<string> method) => WriteByte(method, "NOT_NULL");
+
+        private void WriteByte(List<string> method, string value)
+        {
+            method.Add($"NativeSerializer.WriteByte(writer, {value});");
+        }
+
         private void AddWriteMethodForRecord(RecordDefinition definition, int id)
         {
             var method = StartWriteMethod(id, definition, "value");
@@ -152,6 +144,14 @@ namespace Bon.SourceGeneration.CodeGenerators
             WriteMembers(method, definition);
 
             AddMethod(method);
+        }
+
+        private void WriteMembers(List<string> method, RecordDefinition definition)
+        {
+            foreach (var member in definition.Members)
+            {
+                Write(method, member.Definition, $"value.{member.Name}");
+            }
         }
 
         private void AddWriteMethod(UnionDefinition definition, int id)
