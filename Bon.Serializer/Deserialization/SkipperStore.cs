@@ -23,7 +23,7 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
     private Action<BonInput> GetArraySkipper(Schema schema)
     {
-        var skipElement = GetSkipper(schema.InnerSchemas[0]);
+        var skipElement = GetSkipper(schema.SchemaArguments[0]);
 
         return (BonInput input) =>
         {
@@ -41,8 +41,8 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
     private Action<BonInput> GetDictionarySkipper(Schema schema)
     {
-        var skipKey = GetSkipper(schema.InnerSchemas[0]);
-        var skipValue = GetSkipper(schema.InnerSchemas[1]);
+        var skipKey = GetSkipper(schema.SchemaArguments[0]);
+        var skipValue = GetSkipper(schema.SchemaArguments[1]);
 
         return (BonInput input) =>
         {
@@ -61,8 +61,8 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
     private Action<BonInput> GetTuple2Skipper(Schema schema)
     {
-        var skipItem1 = GetSkipper(schema.InnerSchemas[0]);
-        var skipItem2 = GetSkipper(schema.InnerSchemas[1]);
+        var skipItem1 = GetSkipper(schema.SchemaArguments[0]);
+        var skipItem2 = GetSkipper(schema.SchemaArguments[1]);
 
         if (schema.IsNullable)
         {
@@ -87,9 +87,9 @@ internal sealed class SkipperStore(DeserializerStore deserializerStore) : IUseRe
 
     private Action<BonInput> GetTuple3Skipper(Schema schema)
     {
-        var skipItem1 = GetSkipper(schema.InnerSchemas[0]);
-        var skipItem2 = GetSkipper(schema.InnerSchemas[1]);
-        var skipItem3 = GetSkipper(schema.InnerSchemas[2]);
+        var skipItem1 = GetSkipper(schema.SchemaArguments[0]);
+        var skipItem2 = GetSkipper(schema.SchemaArguments[1]);
+        var skipItem3 = GetSkipper(schema.SchemaArguments[2]);
 
         if (schema.IsNullable)
         {

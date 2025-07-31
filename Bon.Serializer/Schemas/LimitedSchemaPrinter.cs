@@ -1,8 +1,17 @@
 ﻿namespace Bon.Serializer.Schemas;
 
-//2at, stopt bij custom schemas, print geen members, alleen inner schemas en schema types en layout ids
+/// <summary>
+/// Prints schemas but stops at custom schemas.
+/// Prints schema types, schema arguments and layout IDs.
+/// Instead of the members of a custom schema, only its layout ID is printed.
+/// </summary>
 internal static class LimitedSchemaPrinter
 {
+    /// <summary>
+    /// Prints the schema using a single line format.
+    /// Prints schema types, schema arguments and layout IDs.
+    /// Instead of the members of a custom schema, only its layout ID is printed.
+    /// </summary>
     public static string PrintSingleLine(Schema schema)
     {
         if (schema.IsCustom)
@@ -12,31 +21,56 @@ internal static class LimitedSchemaPrinter
 
         return schema.SchemaType switch
         {
-            SchemaType.Array => $"{PrintInner(0, 1)}[]",
+            SchemaType.Array => $"{PrintSchemaArgument(0, 1)}[]",
             SchemaType.Dictionary => "DICTIONARY",
-            SchemaType.Tuple2 => $"({PrintInner(0, 2)}, {PrintInner(1, 2)})",
-            SchemaType.Tuple3 => $"({PrintInner(0, 3)}, {PrintInner(1, 3)}, {PrintInner(2, 3)})",
+            SchemaType.Tuple2 => $"({PrintSchemaArgument(0, 2)}, {PrintSchemaArgument(1, 2)})",
+            SchemaType.Tuple3 => $"({PrintSchemaArgument(0, 3)}, {PrintSchemaArgument(1, 3)}, {PrintSchemaArgument(2, 3)})",
             SchemaType.NullableTuple2 => $"{PrintSingleLine(schema.GetClone(SchemaType.Tuple2))}?",
             SchemaType.NullableTuple3 => $"{PrintSingleLine(schema.GetClone(SchemaType.Tuple3))}?",
-            var schemaType => Print(schemaType),
+            var schemaType => PrintSchemaType(schemaType),
         };
 
-        string PrintInner(int index, int expectedCount)
+        string PrintSchemaArgument(int index, int expectedCount)
         {
-            var actualCount = schema.InnerSchemas.Count;
+            var actualCount = schema.SchemaArguments.Count;
 
             if (expectedCount != actualCount)
             {
                 throw new DeserializationFailedException(
-                    $"Invalid '{schema.SchemaType}' schema data. " +
-                    $"Found {actualCount} inner schemas but expecting {expectedCount}.");
+                    $"Invalid '{schema.SchemaType}' schema. " +
+                    $"Found {actualCount} schema argument(s) but expecting {expectedCount}.");
             }
 
-            return PrintSingleLine(schema.InnerSchemas[index]);
+            return PrintSingleLine(schema.SchemaArguments[index]);
         }
     }
 
-    public static string Print(SchemaType schemaType)
+    /// <summary>
+    /// Prints the schema using a multi-line format.
+    /// Prints schema types, schema arguments and layout IDs.
+    /// Instead of the members of a custom schema, only its layout ID is printed.
+    /// </summary>
+    public static string PrintMultiLine(Schema schema, string indentation = "")
+    {
+        var output = new StringBuilder();
+
+        Add(schema, indentation);
+
+        void Add(Schema schema, string indentation)
+        {
+            var suffix = schema.IsCustom ? $"_{schema.LayoutId}" : "";
+            output.AppendLine($"{indentation}{schema.SchemaType}{suffix}");
+
+            foreach (var schemaArgument in schema.SchemaArguments)
+            {
+                Add(schemaArgument, indentation + "    ");
+            }
+        }
+
+        return output.ToString();
+    }
+
+    public static string PrintSchemaType(SchemaType schemaType)
     {
         var text = schemaType == SchemaType.NullableDecimal ? "decimal" : schemaType.ToString();
         var suffix = schemaType.IsNullable() ? "?" : "";
@@ -61,26 +95,5 @@ internal static class LimitedSchemaPrinter
         var prefix = schemaType == SchemaType.Union ? "Union_" : "Record_";
 
         return prefix + schema.LayoutId + (schemaType == SchemaType.Union ? "?" : "");
-    }
-
-    //2at
-    public static string PrintMultiLine(Schema schema, string indentation = "")
-    {
-        var output = new StringBuilder();
-
-        Add(schema, indentation);
-
-        void Add(Schema schema, string indentation)
-        {
-            var suffix = schema.IsCustom ? $"_{schema.LayoutId}" : "";
-            output.AppendLine($"{indentation}{schema.SchemaType}{suffix}");
-
-            foreach (var inner in schema.InnerSchemas)
-            {
-                Add(inner, indentation + "    ");
-            }
-        }
-
-        return output.ToString();
     }
 }

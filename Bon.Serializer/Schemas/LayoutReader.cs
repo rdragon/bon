@@ -2,7 +2,11 @@
 
 internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader, bool allowUnknownLayoutIds)
 {
-    //2at
+    /// <summary>
+    /// While reading the layouts from the storage, a schema can refer to a layout that is not yet known.
+    /// Here we keep track of those schemas.
+    /// Each time a new layout has been read, this list is traversed and the schemas are updated.
+    /// </summary>
     private List<Schema>? _partialSchemas = null;
 
     public void ReadManyLayouts()
@@ -33,10 +37,10 @@ internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader,
             return Schema.GetNativeSchema(schemaType);
         }
 
-        var innerSchemas = ReadInnerSchemas(schemaType);
+        var schemaArguments = ReadSchemaArguments(schemaType);
         var layoutId = ReadLayoutId(schemaType);
         var members = ReadMembers(schemaType, layoutId);
-        var schema = Schema.Create(schemaType, innerSchemas, layoutId, members!);
+        var schema = Schema.Create(schemaType, schemaArguments, layoutId, members!);
 
         if (members is null)
         {
@@ -66,17 +70,17 @@ internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader,
         return new SchemaMember(id, schema);
     }
 
-    private IReadOnlyList<Schema> ReadInnerSchemas(SchemaType schemaType)
+    private IReadOnlyList<Schema> ReadSchemaArguments(SchemaType schemaType)
     {
-        var count = GetInnerSchemaCount(schemaType);
-        var innerSchemas = new Schema[count];
+        var count = GetSchemaArgumentsCount(schemaType);
+        var schemaArguments = new Schema[count];
 
         for (int i = 0; i < count; i++)
         {
-            innerSchemas[i] = ReadSingleSchema();
+            schemaArguments[i] = ReadSingleSchema();
         }
 
-        return innerSchemas;
+        return schemaArguments;
     }
 
     private int ReadLayoutId(SchemaType schemaType) => schemaType.IsCustomSchema() ? ReadLayoutId() : 0;
@@ -121,7 +125,7 @@ internal sealed class LayoutReader(LayoutStore layoutStore, BinaryReader reader,
 
     private SchemaType ReadSchemaType() => (SchemaType)reader.ReadByte();
 
-    private static int GetInnerSchemaCount(SchemaType schemaType)
+    private static int GetSchemaArgumentsCount(SchemaType schemaType)
     {
         return schemaType switch
         {

@@ -21,11 +21,11 @@ internal sealed class LayoutWriter(BinaryWriter writer)
     public void WriteSchema(Schema schema)
     {
         WriteSchemaType(schema.SchemaType);
-        WriteInnerSchemas(schema.InnerSchemas);
+        WriteSchemaArguments(schema.SchemaArguments);
         WriteLayoutId(schema);
     }
 
-    private void WriteInnerSchemas(IReadOnlyList<Schema> schemas)
+    private void WriteSchemaArguments(IReadOnlyList<Schema> schemas)
     {
         foreach (var schema in schemas)
         {

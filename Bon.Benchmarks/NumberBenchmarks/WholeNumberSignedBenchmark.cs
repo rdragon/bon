@@ -82,7 +82,7 @@ public class WholeNumberSignedBenchmark
         var sum = 0L;
         for (int i = 0; i < N; i++)
         {
-            sum += WholeNumberSerializer.ReadSigned(_reader);
+            sum += WholeNumberSerializer.ReadSigned(_reader) ?? 0;
         }
         return sum;
     }

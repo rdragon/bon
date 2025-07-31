@@ -87,36 +87,36 @@ internal sealed class SchemaStore
     {
         if (type.TryGetElementTypeOfArray() is Type elementType)
         {
-            var innerSchema = GetOrAddSchema(elementType);
+            var elementSchema = GetOrAddSchema(elementType);
 
-            return Schema.Create(SchemaType.Array, [innerSchema]);
+            return Schema.Create(SchemaType.Array, [elementSchema]);
         }
 
-        if (type.TryGetInnerTypesOfDictionary() is (Type keyType, Type valueType))
+        if (type.TryGetTypeArgumentsOfDictionary() is (Type keyType, Type valueType))
         {
-            var innerSchema = GetOrAddSchema(keyType);
-            var innerSchema2 = GetOrAddSchema(valueType);
+            var keySchema = GetOrAddSchema(keyType);
+            var valueSchema = GetOrAddSchema(valueType);
 
-            return Schema.Create(SchemaType.Dictionary, [innerSchema, innerSchema2]);
+            return Schema.Create(SchemaType.Dictionary, [keySchema, valueSchema]);
         }
 
         if (type.TryGetTuple2Type() is { } tuple2)
         {
-            var innerSchema = GetOrAddSchema(tuple2.Item1Type);
-            var innerSchema2 = GetOrAddSchema(tuple2.Item2Type);
+            var schemaArgument1 = GetOrAddSchema(tuple2.Item1Type);
+            var schemaArgument2 = GetOrAddSchema(tuple2.Item2Type);
             var schemaType = tuple2.IsNullable ? SchemaType.NullableTuple2 : SchemaType.Tuple2;
 
-            return Schema.Create(schemaType, [innerSchema, innerSchema2]);
+            return Schema.Create(schemaType, [schemaArgument1, schemaArgument2]);
         }
 
         if (type.TryGetTuple3Type() is { } tuple3)
         {
-            var innerSchema = GetOrAddSchema(tuple3.Item1Type);
-            var innerSchema2 = GetOrAddSchema(tuple3.Item2Type);
-            var innerSchema3 = GetOrAddSchema(tuple3.Item3Type);
+            var schemaArgument1 = GetOrAddSchema(tuple3.Item1Type);
+            var schemaArgument2 = GetOrAddSchema(tuple3.Item2Type);
+            var schemaArgument3 = GetOrAddSchema(tuple3.Item3Type);
             var schemaType = tuple3.IsNullable ? SchemaType.NullableTuple3 : SchemaType.Tuple3;
 
-            return Schema.Create(schemaType, [innerSchema, innerSchema2, innerSchema3]);
+            return Schema.Create(schemaType, [schemaArgument1, schemaArgument2, schemaArgument3]);
         }
 
         throw new SchemaException($"No schema for type '{type}' found. Perhaps this type is missing a [BonObject] attribute?");

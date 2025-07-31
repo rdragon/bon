@@ -7,16 +7,13 @@ using System.Text;
 
 namespace Bon.SourceGeneration
 {
-    internal class SymbolInfo
+    internal sealed class SymbolInfo
     {
         /// <summary>
-        /// non-null
+        /// For value types the non-nullable version of the type.
         /// </summary>
         public ITypeSymbol Symbol { get; set; }
 
-        /// <summary>
-        /// //2at
-        /// </summary>
         public string Type { get; set; }
 
         public bool IsNullable { get; set; }
@@ -67,7 +64,7 @@ namespace Bon.SourceGeneration
         }
     }
 
-    internal class ArrayInfo
+    internal sealed class ArrayInfo
     {
         public ReadCollectionType ReadCollectionType { get; set; }
         public CollectionType CollectionType { get; set; }

@@ -8,7 +8,7 @@ namespace Bon.SourceGeneration.CodeGenerators
     /// Generates a reader factory for each record (for values types even two).
     /// These reader factories are used by the Bon serializer when deserializing a record that was serialized using an "unexpected" schema.
     /// </summary>
-    internal class ReaderFactoryGenerator
+    internal sealed class ReaderFactoryGenerator
     {
         private readonly CodeGenerator _codeGenerator;
 

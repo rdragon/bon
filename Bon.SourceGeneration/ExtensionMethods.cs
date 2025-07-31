@@ -70,7 +70,11 @@ namespace Bon.SourceGeneration
         }
 
         /// <summary>
-        /// //2at
+        /// Returns the name of the type corresponding to the symbol.
+        /// This is the name that is used in the generated code.
+        /// For nullable reference types the name does not end with a question mark, as the generated code does
+        /// not use the nullable reference type feature.
+        /// Example return values: "int?", "string", "System.Collections.Generic.List<int>".
         /// </summary>
         public static string GetTypeName(this ITypeSymbol symbol)
         {
@@ -138,7 +142,8 @@ namespace Bon.SourceGeneration
         }
 
         public static bool IsNullable(this SchemaType schemaType)
-        {//2at also see other isnullable
+        {
+            // Bookmark 662349317
             return
                 schemaType == SchemaType.WholeNumber ||
                 schemaType == SchemaType.SignedWholeNumber ||

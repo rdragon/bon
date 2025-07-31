@@ -1,8 +1,10 @@
 ﻿
 namespace Bon.Serializer.Schemas;
 
-//2at
-internal class FullSchemaPrinter
+/// <summary>
+/// Prints schemas in C# syntax.
+/// </summary>
+internal sealed class FullSchemaPrinter
 {
     private readonly StringBuilder _output = new();
 
@@ -14,6 +16,11 @@ internal class FullSchemaPrinter
 
     private readonly Dictionary<Schema, string> _classNames = [];
 
+    /// <summary>
+    /// Prints the given schema and all its inner schemas.
+    /// Every schema is printed as a C# class.
+    /// The class names include the schema type and the layout ID.
+    /// </summary>
     public string Print(Schema schema)
     {
         var type = GetTypeOfSchema(schema);
@@ -116,8 +123,8 @@ internal class FullSchemaPrinter
 
         return schema switch
         {
-            { IsNative: true } => LimitedSchemaPrinter.Print(schema.SchemaType),
-            { IsArray: true } => $"{GetTypeOfSchema(schema.InnerSchemas[0])}[]?",
+            { IsNative: true } => LimitedSchemaPrinter.PrintSchemaType(schema.SchemaType),
+            { IsArray: true } => $"{GetTypeOfSchema(schema.SchemaArguments[0])}[]?",
             { IsDictionary: true } => "DICTIONARY",
             { IsTuple: true } => GetTypeOfTupleSchema(schema),
             { IsCustom: true } => GetTypeOfCustomSchema(schema),
@@ -128,7 +135,7 @@ internal class FullSchemaPrinter
     {
         var suffix = schema.IsNullable ? "?" : "";
 
-        return $"({string.Join(", ", schema.InnerSchemas.Select(GetTypeOfSchema))}){suffix}";
+        return $"({string.Join(", ", schema.SchemaArguments.Select(GetTypeOfSchema))}){suffix}";
     }
 
     private static bool IsSpecialNativeType(SchemaType schemaType)

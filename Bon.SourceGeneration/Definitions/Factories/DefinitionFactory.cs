@@ -128,7 +128,6 @@ namespace Bon.SourceGeneration.Definitions.Factories
 
             var underlyingDefinition = NativeDefinition.GetNativeDefinition(underlyingSymbol.GetTypeName());
 
-            //2at
             if (symbolInfo.IsNullable)
             {
                 underlyingDefinition = underlyingDefinition.SwapNullability();

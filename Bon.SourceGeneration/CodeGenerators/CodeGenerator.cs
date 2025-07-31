@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Bon.SourceGeneration.CodeGenerators
 {
-    internal class CodeGenerator
+    internal sealed class CodeGenerator
     {
         public Dictionary<string, string> FactoryMethods { get; } = new Dictionary<string, string>();
 
@@ -96,7 +96,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         {
             if (!_definitionIds.TryGetValue(type, out var id))
             {
-                id = _definitionIds.Count;
+                id = _definitionIds.Count + 1;
                 _definitionIds[type] = id;
             }
 

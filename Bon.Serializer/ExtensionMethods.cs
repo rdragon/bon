@@ -16,18 +16,19 @@ internal static class ExtensionMethods
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        if (innerTypes.Length != 1)
+        if (typeArguments.Length != 1)
         {
             return null;
         }
 
-        return innerTypes[0];
+        return typeArguments[0];
     }
 
     /// <summary>
-    /// //2at
+    /// If the type is a nullable value type, its inner type is returned.
+    /// Otherwise the type is returned as is.
     /// </summary>
     public static Type UnwrapNullable(this Type type, out bool wasNullable)
     {
@@ -43,16 +44,16 @@ internal static class ExtensionMethods
     public static Type? TryGetGenericTypeDefinition(this Type type) =>
         type.IsGenericType ? type.GetGenericTypeDefinition() : null;
 
-    public static (Type KeyType, Type ValueType)? TryGetInnerTypesOfDictionary(this Type type)
+    public static (Type KeyType, Type ValueType)? TryGetTypeArgumentsOfDictionary(this Type type)
     {
         if (!type.IsGenericType)
         {
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        if (innerTypes.Length != 2)
+        if (typeArguments.Length != 2)
         {
             return null;
         }
@@ -66,7 +67,7 @@ internal static class ExtensionMethods
             return null;
         }
 
-        return (innerTypes[0], innerTypes[1]);
+        return (typeArguments[0], typeArguments[1]);
     }
 
     public static Tuple2Type? TryGetTuple2Type(this Type type)
@@ -83,9 +84,9 @@ internal static class ExtensionMethods
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        return new(innerTypes[0], innerTypes[1], isNullable);
+        return new(typeArguments[0], typeArguments[1], isNullable);
     }
 
     public static Tuple3Type? TryGetTuple3Type(this Type type)
@@ -102,9 +103,9 @@ internal static class ExtensionMethods
             return null;
         }
 
-        var innerTypes = type.GetGenericArguments();
+        var typeArguments = type.GetGenericArguments();
 
-        return new(innerTypes[0], innerTypes[1], innerTypes[2], isNullable);
+        return new(typeArguments[0], typeArguments[1], typeArguments[2], isNullable);
     }
 
     public static MethodInfo GetPrivateMethod(this IUseReflection instance, string methodName)

@@ -99,7 +99,7 @@ public enum SchemaType : byte
     Array = 19,
 
     /// <summary>
-    /// A dictionary.
+    /// A dictionary. OBSOLETE
     /// </summary>
     Dictionary = 24,
 
@@ -122,4 +122,6 @@ public enum SchemaType : byte
     /// A nullable value tuple with three elements.
     /// </summary>
     NullableTuple3 = 23,
+
+    // Also update at bookmark 662349317 when adding a value.
 }

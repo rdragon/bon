@@ -5,7 +5,7 @@ partial class Schema
 {
     public static Schema Create(
         SchemaType schemaType,
-        IReadOnlyList<Schema>? innerSchemas = null,
+        IReadOnlyList<Schema>? schemaArguments = null,
         int layoutId = 0,
         IReadOnlyList<SchemaMember>? members = null,
         bool forceNewSchema = false)
@@ -18,7 +18,7 @@ partial class Schema
         return new Schema
         {
             SchemaType = schemaType,
-            InnerSchemas = innerSchemas ?? [],
+            SchemaArguments = schemaArguments ?? [],
             LayoutId = layoutId,
             Members = members ?? []
         };

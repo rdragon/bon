@@ -1,7 +1,7 @@
 ﻿namespace Bon.Serializer;
 
 /// <summary>
-/// //2at
+/// This class is being called by the source generation context.
 /// </summary>
 public sealed class BonFacade
 {

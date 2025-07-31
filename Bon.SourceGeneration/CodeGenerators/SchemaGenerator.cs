@@ -66,9 +66,22 @@ namespace Bon.SourceGeneration.CodeGenerators
         private void CreateSchema(IDefinition definition)
         {
             var id = GetId(definition);
+            var layoutId = GetLayoutId(definition);
 
             _codeGenerator.AppendClassBody(
-                $"var schema{id} = Schema.Create(SchemaType.{definition.SchemaType});");
+                $"var schema{id} = Schema.Create(SchemaType.{definition.SchemaType}, layoutId: {layoutId});");
+        }
+
+        private int GetLayoutId(IDefinition definition)
+        {
+            // Bookmark 458282233
+            // At this moment we can't yet give the schema a "real" layout ID, as we have no way of obtaining one.
+            // However, at bookmark 557955753 we need to detect a recursive schema.
+            // This is done via the layout ID field.
+            // Therefore we generate here a temporary layout ID that can be used to detect recursion.
+            // We generate negative values to make it clear those are not yet the real layout IDs.
+            // We base the IDs on the non-nullable version of the definition, as for detecting recursion nullability shouldn't matter.
+            return definition is ICustomDefinition ? -_codeGenerator.GetId(definition.TypeNonNullable) : 0;
         }
 
         private void UpdateSchema(IDefinition definition)
@@ -86,7 +99,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             if (arguments.Length > 0)
             {
                 _codeGenerator.AppendClassBody(
-                    $"schema{id}.InnerSchemas = [{arguments}];");
+                    $"schema{id}.SchemaArguments = [{arguments}];");
             }
         }
 

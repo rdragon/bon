@@ -10,7 +10,8 @@ namespace Bon.SourceGeneration.Definitions
         public string TypeAlphanumeric { get; }
 
         /// <summary>
-        /// //2at
+        /// The identifier that resolves to the schema for this type.
+        /// For example, "Schema.Int".
         /// </summary>
         public string SchemaIdentifier { get; }
 

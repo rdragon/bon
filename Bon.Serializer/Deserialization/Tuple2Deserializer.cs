@@ -19,8 +19,8 @@ internal sealed class Tuple2Deserializer(DeserializerStore deserializerStore) : 
     {
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.InnerSchemas[0]);
-        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.InnerSchemas[1]);
+        var readItem1 = deserializerStore.GetDeserializer<T1>(sourceSchema.SchemaArguments[0]);
+        var readItem2 = deserializerStore.GetDeserializer<T2>(sourceSchema.SchemaArguments[1]);
         var sourceIsNullable = sourceSchema.IsNullable;
 
         if (sourceIsNullable && targetIsNullable)

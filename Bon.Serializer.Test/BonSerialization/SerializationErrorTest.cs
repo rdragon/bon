@@ -8,7 +8,7 @@ public class SerializationErrorTest : BonSerializerTestBase
     [Fact] public void CustomGenericTypeWithNewTypeParameter() => SerializationFailure(new GenericClass<ushort>(1));
 
     [Fact]
-    public async Task InvalidContext()
+    public async Task InvalidContextAsync()
     {
         var exception = await Assert.ThrowsAnyAsync<Exception>(() =>
             BonSerializer.CreateAsync(new InvalidBonSerializerContext(), new InMemoryBlob()));

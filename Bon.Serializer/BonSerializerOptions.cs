@@ -15,7 +15,8 @@ public sealed class BonSerializerOptions
     internal bool AllowSchemaTypeOptimization { get; set; } = true;
 
     /// <summary>
-    /// //2at
+    /// A hidden option that is used by unit tests.
+    /// If false then the header is not included in the serialized message.
     /// </summary>
-    public bool IncludeHeader { get; set; } = true;
+    internal bool IncludeHeader { get; set; } = true;
 }

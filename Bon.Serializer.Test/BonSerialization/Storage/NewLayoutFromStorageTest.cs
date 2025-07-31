@@ -3,7 +3,7 @@
 public sealed class NewLayoutFromStorageTest : StorageTestBase
 {
     [Fact]
-    public async Task Run()
+    public async Task RunAsync()
     {
         var layoutId = BonSerializer.KnownLayouts.Count() + 1;
 
@@ -11,7 +11,7 @@ public sealed class NewLayoutFromStorageTest : StorageTestBase
         Blob.Bytes = [.. Blob.Bytes, .. GetClassV1Layout(layoutId)];
 
         Assert.ThrowsAny<Exception>(() => GetSerializationResult(GetClassV1InstanceBytes(layoutId)).DeserializeSlow<ClassV2>());
-        await BonSerializer.LoadLatestLayouts();
+        await BonSerializer.LoadLatestLayoutsAsync();
         Assert.Equal(ClassV2Instance, GetSerializationResult(GetClassV1InstanceBytes(layoutId)).DeserializeSlow<ClassV2>());
     }
 }

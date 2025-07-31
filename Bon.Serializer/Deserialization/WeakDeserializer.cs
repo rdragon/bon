@@ -1,14 +1,18 @@
 ﻿namespace Bon.Serializer.Deserialization;
 
 /// <summary>
-/// //2at
+/// This deserializer can transform some output types to other output types.
+/// For example, if an output of type bool is expected, this deserializer first obtains a deserializer
+/// for the output type byte and then transforms the output of that deserializer to a bool.
 /// </summary>
-internal class WeakDeserializer
+internal sealed class WeakDeserializer
 {
     private readonly DeserializerStore _deserializerStore;
 
     /// <summary>
-    /// //2at
+    /// Contains a factory for each output type.
+    /// The factory returns a method of type <see cref="Read{T}"/>.
+    /// The method reads binary data formatted according to the provided schema and outputs a value of the target type.
     /// </summary>
     private readonly Dictionary<Type, Func<Schema, Delegate>> _factories = [];
 
@@ -51,6 +55,9 @@ internal class WeakDeserializer
         AddFactory<Guid?, byte[]?>(x => x?.ToGuid());
     }
 
+    /// <summary>
+    /// Also called by the source generation context, which adds factories for enum types.
+    /// </summary>
     public void AddFactory<T1, T2>(Func<T2, T1> func)
     {
         _factories[typeof(T1)] = schema =>

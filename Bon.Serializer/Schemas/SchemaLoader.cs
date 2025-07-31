@@ -1,29 +1,54 @@
 ﻿namespace Bon.Serializer.Schemas;
 
-//2at
+/// <summary>
+/// Fills the stores with schemas and layouts.
+/// This class is only used during the creation of a BonSerializer instance.
+/// </summary>
 internal sealed class SchemaLoader(
      LayoutStorage layoutStorage,
      LayoutStore layoutStore,
      SchemaStore schemaStore,
      ISourceGenerationContext sourceGenerationContext)
 {
+    /// <summary>
+    /// Keeps track of all known layout IDs.
+    /// </summary>
     private readonly Dictionary<Structure, int> _layoutIds = [];
 
+    /// <summary>
+    /// The layouts that need to be saved to the storage.
+    /// These are the new layouts created by the source generation context.
+    /// </summary>
     private readonly List<Layout> _layoutsToSave = [];
 
     /// <summary>
-    /// Adds the native schemas, the layouts from the storage and the schemas and layouts from the source generation context to the stores.
-    /// Then saves the new layouts to the storage.
+    /// The schemas that need to receive a "real" layout ID.
+    /// This list eventually contains all the custom schemas from the source generation context.
+    /// The reason we postpone updating the schemas is that the layout IDs are used to spot recursive
+    /// schemas and there should not be a mix of "fake" and "real" layout IDs.
     /// </summary>
-    public async Task Run()
+    private readonly List<(Schema Schema, int LayoutId)> _schemasToUpdate = [];
+
+    /// <summary>
+    /// Fills the stores with schemas and layouts.
+    /// First adds the native schemas.
+    /// Then loads the layouts from the storage.
+    /// Then adds the schemas from the source generation context.
+    /// For each custom schema that does not have a corresponding layout, a new layout is created.
+    /// Then saves these new layouts to the storage.
+    /// </summary>
+    /// <returns>
+    /// Whether new layouts were found and saved to the storage.
+    /// </returns>
+    public async Task<bool> RunAsync()
     {
         const int MAX_ATTEMPTS = 3;
 
         for (int i = 0; i < MAX_ATTEMPTS; i++)
         {
-            if (await RunNow().ConfigureAwait(false))
+            if (await RunNowAsync().ConfigureAwait(false))
             {
-                return;
+                return _layoutsToSave.Count > 0;
             }
 
             ClearAll();
@@ -32,24 +57,42 @@ internal sealed class SchemaLoader(
         throw new IOException("Failed to save the new layouts to the storage.");
     }
 
-    private async Task<bool> RunNow()
+    private async Task<bool> RunNowAsync()
     {
         schemaStore.AddNativeSchemas();
-        await layoutStorage.LoadLayouts().ConfigureAwait(false);
+        await layoutStorage.LoadLayoutsAsync().ConfigureAwait(false);
         FillLayoutIds();
         sourceGenerationContext.LoadSchemas(OnSchemaLoaded);
-        return await layoutStorage.TrySave(_layoutsToSave).ConfigureAwait(false);
+        UpdateSchemas();
+
+        if (_layoutsToSave.Count == 0)
+        {
+            return true;
+        }
+
+        return await layoutStorage.TrySaveAsync(_layoutsToSave).ConfigureAwait(false);
     }
 
     private void FillLayoutIds()
     {
         foreach (var layout in layoutStore.Layouts)
         {
-            _layoutIds.Add(new Structure(layout), layout.Id);
+            _layoutIds.Add(StructureFactory.Create(layout), layout.Id);
         }
     }
 
-    //2at, source generated context
+    private void UpdateSchemas()
+    {
+        foreach (var (schema, layoutId) in _schemasToUpdate)
+        {
+            schema.LayoutId = layoutId;
+        }
+    }
+
+    /// <summary>
+    /// Called by the source generation context for every record, union and enum.
+    /// </summary>
+    /// <param name="schema">The schema corresponding to the type. The schama contains "fake" layout IDs.</param>
     public void OnSchemaLoaded(Type type, Schema schema)
     {
         schemaStore.AddSchema(type, schema);
@@ -59,23 +102,27 @@ internal sealed class SchemaLoader(
             return;
         }
 
-        Trace.Assert(schema.LayoutId == 0, "Layout ID is non-zero");
+        Trace.Assert(schema.LayoutId < 0, "Expecting a negative Layout ID"); // See bookmark 458282233.
         var layoutId = GetOrCreateLayout(schema);
-        schema.LayoutId = layoutId;
+        _schemasToUpdate.Add((schema, layoutId));
     }
 
-    //2at, source generated context
+    /// <summary>
+    /// Returns the ID of the layout corresponding to a custom schema.
+    /// If the layout does not exist, it is created and added to the layout store.
+    /// </summary>
+    /// <param name="schema">A schema containing "fake" layout IDs.</param>
     private int GetOrCreateLayout(Schema schema)
     {
-        var key = new Structure(schema);
+        var structure = StructureFactory.Create(schema, false);
 
-        if (_layoutIds.TryGetValue(key, out var id))
+        if (_layoutIds.TryGetValue(structure, out var id))
         {
             return id;
         }
 
         var layout = layoutStore.CreateLayout(schema.Members);
-        _layoutIds[key] = layout.Id;
+        _layoutIds[structure] = layout.Id;
         _layoutsToSave.Add(layout);
         return layout.Id;
     }
@@ -84,8 +131,9 @@ internal sealed class SchemaLoader(
     {
         layoutStore.Clear();
         schemaStore.Clear();
+        layoutStorage.Clear();
         _layoutIds.Clear();
         _layoutsToSave.Clear();
-        layoutStorage.Clear();
+        _schemasToUpdate.Clear();
     }
 }

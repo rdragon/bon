@@ -1,6 +1,6 @@
 ﻿namespace Bon.Serializer;
 
-internal class StringBuilderPool
+internal sealed class StringBuilderPool
 {
     private const int MaxStringBuilderCapacity = 512;
     private const int PoolSize = 8;

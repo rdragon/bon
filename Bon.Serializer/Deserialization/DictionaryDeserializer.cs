@@ -34,8 +34,8 @@ internal sealed class DictionaryDeserializer(DeserializerStore deserializerStore
             return null;
         }
 
-        var readKey = deserializerStore.GetDeserializer<TKey>(sourceSchema.InnerSchemas[0]);
-        var readValue = deserializerStore.GetDeserializer<TValue>(sourceSchema.InnerSchemas[1]);
+        var readKey = deserializerStore.GetDeserializer<TKey>(sourceSchema.SchemaArguments[0]);
+        var readValue = deserializerStore.GetDeserializer<TValue>(sourceSchema.SchemaArguments[1]);
 
         return input =>
         {

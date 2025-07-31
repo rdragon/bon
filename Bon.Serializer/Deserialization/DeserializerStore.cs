@@ -23,7 +23,8 @@ internal sealed partial class DeserializerStore(
     private readonly ConcurrentDictionary<(Schema SourceSchema, Type TargetType), Delegate> _deserializers = new();
 
     /// <summary>
-    /// //2at
+    /// Provides easy access to the default reader and skipper for each native schema type.
+    /// The reader is of type <see cref="Read{T}"/>.
     /// </summary>
     private readonly Dictionary<SchemaType, (Delegate DefaultReader, Action<BonInput> Skipper)> _nativeMethods = [];
 
@@ -127,12 +128,13 @@ internal sealed partial class DeserializerStore(
     }
 
     /// <summary>
-    /// //2at
+    /// Returns a method that skips the binary data formatted according to the provided schema type.
     /// </summary>
     public Action<BonInput> GetNativeSkipper(SchemaType schemaType) => _nativeMethods[schemaType].Skipper;
 
     /// <summary>
-    /// //2at
+    /// Returns a method that reads binary data formatted according to the provided schema type and outputs a
+    /// value of the default target type corresponding to the schema type.
     /// </summary>
     public Delegate GetDefaultNativeReader(SchemaType schemaType) => _nativeMethods[schemaType].DefaultReader;
 

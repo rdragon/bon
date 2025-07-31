@@ -51,7 +51,7 @@ internal static class BonToJsonDeserializer
             }
         }
 
-        var valueSchemas = schema.IsTuple ? schema.InnerSchemas : schema.Members.Select(member => member.Schema).ToArray();
+        var valueSchemas = schema.IsTuple ? schema.SchemaArguments : schema.Members.Select(member => member.Schema).ToArray();
 
         return new JsonArray(valueSchemas.Select(valueSchema => Deserialize(reader, valueSchema)).ToArray());
     }
@@ -84,7 +84,7 @@ internal static class BonToJsonDeserializer
 
         for (var i = 0; i < count; i++)
         {
-            array.Add(Deserialize(reader, schema.InnerSchemas[0]));
+            array.Add(Deserialize(reader, schema.SchemaArguments[0]));
         }
 
         return array;

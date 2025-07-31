@@ -129,7 +129,7 @@ internal sealed class RecordDeserializer(
         return () => deserializerStore.LoadDefaultValueGetter(targetMemberType);
     }
 
-    public class MemberCollection(IReadOnlyList<SchemaMember> members)
+    public sealed class MemberCollection(IReadOnlyList<SchemaMember> members)
     {
         private int _index;
 

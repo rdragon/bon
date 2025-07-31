@@ -7,7 +7,7 @@ namespace Bon.Serializer.Schemas;
 /// <summary>
 /// Provides methods for serializing a <see cref="Schema"/> to JSON and deserializing it back.
 /// </summary>
-internal class SchemaJsonSerializer(LayoutStore layoutStore)
+internal sealed class SchemaJsonSerializer(LayoutStore layoutStore)
 {
     private static JsonSerializerOptions? _options;
 
@@ -20,9 +20,9 @@ internal class SchemaJsonSerializer(LayoutStore layoutStore)
 
     private Schema Convert(SerializableSchema serializableSchema)
     {
-        var innerSchemas = serializableSchema.InnerSchemas?.Select(Convert).ToArray();
+        var schemaArguments = serializableSchema.SchemaArguments?.Select(Convert).ToArray();
         var members = GetMembers(serializableSchema);
-        return Schema.Create(serializableSchema.SchemaType, innerSchemas, serializableSchema.LayoutId ?? 0, members);
+        return Schema.Create(serializableSchema.SchemaType, schemaArguments, serializableSchema.LayoutId ?? 0, members);
     }
 
     private IReadOnlyList<SchemaMember> GetMembers(SerializableSchema serializableSchema)
@@ -38,9 +38,9 @@ internal class SchemaJsonSerializer(LayoutStore layoutStore)
     private static SerializableSchema Convert(Schema schema)
     {
         var layoutId = schema.LayoutId > 0 ? schema.LayoutId : (int?)null;
-        var innerSchemas = schema.InnerSchemas.Count == 0 ? null : schema.InnerSchemas.Select(Convert).ToArray();
+        var schemaArguments = schema.SchemaArguments.Count == 0 ? null : schema.SchemaArguments.Select(Convert).ToArray();
 
-        return new SerializableSchema(schema.SchemaType, innerSchemas, layoutId);
+        return new SerializableSchema(schema.SchemaType, schemaArguments, layoutId);
     }
 
     private static JsonSerializerOptions Options => _options ??= new JsonSerializerOptions
@@ -52,6 +52,6 @@ internal class SchemaJsonSerializer(LayoutStore layoutStore)
     // A class that can be serialized to JSON without a custom converter.
     public sealed record class SerializableSchema(
          SchemaType SchemaType,
-         IReadOnlyList<SerializableSchema>? InnerSchemas,
+         IReadOnlyList<SerializableSchema>? SchemaArguments,
          int? LayoutId);
 }

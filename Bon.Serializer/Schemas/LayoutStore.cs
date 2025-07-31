@@ -7,22 +7,32 @@ namespace Bon.Serializer.Schemas;
 /// </summary>
 internal sealed class LayoutStore
 {
-    //2at
+    /// <summary>
+    /// The layouts that are known.
+    /// At index <c>i</c> the layout with ID <c>i + 1</c> is stored.
+    /// Null values are stored at indices larger than or equal to <see cref="_count"/>.
+    /// </summary>
     private Layout[] _layouts = [];
 
+    /// <summary>
+    /// The number of layouts that are known.
+    /// </summary>
     private int _count;
 
-    // wordt enkel gebruikt tijdens startup, source generated context
+    /// <summary>
+    /// Creates a new layout based on the provided members and adds it to the store.
+    /// Called by the source generation context.
+    /// </summary>
     public Layout CreateLayout(IReadOnlyList<SchemaMember> members)
     {
         return AddLayout(new Layout(_count + 1, members));
     }
 
-    public bool ContainsLayoutId(int layoutId) => layoutId - 1 < _count;
-
-    // wordt gebruikt bij het laden uit storage
-    // voegt layouts toe die mogelijk nog half zijn
-    public Layout AddLayout(Layout layout)//2at check ook race condities
+    /// <summary>
+    /// Adds the provided layout to the store.
+    /// Called when a new layout was read from the storage.
+    /// </summary>
+    public Layout AddLayout(Layout layout)
     {
         Trace.Assert(layout.Id == _count + 1, "Unexpected layout ID");
         ResizeArray();
@@ -52,6 +62,8 @@ internal sealed class LayoutStore
         throw new InvalidOperationException($"No layout with ID {layoutId} found.");
 
     public IEnumerable<Layout> Layouts => _layouts.Take(_count);
+
+    public int Count => _count;
 
     public void Clear()
     {

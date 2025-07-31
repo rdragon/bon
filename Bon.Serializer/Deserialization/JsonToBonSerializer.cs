@@ -43,7 +43,7 @@ internal static class JsonToBonSerializer
         // See bookmark 831853187 for all places where a record is serialized/deserialized.
         // See bookmark 747115664 for all places where a tuple is serialized/deserialized.
 
-        var valueSchemas = schema.IsTuple ? schema.InnerSchemas : schema.Members.Select(member => member.Schema).ToArray();
+        var valueSchemas = schema.IsTuple ? schema.SchemaArguments : schema.Members.Select(member => member.Schema).ToArray();
 
         if (isNullable)
         {
@@ -98,7 +98,7 @@ internal static class JsonToBonSerializer
 
         foreach (var element in array)
         {
-            Serialize(writer, element, schema.InnerSchemas[0]);
+            Serialize(writer, element, schema.SchemaArguments[0]);
         }
     }
 

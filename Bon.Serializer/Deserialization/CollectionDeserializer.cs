@@ -61,12 +61,12 @@ internal sealed class CollectionDeserializer(
 
     private Read<TElement[]?> CreateArrayReaderFor<TElement>(Schema sourceSchema)
     {
-        if (typeof(TElement) == typeof(byte) && sourceSchema.InnerSchemas[0].SchemaType == SchemaType.Byte)
+        if (typeof(TElement) == typeof(byte) && sourceSchema.SchemaArguments[0].SchemaType == SchemaType.Byte)
         {
             return (Read<TElement[]?>)(object)CreateByteArrayReader();
         }
 
-        var readElement = deserializerStore.GetDeserializer<TElement>(sourceSchema.InnerSchemas[0]);
+        var readElement = deserializerStore.GetDeserializer<TElement>(sourceSchema.SchemaArguments[0]);
 
         return (BonInput input) =>
         {
@@ -93,7 +93,7 @@ internal sealed class CollectionDeserializer(
 
     private Read<List<T>?> CreateListReaderFor<T>(Schema sourceSchema)
     {
-        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.InnerSchemas[0]);
+        var readElement = deserializerStore.GetDeserializer<T>(sourceSchema.SchemaArguments[0]);
 
         return (BonInput input) =>
         {

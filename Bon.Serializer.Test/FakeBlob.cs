@@ -15,7 +15,7 @@ public sealed class FakeBlob : InMemoryBlob
         }
     }
 
-    public override Task<EntityTag?> TryAppend(Stream stream, EntityTag entityTag)
+    public override Task<EntityTag?> TryAppendAsync(Stream stream, EntityTag entityTag)
     {
         if (FailFirstSave)
         {
@@ -24,6 +24,6 @@ public sealed class FakeBlob : InMemoryBlob
             return Task.FromResult<EntityTag?>(null);
         }
 
-        return base.TryAppend(stream, entityTag);
+        return base.TryAppendAsync(stream, entityTag);
     }
 }
