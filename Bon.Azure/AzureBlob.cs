@@ -1,15 +1,16 @@
 ﻿using Azure;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Bon.Serializer.Schemas;
 
 namespace Bon.Azure;
 
-public sealed class AzureBlob(string connectionString, string container, string blobName) : IBlob
+public sealed class AzureBlob(string connectionString, string container, string folder) : IBlob
 {
     public async Task<EntityTag?> TryAppendAsync(Stream stream, EntityTag entityTag)
     {
-        var client = GetBlobClient();
+        var client = GetAppendBlobClient();
 
         if (entityTag.Value is null)
         {
@@ -29,6 +30,7 @@ public sealed class AzureBlob(string connectionString, string container, string 
         try
         {
             var response = await client.AppendBlockAsync(stream, options).ConfigureAwait(false);
+            await CreateHistoryBlobAsync();
 
             return GetEntityTag(response.GetRawResponse());
         }
@@ -40,7 +42,7 @@ public sealed class AzureBlob(string connectionString, string container, string 
 
     public async Task<EntityTag> LoadToAsync(Stream stream)
     {
-        var client = GetBlobClient();
+        var client = GetAppendBlobClient();
 
         if (!await client.ExistsAsync().ConfigureAwait(false))
         {
@@ -54,7 +56,7 @@ public sealed class AzureBlob(string connectionString, string container, string 
 
     public async Task<EntityTag> GetEntityTagAsync()
     {
-        var client = GetBlobClient();
+        var client = GetAppendBlobClient();
 
         Response rawResponse;
         var response = await client.ExistsAsync().ConfigureAwait(false);
@@ -71,7 +73,21 @@ public sealed class AzureBlob(string connectionString, string container, string 
         return GetEntityTag(rawResponse);
     }
 
-    private AppendBlobClient GetBlobClient() => new(connectionString, container, blobName);
+    private async Task CreateHistoryBlobAsync()
+    {
+        var sourceBlob = GetAppendBlobClient();
+        var targetBlob = GetHistoryBlobClient();
+
+        await targetBlob.StartCopyFromUriAsync(sourceBlob.Uri).ConfigureAwait(false);
+    }
+
+    private AppendBlobClient GetAppendBlobClient() => new(connectionString, container, folder + "/main");
+
+    private BlobClient GetHistoryBlobClient()
+    {
+        var now = DateTime.UtcNow;
+        return new(connectionString, container, $"{folder}/history/{now.Year}/{now:yyyyMMdd_HHmmss_ffffff}");
+    }
 
     private static EntityTag GetEntityTag(Response response) =>
         new(response.Headers.ETag?.ToString() ?? throw new InvalidOperationException("No entity tag in response."));
