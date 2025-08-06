@@ -172,8 +172,10 @@ If a number is serialized as signed variable-width integer then the number is fi
 
 The reason for using ZigZag encoding instead of two's complement is that this prevents negative values from always taking up 9 bytes.
 
+#### String
+A `string` is serialized starting with a nullability byte followed by the output of `BinaryWriter.Write(string)`. UTF-8 encoding is used. The `BinaryWriter` method uses a "7-bit encoded int" for the length of the byte array, see `BinaryWriter.Write7BitEncodedInt(int)`.
+
 #### Rest
-- A `string` is first converted to a UTF-8 byte array and then this array is serialized like any other array.
 - A char is serialized as a variable-width integer.
 - A `float` takes up 4 bytes, a `float?` 5 bytes (if not null).
 - A `double` takes up 8 bytes, a `double?` 9 bytes (if not null).

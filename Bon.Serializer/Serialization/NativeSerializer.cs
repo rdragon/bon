@@ -9,7 +9,7 @@ public static class NativeSerializer
     // Bookmark 659516266 (native serialization)
     // For every type that can be found at bookmark 293228595 there should be two methods defined here (one reader and one writer).
     // The naming of these methods is important, it should follow the type name.
-    public static void WriteString(BinaryWriter writer, string? value) => StringSerializer.WriteString(writer, value);
+    public static void WriteString(BinaryWriter writer, string? value) => NativeWriter.WriteString(writer, value);
     public static void WriteBool(BinaryWriter writer, bool value) => writer.Write(value);
     public static void WriteByte(BinaryWriter writer, byte value) => writer.Write(value);
     public static void WriteSByte(BinaryWriter writer, sbyte value) => writer.Write(value);
@@ -50,7 +50,7 @@ public static class NativeSerializer
     public static void WriteNullableDateOnly(BinaryWriter writer, DateOnly? value) => WholeNumberSerializer.WriteSigned(writer, value?.ToInt());
     public static void WriteNullableTimeOnly(BinaryWriter writer, TimeOnly? value) => WholeNumberSerializer.WriteSigned(writer, value?.ToLong());
 
-    public static string? ReadString(BinaryReader reader) => StringDeserializer.ReadString(reader);
+    public static string? ReadString(BinaryReader reader) => NativeReader.ReadString(reader);
     public static bool ReadBool(BinaryReader reader) => NativeReader.ReadBool(reader) ?? default;
     public static byte ReadByte(BinaryReader reader) => reader.ReadByte();
     public static sbyte ReadSByte(BinaryReader reader) => reader.ReadSByte();

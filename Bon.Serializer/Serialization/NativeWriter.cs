@@ -5,6 +5,19 @@ public static class NativeWriter
     public const byte NULL = 255;
     public const byte NOT_NULL = 254;
 
+    public static void WriteString(BinaryWriter writer, string? value)
+    {
+        if (value is null)
+        {
+            writer.Write(NULL);
+        }
+        else
+        {
+            writer.Write(NOT_NULL);
+            writer.Write(value);
+        }
+    }
+
     public static void WriteBool(BinaryWriter writer, bool? value)
     {
         writer.Write(value switch

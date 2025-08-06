@@ -2,6 +2,8 @@
 
 public static class NativeReader
 {
+    public static string? ReadString(BinaryReader reader) => reader.ReadByte() == NativeWriter.NULL ? null : reader.ReadString();
+
     public static bool? ReadBool(BinaryReader reader)
     {
         return reader.ReadByte() switch
