@@ -1,15 +1,19 @@
-[*.cs]
+﻿[*.cs]
+
+# CS1591: Missing XML comment for publicly visible type or member
+# CS1573: Parameter has no matching param tag in the XML comment (but other parameters do)
+# Reason: Not everything needs a comment.
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.CS1573.severity = none
 
 # CA1859: Use concrete types when possible for improved performance.
-# Reason: Sometimes clarity is more important than performance. This rule prevents us from conveying the
-# information (by the use of a type) that some variable is read only.
+# Reason: Sometimes clarity is more important than performance. This rule prevents us from conveying the information (by the use of a type) that some variable is read only.
 dotnet_diagnostic.CA1859.severity = none
 
 # CS8846: The switch expression does not handle all possible values of its input type (it is not exhaustive).
 # CS8509: The switch expression does not handle all possible values of its input type (it is not exhaustive).
 # CS8524: The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
-# Reason: Laziness (and aesthetics). we don't want to have to add a wildcard case at the end that simply that throws an exception.
-# The exception that C# generates when there is a match failure is fine.
+# Reason: Laziness (and aesthetics). We don't want to have to add a wildcard case at the end that simply that throws an exception. The exception that C# generates when there is a match failure is fine.
 dotnet_diagnostic.CS8846.severity = none
 dotnet_diagnostic.CS8509.severity = none
 dotnet_diagnostic.CS8524.severity = none

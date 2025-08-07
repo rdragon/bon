@@ -35,7 +35,7 @@ partial class BonSerializer
     }
 
     /// <summary>
-    /// The reverse of <see cref="BonToJson"/>.
+    /// The reverse of <see cref="BonToJson(Stream)"/>.
     /// If unknown schema IDs are encountered then an exception is thrown.
     /// </summary>
     public void JsonToBon(Stream stream, JsonObject jsonObject)
@@ -48,7 +48,7 @@ partial class BonSerializer
     }
 
     /// <summary>
-    /// The reverse of <see cref="BonToJson"/>.
+    /// The reverse of <see cref="BonToJson(byte[])"/>.
     /// </summary>
     public byte[] JsonToBon(string json)
     {
