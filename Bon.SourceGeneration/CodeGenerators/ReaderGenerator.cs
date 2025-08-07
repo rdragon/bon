@@ -136,7 +136,14 @@ namespace Bon.SourceGeneration.CodeGenerators
             var args = string.Join(", ", Enumerable.Range(0, definition.Members.Count).Select(i => $"arg{i}"));
 
             method.AddEmptyLine();
-            method.Add($"return {definition.GetLongConstructorName(_codeGenerator)}({args});");
+            method.Add($"var result = {definition.GetLongConstructorName(_codeGenerator)}({args});");
+
+            if (definition.HasOnDeserialized)
+            {
+                method.Add("result.OnDeserialized();");
+            }
+
+            method.Add("return result;");
         }
 
         private void AddReadMethod(ArrayDefinition definition, int id)

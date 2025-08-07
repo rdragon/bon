@@ -73,6 +73,9 @@ The following types can be serialized:
 - Any class, struct or interface decorated with the `[BonObject]` attribute
 - Enums
 
+### OnDeserialized
+If you give a class or struct a public method called OnDeserialized that doesn't accept any parameters then this method will be called directly after deserialization.
+
 ## Attributes
 Serialization is controlled trough the use of the following attributes.
 

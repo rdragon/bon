@@ -20,8 +20,26 @@ namespace Bon.SourceGeneration.Definitions.Factories
             var isConcreteType = symbolInfo.TypeArguments.All(arg => !(arg is ITypeParameterSymbol));
             var isValueType = symbolInfo.Symbol.IsValueType;
             var isNullable = symbolInfo.IsNullable;
+            var hasOnDeserialized = HasOnDeserialized(symbolInfo);
 
-            return new RecordDefinition(symbolInfo.Type, Array.Empty<Member>(), isValueType, false, isConcreteType, isNullable);
+            return new RecordDefinition(
+                symbolInfo.Type,
+                Array.Empty<Member>(),
+                isValueType,
+                false,
+                hasOnDeserialized,
+                isConcreteType,
+                isNullable);
+        }
+
+        private static bool HasOnDeserialized(SymbolInfo symbolInfo)
+        {
+            return symbolInfo.Symbol.GetMembers().Any(member =>
+                member.Kind == SymbolKind.Method &&
+                member.Name == "OnDeserialized" &&
+                member.DeclaredAccessibility == Accessibility.Public &&
+                member is IMethodSymbol method &&
+                method.Parameters.Length == 0);
         }
 
         public void AddMembers(RecordDefinition definition, INamedTypeSymbol symbol)

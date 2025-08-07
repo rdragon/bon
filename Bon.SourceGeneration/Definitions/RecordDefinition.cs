@@ -21,6 +21,11 @@ namespace Bon.SourceGeneration.Definitions
         public bool HasValidConstructor { get; set; }
 
         /// <summary>
+        /// Whether this type has a public method called "OnDeserialized" that doesn't accept any parameters.
+        /// </summary>
+        public bool HasOnDeserialized { get; }
+
+        /// <summary>
         /// Whether every type argument is replaced by a concrete type.
         /// Non-generic types are always considered concrete.
         /// </summary>
@@ -31,11 +36,13 @@ namespace Bon.SourceGeneration.Definitions
             IReadOnlyList<Member> members,
             bool isValueType,
             bool hasValidConstructor,
+            bool hasOnDeserialized,
             bool isConcreteType,
             bool isNullable) : base(type, GetSchemaType(isNullable), isValueType)
         {
             Members = members;
             HasValidConstructor = hasValidConstructor;
+            HasOnDeserialized = hasOnDeserialized;
             IsConcreteType = isConcreteType;
         }
 
@@ -82,6 +89,7 @@ namespace Bon.SourceGeneration.Definitions
                 Members,
                 IsValueType,
                 HasValidConstructor,
+                HasOnDeserialized,
                 IsConcreteType,
                 !IsNullable);
     }
