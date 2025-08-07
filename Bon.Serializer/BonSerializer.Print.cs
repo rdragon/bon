@@ -90,4 +90,19 @@ partial class BonSerializer
 
         return builder.ToString();
     }
+
+    /// <summary>
+    /// Prints the body of the provided message.
+    /// </summary>
+    public string PrintBody(byte[] message)
+    {
+        var reader = new BinaryReader(new MemoryStream(message));
+        ReadSchema(reader);
+        var body = message[(int)reader.BaseStream.Position..];
+        var builder = new StringBuilder();
+        builder.AppendLine("Body");
+        builder.AppendLine("Length       " + body.Length);
+        builder.AppendLine("Hexadecimal  " + body.ToHexString());
+        return builder.ToString();
+    }
 }
