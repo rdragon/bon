@@ -89,7 +89,9 @@ The `[BonMember]` attribute has one required parameter of type `int`. This param
 
 Every member should have a unique non-negative ID. You are free to choose any IDs you like. The IDs are not included in the serializer output. They are written as variable-width integers to the schema file.
 
-Every serializable member should have a setter, or there should be a suitable constructor. A suitable constructor is a constructor that has for every serializable member one argument with the same name (case insensitive) and same type. If found, this constructor will be used during deserialization, even if all members have setters.
+Every serializable member should have a setter, or there should be a suitable constructor. A suitable constructor is a constructor that has for every serializable member one argument with the same name (case insensitive) and same type. If found, this constructor will be used during deserialization, even if all members have setters. You can force the use of this non-empty constructor by adding `ForceNonEmptyConstructor = true` to the `[BonObject]` attribute.
+
+It is allowed to add the `required` keyword to a member decorated with `[BonMember]`. However, this has no effect on the deserialization process.
 
 ### BonReservedMembers
 If you delete a member from a class (or struct) then you should not re-use its ID. Otherwise, if you deserialize older data, the new member might receive incorrect values. To prevent this scenario you can use the `[BonReservedMembers]` attribute. For example, decorating a type with `[BonReservedMembers(3, 5)]` makes sure the code no longer compiles if a member with ID 3 or 5 is added to the type.

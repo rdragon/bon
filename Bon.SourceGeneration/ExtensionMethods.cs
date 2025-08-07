@@ -156,5 +156,11 @@ namespace Bon.SourceGeneration
                 schemaType == SchemaType.Dictionary ||
                 schemaType == SchemaType.String;
         }
+
+        public static T TryGetNamedArgumentValue<T>(this AttributeData attributeData, string name)
+        {
+            var typedConstants = attributeData.NamedArguments.Where(pair => pair.Key == name).Select(pair => pair.Value);
+            return typedConstants.TryGetFirst(out var typedConstant) ? (T)typedConstant.Value : default;
+        }
     }
 }

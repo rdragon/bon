@@ -4,7 +4,13 @@
 /// Indicates that the type can be serialized and deserialized by the Bon serializer.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum)]
-public sealed class BonObjectAttribute : Attribute { }
+public sealed class BonObjectAttribute : Attribute
+{
+    /// <summary>
+    /// Whether to force the use of a non-empty constructor during deserialization.
+    /// </summary>
+    public bool ForceNonEmptyConstructor { get; set; }
+}
 
 /// <summary>
 /// Indicates that the member should be serialized and deserialized by the Bon serializer.
@@ -26,7 +32,7 @@ public sealed class BonMemberAttribute : Attribute
 /// <summary>
 /// Indicates that the member should be ignored by the Bon serializer.
 /// </summary>
-[AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 public sealed class BonIgnoreAttribute : Attribute { }
 
 /// <summary>

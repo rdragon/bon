@@ -49,8 +49,9 @@ namespace Bon.SourceGeneration.Definitions.Factories
                 return;
             }
 
+            var bonObjectAttribute = RequireBonObjectAttribute(symbol);
             var members = GetMembers(symbol);
-            var hasValidConstructor = SetConstructorIndices(symbol, members);
+            var hasValidConstructor = SetConstructorIndices(symbol, members, bonObjectAttribute);
 
             definition.Members = members;
             definition.HasValidConstructor = hasValidConstructor;
@@ -61,8 +62,6 @@ namespace Bon.SourceGeneration.Definitions.Factories
         /// </summary>
         private IReadOnlyList<Member> GetMembers(INamedTypeSymbol symbol)
         {
-            RequireBonObjectAttribute(symbol);
-
             var members = symbol.GetMembers()
                 .Select(TryGetMember)
                 .Where(member => member != null)
@@ -75,15 +74,18 @@ namespace Bon.SourceGeneration.Definitions.Factories
             return members;
         }
 
-        private static void RequireBonObjectAttribute(ISymbol symbol)
+        private static AttributeData RequireBonObjectAttribute(ISymbol symbol)
         {
-            if (symbol.GetAttributes().All(attribute => attribute.AttributeClass?.Name != "BonObjectAttribute"))
+            var attributes = symbol.GetAttributes().Where(attribute => attribute.AttributeClass?.Name == "BonObjectAttribute");
+            if (attributes.TryGetFirst(out var result))
             {
-                throw new SourceGenerationException(
-                    $"Type '{symbol}' must have a BonObjectAttribute.",
-                    1761,
-                    symbol);
+                return result;
             }
+
+            throw new SourceGenerationException(
+                $"Type '{symbol}' must have a BonObjectAttribute.",
+                1761,
+                symbol);
         }
 
         private static void RequireUniqueIds(IReadOnlyList<Member> members, ISymbol symbol)
@@ -190,6 +192,14 @@ namespace Bon.SourceGeneration.Definitions.Factories
                     symbol);
             }
 
+            if (shouldIgnore && ((symbol as IPropertySymbol)?.IsRequired == true || (symbol as IFieldSymbol)?.IsRequired == true))
+            {
+                throw new SourceGenerationException(
+                    $"The 'required' keyword is not allowed on a member decorated with the [BonIgnore] attribute.",
+                    8791,
+                    symbol);
+            }
+
             if (value.HasValue || shouldIgnore)
             {
                 return value;
@@ -215,7 +225,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
         /// <summary>
         /// Sets <see cref="Member.ConstructorIndex"/> for each member.
         /// </summary>
-        private bool SetConstructorIndices(INamedTypeSymbol symbol, IReadOnlyList<Member> members)
+        private bool SetConstructorIndices(INamedTypeSymbol symbol, IReadOnlyList<Member> members, AttributeData bonObjectAttribute)
         {
             var hasEmptyConstructor = false;
             var dictionary = members.ToDictionary(member => member.Name, StringComparer.OrdinalIgnoreCase);
@@ -264,6 +274,14 @@ namespace Bon.SourceGeneration.Definitions.Factories
                 throw new SourceGenerationException(
                     $"The class '{symbol}' does not have an accessible empty constructor nor a constructor with the correct " +
                     $"parameter names and types.",
+                    2677,
+                    symbol);
+            }
+
+            if (bonObjectAttribute.TryGetNamedArgumentValue<bool>("ForceNonEmptyConstructor"))
+            {
+                throw new SourceGenerationException(
+                    $"The class '{symbol}' does not have an accessible constructor with the correct parameter names and types.",
                     2677,
                     symbol);
             }
