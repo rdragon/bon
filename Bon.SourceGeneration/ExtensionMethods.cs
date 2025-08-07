@@ -162,5 +162,10 @@ namespace Bon.SourceGeneration
             var typedConstants = attributeData.NamedArguments.Where(pair => pair.Key == name).Select(pair => pair.Value);
             return typedConstants.TryGetFirst(out var typedConstant) ? (T)typedConstant.Value : default;
         }
+
+        public static bool IsAccessible(this ISymbol symbol) =>
+            symbol.DeclaredAccessibility == Accessibility.Public ||
+            symbol.DeclaredAccessibility == Accessibility.Internal ||
+            symbol.DeclaredAccessibility == Accessibility.ProtectedOrInternal;
     }
 }

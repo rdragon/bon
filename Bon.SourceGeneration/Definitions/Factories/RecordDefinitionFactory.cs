@@ -17,10 +17,16 @@ namespace Bon.SourceGeneration.Definitions.Factories
 
         public RecordDefinition GetRecordDefinitionWithoutMembers(SymbolInfo symbolInfo)
         {
+            var symbol = symbolInfo.Symbol;
             var isConcreteType = symbolInfo.TypeArguments.All(arg => !(arg is ITypeParameterSymbol));
-            var isValueType = symbolInfo.Symbol.IsValueType;
+            var isValueType = symbol.IsValueType;
             var isNullable = symbolInfo.IsNullable;
             var hasOnDeserialized = HasOnDeserialized(symbolInfo);
+
+            if (!symbol.IsAccessible())
+            {
+                throw new SourceGenerationException($"Type '{symbol}' should be public or internal.", 1124, symbol);
+            }
 
             return new RecordDefinition(
                 symbolInfo.Type,
@@ -37,7 +43,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
             return symbolInfo.Symbol.GetMembers().Any(member =>
                 member.Kind == SymbolKind.Method &&
                 member.Name == "OnDeserialized" &&
-                member.DeclaredAccessibility == Accessibility.Public &&
+                member.IsAccessible() &&
                 member is IMethodSymbol method &&
                 method.Parameters.Length == 0);
         }
@@ -116,7 +122,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
             if (members.Where(member => reservedIds.Contains(member.Id)).TryGetFirst(out var badMember))
             {
                 throw new SourceGenerationException(
-                    $"Cannot used reseved ID {badMember.Id} in type '{symbol}'.",
+                    $"Cannot used reserved ID {badMember.Id} in type '{symbol}'.",
                     6697,
                     symbol);
             }
@@ -179,15 +185,15 @@ namespace Bon.SourceGeneration.Definitions.Factories
                 // Negative member IDs result in larger schema sizes.
                 // Also the line at bookmark 541895765 assumes that the member ID is larger than int.MinValue.
                 throw new SourceGenerationException(
-                    $"Negative member IDs are not supported. Please give member '{symbol}' a non-negative ID.",
+                    $"Negative member IDs are not supported. Error in member '{symbol}'.",
                     5347,
                     symbol);
             }
 
-            if (value.HasValue && symbol.DeclaredAccessibility != Accessibility.Public)
+            if (value.HasValue && !symbol.IsAccessible())
             {
                 throw new SourceGenerationException(
-                    $"The BonMember attribute can only be used on public members. Please make '{symbol}' public or remove the attribute.",
+                    $"The BonMember attribute can only be used on public or internal members. Error in member '{symbol}'.",
                     3348,
                     symbol);
             }
@@ -195,7 +201,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
             if (shouldIgnore && ((symbol as IPropertySymbol)?.IsRequired == true || (symbol as IFieldSymbol)?.IsRequired == true))
             {
                 throw new SourceGenerationException(
-                    $"The 'required' keyword is not allowed on a member decorated with the [BonIgnore] attribute.",
+                    $"The 'required' keyword is not allowed on an ignored member. Error in member '{symbol}'.",
                     8791,
                     symbol);
             }
@@ -211,13 +217,13 @@ namespace Bon.SourceGeneration.Definitions.Factories
                 return null;
             }
 
-            if (symbol.DeclaredAccessibility != Accessibility.Public)
+            if (!symbol.IsAccessible())
             {
                 return null;
             }
 
             throw new SourceGenerationException(
-                $"Public member '{symbol}' must have a BonMember or BonIgnore attribute.",
+                $"Public or internal member '{symbol}' must have a BonMember or BonIgnore attribute.",
                 3963,
                 symbol);
         }
@@ -231,9 +237,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
             var dictionary = members.ToDictionary(member => member.Name, StringComparer.OrdinalIgnoreCase);
 
             foreach (var parameters in symbol.InstanceConstructors
-                .Where(constructor =>
-                    constructor.DeclaredAccessibility == Accessibility.Public ||
-                    constructor.DeclaredAccessibility == Accessibility.Internal)
+                .Where(constructor => constructor.IsAccessible())
                 .Select(constructor => constructor.Parameters))
             {
                 var count = parameters.Length;
