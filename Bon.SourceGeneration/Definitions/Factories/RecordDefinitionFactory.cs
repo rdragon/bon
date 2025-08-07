@@ -74,6 +74,11 @@ namespace Bon.SourceGeneration.Definitions.Factories
                 .OrderBy(member => member.Id)
                 .ToArray();
 
+            if (members.Length == 0)
+            {
+                members = new[] { Member.CreateVirtualMember() };
+            }
+
             RequireUniqueIds(members, symbol);
             ForbidReservedIds(members, symbol);
 
@@ -301,7 +306,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
 
             foreach (var member in members)
             {
-                if (!member.HasSetter)
+                if (!member.HasSetter && !member.IsVirtual)
                 {
                     throw new SourceGenerationException($"Member '{member.Name}' of class '{symbol}' does not have a setter.", 6172, symbol);
                 }

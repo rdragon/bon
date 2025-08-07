@@ -36,10 +36,12 @@ public sealed class BytesTest : BonSerializerTestBase
         .ShouldBeBodyFor(HoldsSmallInt);
 
     // A class does not take up more space than the space of its members, except for a nullability byte at the start.
+    // Also, if there are no members at all, an extra NULL byte is written.
 
     [Fact]
     public void EmptyClass_Body() => GetManualSerializer()
         .WriteNotNull()
+        .WriteNull()
         .ShouldBeBodyFor(EmptyClass);
 
     [Fact]
@@ -162,7 +164,9 @@ public sealed class BytesTest : BonSerializerTestBase
         .WriteNotNull()
         .WriteCompactInt(2)
         .WriteNotNull()
+        .WriteNull()
         .WriteNotNull()
+        .WriteNull()
         .ShouldBeBodyFor(WithArrayOfEmptyClass);
 
     [Fact]

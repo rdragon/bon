@@ -27,6 +27,13 @@ namespace Bon.SourceGeneration
         /// </summary>
         public int ConstructorIndex { get; set; }
 
+        /// <summary>
+        /// A virtual member is a member that does not exist on the type.
+        /// A virtual member is added to empty records so that the serialization of any record contains at least one byte.
+        /// This prevents small messages to be deserialized to enormous objects.
+        /// </summary>
+        public bool IsVirtual { get; private set; }
+
         public Member(string name, int id, IDefinition definition, bool hasSetter)
         {
             Name = name;
@@ -57,5 +64,10 @@ namespace Bon.SourceGeneration
         }
 
         public override string ToString() => Name;
+
+        public static Member CreateVirtualMember()
+        {
+            return new Member("_", 0, NativeDefinition.GetNativeDefinition("string"), false) { IsVirtual = true };
+        }
     }
 }

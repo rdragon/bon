@@ -106,6 +106,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         private void UpdateCustomSchema(ICustomDefinition definition)
         {
             var id = GetId(definition);
+
             var arguments = string.Join(", ", definition.Members.Select(GetMemberArgument));
 
             _codeGenerator.AppendClassBody(

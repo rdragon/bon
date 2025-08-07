@@ -150,7 +150,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         {
             foreach (var member in definition.Members)
             {
-                Write(method, member.Definition, $"value.{member.Name}");
+                Write(method, member.Definition, member.IsVirtual ? "null" : $"value.{member.Name}");
             }
         }
 

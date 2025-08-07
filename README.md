@@ -226,4 +226,4 @@ Only deserialize trusted data. There is at least one vulnerability when deserial
 ### Large memory allocations
 It is possible to create messages that cause large amount of memory to be allocated. For this you can create a message that contains an array and specify in the message that the array contains more elements than it actually does. The way the deserializer works is that it first allocates an array of the appropriate size and only then starts reading the elements.
 
-This problem could be fixed at the cost of some performance. However, this would not completely solve the issue. If a schema exists of a type without any members then this schema could be used as schema of the elements in the array. Now the elements in the array do not take up any space in the message. In this way you can make a small valid message that contains a very large array. A type without members can be useful as value type in a dictionary when you use the dictionary as hash set.
+This problem could be fixed at the cost of some performance.

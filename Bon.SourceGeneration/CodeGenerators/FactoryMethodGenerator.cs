@@ -38,7 +38,10 @@ namespace Bon.SourceGeneration.CodeGenerators
         {
             var number = ++_counter;
             var parameterText = string.Join(", ", definition.Members.Select(member => $"{member.Definition.Type} {member.Name}"));
-            var argumentText = string.Join(", ", definition.Members.Select(member => $"{member.Name} = {member.Name}"));
+
+            var argumentText = string.Join(", ", definition.Members
+                .Where(member => !member.IsVirtual)
+                .Select(member => $"{member.Name} = {member.Name}"));
 
             _codeGenerator.AddMethod(
                 $"private static {definition.TypeNonNullable} Construct{number}({parameterText})",
