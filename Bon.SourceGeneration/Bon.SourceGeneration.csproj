@@ -5,7 +5,7 @@
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <Title>$(AssemblyName)</Title>
     <Authors>rdragon</Authors>
-    <Version>1.0.18</Version>
+    <Version>1.0.19</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
