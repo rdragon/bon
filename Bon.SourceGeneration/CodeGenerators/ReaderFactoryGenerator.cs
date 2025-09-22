@@ -82,7 +82,7 @@ namespace Bon.SourceGeneration.CodeGenerators
             {
                 _codeGenerator.AppendClassBody(
                     $"skip{i}?.Invoke(input);",
-                    $"var arg{i} = read{i}(input);");
+                    $"var arg{members[i].ConstructorIndex} = read{i}(input);");
             }
 
             var argText = string.Join(", ", Enumerable.Range(0, members.Count).Select(i => $"arg{i}"));

@@ -170,3 +170,6 @@ public sealed record class WithField
     [BonMember(1)]
     public int Int;
 }
+
+[BonObject]
+public sealed record class WithScrambledConstructor([property: BonMember(2)] int Int, [property: BonMember(1)] string String);
