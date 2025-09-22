@@ -1,5 +1,4 @@
-﻿using Bon.SourceGeneration.Definitions;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -160,7 +159,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
         {
             var attributes = symbol.GetAttributes();
             int? value = null;
-            var shouldIgnore = false;
+            var shouldIgnore = true; // For now, ignore by default, to get rid of all those BonIgnore attributes.
 
             foreach (var attribute in attributes)
             {
@@ -170,6 +169,7 @@ namespace Bon.SourceGeneration.Definitions.Factories
                 {
                     var typedConstant = attribute.ConstructorArguments[0];
                     value = (int)typedConstant.Value;
+                    shouldIgnore = false;
                 }
                 else if (name == "BonIgnoreAttribute")
                 {

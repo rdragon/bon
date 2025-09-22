@@ -74,7 +74,7 @@ The following types can be serialized:
 - Enums
 
 ### OnDeserialized
-If you give a class or struct a public method called OnDeserialized that doesn't accept any parameters then this method will be called directly after deserialization.
+If you give a class or struct a public method called `OnDeserialized` that doesn't accept any parameters, then this method will be called directly after deserialization.
 
 ## Attributes
 Serialization is controlled trough the use of the following attributes.
@@ -82,8 +82,8 @@ Serialization is controlled trough the use of the following attributes.
 ### BonObject
 Any class, struct or interface that you want to be serializable should be decorated with the `[BonObject]` attribute. This attribute can also be given to enums. For enums the attribute is only required if the enum cannot be found inside another serializable type.
 
-### BonMember and BonIgnore
-You need to specify which members of a type should be serialized. This is done through the use of the `[BonMember]` and `[BonIgnore]` attributes. Every public property or field of a serializable type should be given one of these attributes, otherwise the code will not compile. Private members cannot be serialized.
+### BonMember
+You need to specify which members of a type should be serialized. This is done through the use of the `[BonMember]` attribute. Public properties and fields can be marked with this attribute, private members cannot. Private members cannot be serialized.
 
 The `[BonMember]` attribute has one required parameter of type `int`. This parameter specifies the ID of the member. The ID is used during serialization and deserialization to identify the member. It has the same purpose as the name of the member when using JSON. Changing the ID of a member is identical to deleting the member and creating a new member. This will cause data to be lost.
 
