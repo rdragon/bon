@@ -29,7 +29,10 @@ namespace Bon.SourceGeneration.CodeGenerators
             enumDataGenerator.Run(definitions.OfType<EnumDefinition>());
             readerFactoryGenerator.Run(definitions.OfType<RecordDefinition>());
 
-            return new CodeGeneratorOutput(Helper.Indent(codeGenerator.Build()), contextClass.ClassName);
+            return new CodeGeneratorOutput(
+                Helper.Indent(codeGenerator.Build()),
+                contextClass.ClassName,
+                contextClass.DebugOutputDirectory);
         }
 
         /// <summary>

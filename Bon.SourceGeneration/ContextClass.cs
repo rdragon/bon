@@ -6,10 +6,13 @@
 
         public string ClassName { get; }
 
-        public ContextClass(string namespaceName, string className)
+        public string DebugOutputDirectory { get; }
+
+        public ContextClass(string namespaceName, string className, string debugOutputDirectory)
         {
             NamespaceName = namespaceName;
             ClassName = className;
+            DebugOutputDirectory = debugOutputDirectory;
         }
     }
 }

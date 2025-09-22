@@ -6,10 +6,13 @@
 
         public string ClassName { get; }
 
-        public CodeGeneratorOutput(string code, string className)
+        public string DebugOutputDirectory { get; }
+
+        public CodeGeneratorOutput(string code, string className, string debugOutputDirectory)
         {
             Code = code;
             ClassName = className;
+            DebugOutputDirectory = debugOutputDirectory;
         }
     }
 }

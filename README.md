@@ -111,6 +111,9 @@ interface IAnimal;
 
 The first parameter of the attribute is an identifier of type `int`. Each implementation should have a unique identifier within the context of a single interface or abstract class. The identifiers do not have to be unique across types. Each time an interface or abstract class is serialized the right identifier is written as variable-width integer to the serialized data. Therefore, it is beneficial to use small instead of large identifiers.
 
+### BonDebugOutput
+If you add the `[BonDebugOutput]` attribute to the serializer context class then a copy of the generated code will be written to specified directory. This can be helpful when Visual Studio doesn't correctly show the latest generated code.
+
 ## BON format
 The serializer outputs a binary message that consists of a header and a body.
 

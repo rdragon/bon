@@ -69,9 +69,22 @@ namespace Bon.SourceGeneration.CodeGenerators
                     context.TargetSymbol));
             }
 
+            string debugOutputDirectory = null;
+
+            var attributes = context.TargetSymbol.GetAttributes();
+            foreach (var attribute in attributes)
+            {
+                var name = attribute.AttributeClass?.Name;
+
+                if (name == "BonDebugOutputAttribute")
+                {
+                    debugOutputDirectory = (string)attribute.ConstructorArguments[0].Value;
+                }
+            }
+
             return TryExecute((symbol, _1) =>
             {
-                return new ContextClass(symbol.ContainingNamespace.ToString(), symbol.Name);
+                return new ContextClass(symbol.ContainingNamespace.ToString(), symbol.Name, debugOutputDirectory);
             }, context.TargetSymbol);
         }
 
@@ -86,7 +99,7 @@ namespace Bon.SourceGeneration.CodeGenerators
         private static void WriteFile(SourceProductionContext context, CodeGeneratorOutput output)
         {
             var fileName = $"{output.ClassName}.g.cs";
-            DebugOutput.WriteAllText(output.Code, fileName);
+            DebugOutput.WriteAllText(output.Code, fileName, output.DebugOutputDirectory);
             context.AddSource(fileName, output.Code);
         }
 

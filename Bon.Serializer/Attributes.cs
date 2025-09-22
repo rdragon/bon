@@ -81,3 +81,16 @@ public sealed class BonReservedMembersAttribute : Attribute
         BonHelper.Ignore(ids);
     }
 }
+
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class BonDebugOutputAttribute : Attribute
+{
+    /// <param name="outputDirectory">
+    /// The directory where the Bon source generator will write its debug output files.
+    /// If not specified, no debug output files will be written.
+    /// </param>
+    public BonDebugOutputAttribute(string outputDirectory)
+    {
+        BonHelper.Ignore(outputDirectory);
+    }
+}
